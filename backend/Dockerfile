@@ -1,7 +1,7 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /src
-RUN apk add --no-cache git ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -9,11 +9,11 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/lumi-backend ./cmd/main.go
 
-FROM alpine:3.21
+FROM debian:bookworm-slim
 
 WORKDIR /app
-RUN apk add --no-cache ca-certificates tzdata \
-    && addgroup -S app && adduser -S app -G app
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates tzdata && rm -rf /var/lib/apt/lists/* \
+    && groupadd --system app && useradd --system --gid app --create-home app
 
 COPY --from=builder /out/lumi-backend /app/lumi-backend
 COPY --from=builder /src/internal/email/templates /app/internal/email/templates

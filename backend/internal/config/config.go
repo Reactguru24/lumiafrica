@@ -10,34 +10,34 @@ import (
 )
 
 type Config struct {
-	ServerPort             string
-	ServerEnv              string
-	DBHost                 string
-	DBPort                 string
-	DBUser                 string
-	DBPassword             string
-	DBName                 string
-	JWTSecret              string
-	JWTExpiry              string
-	MaxUploadSize          int64
-	CORSOrigins            []string
-	CloudinaryCloudName    string
-	CloudinaryAPIKey       string
-	CloudinaryAPISecret    string
-	PaystackSecretKey      string
-	PaystackPublicKey      string
-	PaystackCallbackURL    string
-	FrontendURL            string
-	SMTPHost               string
-	SMTPPort               int
-	SMTPUser               string
-	SMTPPassword           string
-	SMTPFromEmail          string
-	SMTPFromName           string
-	RedisEnabled           bool
-	RedisAddr              string
-	RedisPassword          string
-	RedisDB                int
+	ServerPort          string
+	ServerEnv           string
+	DBHost              string
+	DBPort              string
+	DBUser              string
+	DBPassword          string
+	DBName              string
+	JWTSecret           string
+	JWTExpiry           string
+	MaxUploadSize       int64
+	CORSOrigins         []string
+	CloudinaryCloudName string
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
+	PaystackSecretKey   string
+	PaystackPublicKey   string
+	PaystackCallbackURL string
+	FrontendURL         string
+	SMTPHost            string
+	SMTPPort            int
+	SMTPUser            string
+	SMTPPassword        string
+	SMTPFromEmail       string
+	SMTPFromName        string
+	RedisEnabled        bool
+	RedisAddr           string
+	RedisPassword       string
+	RedisDB             int
 }
 
 // LoadConfig loads configuration from environment variables
@@ -50,15 +50,15 @@ func LoadConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServerPort:    getEnv("PORT", getEnv("SERVER_PORT", "8080")),
-		ServerEnv:     getEnv("SERVER_ENV", "development"),
-		DBHost:        getEnv("DB_HOST", "localhost"),
-		DBPort:        getEnv("DB_PORT", "3306"),
-		DBUser:        getEnv("DB_USER", "root"),
-		DBPassword:    getEnv("DB_PASSWORD", "root"),
-		DBName:        getEnv("DB_NAME", "lumi_marketplace"),
-		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key"),
-		JWTExpiry:     getEnv("JWT_EXPIRY", "24h"),
+		ServerPort:          getEnv("PORT", getEnv("SERVER_PORT", "8080")),
+		ServerEnv:           getEnv("SERVER_ENV", "development"),
+		DBHost:              getEnv("DB_HOST", getEnv("MYSQLHOST", getEnv("MYSQL_HOST", "localhost"))),
+		DBPort:              getEnv("DB_PORT", getEnv("MYSQLPORT", getEnv("MYSQL_PORT", "3306"))),
+		DBUser:              getEnv("DB_USER", getEnv("MYSQLUSER", getEnv("MYSQL_USER", "root"))),
+		DBPassword:          getEnv("DB_PASSWORD", getEnv("MYSQLPASSWORD", getEnv("MYSQL_PASSWORD", "root"))),
+		DBName:              getEnv("DB_NAME", getEnv("MYSQLDATABASE", getEnv("MYSQL_DB", "lumi_marketplace"))),
+		JWTSecret:           getEnv("JWT_SECRET", "your-secret-key"),
+		JWTExpiry:           getEnv("JWT_EXPIRY", "24h"),
 		MaxUploadSize:       maxUploadSize(getEnv("MAX_UPLOAD_SIZE", "10485760")),
 		CloudinaryCloudName: getEnv("CLOUDINARY_CLOUD_NAME", ""),
 		CloudinaryAPIKey:    getEnv("CLOUDINARY_API_KEY", ""),
