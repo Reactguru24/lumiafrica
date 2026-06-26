@@ -1,0 +1,80 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    queries: "db/queries"
+    schema: "db/schema_v2.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "internal/database/sqlc"
+
+        # Emit standard Go JSON tags on every generated struct field.
+        emit_json_tags: true
+
+        # Emit empty slices ([]T{}) instead of nil for :many queries that
+        # return no rows, so callers never need a nil check before ranging.
+        emit_empty_slices: true
+
+        # Nullable columns become *T instead of sql.NullString / sql.NullTime /
+        # etc. Combined with the BinaryUUID override below, nullable BINARY(16)
+        # FKs are generated as *types.BinaryUUID — no separate null wrapper needed.
+        emit_pointers_for_null_types: true
+
+        # Generate a Querier interface alongside the Queries struct.
+        # Useful for mocking in tests without hitting a real database.
+        emit_interface: true
+
+        overrides:
+          # ── BINARY(16) → BinaryUUID ──────────────────────────────────────────
+          # All primary keys and foreign keys in schema_v2.sql are BINARY(16).
+          # BinaryUUID implements driver.Valuer and sql.Scanner so sqlc-generated
+          # code can read/write them without manual conversion.
+          # Nullable BINARY(16) columns (FKs that allow NULL) become *BinaryUUID
+          # automatically via emit_pointers_for_null_types above.
+          - db_type: "binary"
+            go_type:
+              import: "lumi-backend/internal/database/types"
+              type: "BinaryUUID"
+
+          - db_type: "binary"
+            nullable: true
+            go_type:
+              import: "lumi-backend/internal/database/types"
+              type: "BinaryUUID"
+              pointer: true
+
+          - column: "categories.parent_id"
+            go_type:
+              import: "lumi-backend/internal/database/types"
+              type: "BinaryUUID"
+              pointer: true
+
+          # ── JSON → json.RawMessage ────────────────────────────────────────────
+          # Keeps JSON columns as raw bytes in Go; the application layer is
+          # responsible for marshaling into concrete types (e.g. []OrderItem).
+          - db_type: "json"
+            go_type: "encoding/json.RawMessage"
+
+          # ── Nullable JSON → *json.RawMessage ─────────────────────────────────
+          # Nullable JSON columns (e.g. products.colors in legacy queries) get a
+          # pointer so the caller can distinguish NULL from an empty JSON value.
+          - db_type: "json"
+            nullable: true
+            go_type:
+              import: "encoding/json"
+              type: "RawMessage"
+              pointer: true
+
+          # ── TINYINT → int16 ───────────────────────────────────────────────────
+          # reviews.rating is TINYINT with CHECK (rating BETWEEN 1 AND 5).
+          # int16 is more ergonomic than int8 when doing arithmetic on ratings
+          # (avg, sum) without overflow risk.
+          - db_type: "tinyint"
+            go_type: "int16"
+
+          # ── DATE → time.Time ─────────────────────────────────────────────────
+          # vendor_analytics_daily.period_date and shipments.estimated_delivery
+          # are DATE columns. The MySQL driver returns them as time.Time with the
+          # time component zeroed; no custom type needed.
+          - db_type: "date"
+            go_type: "time.Time"

@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+dist
+dist-ssr
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+.cursor/
+.understand-anything
+.vscode

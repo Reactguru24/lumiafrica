@@ -1,0 +1,14 @@
+bin/
+uploads/
+.env
+.env.*
+!.env.docker.example
+!.env.example
+.git/
+.gitignore
+*.md
+docs/
+tmp/
+.air.toml
+seeders/
+**/*_test.go

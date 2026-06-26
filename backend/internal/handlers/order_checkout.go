@@ -1,0 +1,78 @@
+package handlers
+
+import (
+	"context"
+	"fmt"
+
+	"lumi-backend/internal/commerce"
+	"lumi-backend/internal/database/sqlc"
+	"lumi-backend/internal/database/types"
+	"lumi-backend/internal/models"
+	"lumi-backend/internal/utils"
+)
+
+func prepareOrderPaymentMetadata(
+	ctx context.Context,
+	q *sqlc.Queries,
+	userID types.BinaryUUID,
+	req models.CreateOrderRequest,
+	subtotal float64,
+) (models.OrderPaymentMetadata, error) {
+	shippingCost, zone, err := commerce.ResolveShippingCost(ctx, q, req.DeliveryCity, req.DeliveryZoneID)
+	if err != nil {
+		return models.OrderPaymentMetadata{}, err
+	}
+
+	discount := 0.0
+	var couponID, couponCode *string
+	if req.CouponCode != nil && *req.CouponCode != "" {
+		coupon, amount, err := commerce.ValidateCoupon(ctx, q, *req.CouponCode, userID, subtotal)
+		if err != nil {
+			return models.OrderPaymentMetadata{}, fmt.Errorf("%s", commerce.CouponErrorMessage(err))
+		}
+		discount = amount
+		cid := coupon.ID.String()
+		couponID = &cid
+		cc := coupon.Code
+		couponCode = &cc
+	}
+
+	taxAmount := subtotal * defaultTaxRate
+	total := subtotal - discount + shippingCost + taxAmount
+	if total < 0 {
+		total = 0
+	}
+
+	var zoneID *string
+	if zone != nil {
+		zid := zone.ID.String()
+		zoneID = &zid
+	}
+
+	return models.OrderPaymentMetadata{
+		Items:           req.Items,
+		PaymentMethod:   req.PaymentMethod,
+		DeliveryAddress: req.DeliveryAddress,
+		DeliveryCity:    req.DeliveryCity,
+		DeliveryZoneID:  zoneID,
+		CouponCode:      couponCode,
+		CouponID:        couponID,
+		Notes:           req.Notes,
+		Subtotal:        subtotal,
+		DiscountAmount:  discount,
+		ShippingCost:    shippingCost,
+		TaxAmount:       taxAmount,
+		Total:           total,
+	}, nil
+}
+
+func optionalBinaryUUID(s *string) *types.BinaryUUID {
+	if s == nil || *s == "" {
+		return nil
+	}
+	id, err := utils.ParseID(*s)
+	if err != nil {
+		return nil
+	}
+	return &id
+}

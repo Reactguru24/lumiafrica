@@ -1,0 +1,38 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*~
+
+# Backend (Go)
+backend/bin/
+backend/tmp/
+backend/vendor/
+backend/docs/
+backend/uploads/
+backend/*.exe
+backend/main
+backend/build-errors.log
+backend/db/*.db
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.understand-anything
+
+# Root misc
+sqlc
