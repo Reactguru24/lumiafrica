@@ -1,10 +1,11 @@
 import PromotionProductsClient from './PromotionProductsClient'
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default function PromotionProductsPage({ params }: Props) {
-  return <PromotionProductsClient promotionId={params.id} />
+export default async function PromotionProductsPage({ params }: Props) {
+  const { id } = await params
+  return <PromotionProductsClient promotionId={id} />
 }
 

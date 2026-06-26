@@ -6,7 +6,7 @@ import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections 
 import { unwrapItems } from '@/lib/utils/api'
 import { ProductCard } from '@/components/product/ProductCard'
 import { HeroSlider } from '@/components/common/HeroSlider'
-import { FeaturedVendorsCarousel } from '@/components/common/FeaturedVendorsCarousel'
+import { FeaturedVendorsCarousel, type FeaturedVendorSlide } from '@/components/common/FeaturedVendorsCarousel'
 import { heroImage, HOMEPAGE_GRID_IMAGES } from '@/lib/utils/images'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
@@ -29,7 +29,7 @@ export default function HomePage() {
   const { data: promotions } = usePromotions()
   const { data: collections } = useCollections()
 
-  const featuredVendorsList = unwrapItems(featuredVendors)
+  const featuredVendorsList = unwrapItems(featuredVendors) as FeaturedVendorSlide[]
   const collectionsData = (homepageProducts as any) || {}
   const featuredProducts = (collectionsData.featured || []) as any[]
   const trendingProducts = (collectionsData.trending || []) as any[]

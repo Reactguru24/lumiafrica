@@ -19,13 +19,18 @@ export default function AdminDashboardPage() {
   const { data: vendorApplicationsAPI } = useAdminVendorApplications(1, 50)
   const { data: analyticsData, loading } = useAdminAnalytics()
 
-  const { items: applications } = unwrapPaginated(vendorApplicationsAPI)
+  const { items: applications } = unwrapPaginated<{
+    id: string
+    status?: string
+    storeName?: string
+    submittedAt?: string
+  }>(vendorApplicationsAPI)
   const analytics = (analyticsData as Record<string, unknown>) || {}
 
-  const pendingApplications = applications.filter((app: { status?: string }) => app.status === 'pending')
+  const pendingApplications = applications.filter((app) => app.status === 'pending')
 
   const verificationAlerts = useMemo(() => {
-    return pendingApplications.slice(0, 3).map((app: { id: string; storeName?: string; submittedAt?: string }) => ({
+    return pendingApplications.slice(0, 3).map((app) => ({
       id: app.id,
       vendor: app.storeName || 'Unknown store',
       pendingDays: app.submittedAt

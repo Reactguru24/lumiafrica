@@ -31,7 +31,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '',
     street: '', city: '', state: '', country: 'Kenya', zipCode: '',
-    deliveryMethod: SHIPPING_METHODS[0].name,
+    deliveryMethod: SHIPPING_METHODS[0].name as string,
     paymentMethod: PAYMENT_METHODS[0] as (typeof PAYMENT_METHODS)[number],
   })
   const { data: allProducts } = useProducts({ limit: 200 })

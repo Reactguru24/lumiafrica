@@ -7,7 +7,7 @@ import { unwrapPaginated } from '@/lib/utils/api'
 import { analyticsField } from '@/lib/utils/admin'
 import { confirmAction } from '@/lib/utils/swal'
 import { StatCard } from '@/components/common/StatCard'
-import { ResponsiveDataTable } from '@/components/common/ResponsiveDataTable'
+import { ResponsiveDataTable, type TableRow } from '@/components/common/ResponsiveDataTable'
 import { Pagination } from '@/components/common/Pagination'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { UserIcon, ShieldCheckIcon, NoSymbolIcon } from '@heroicons/react/24/outline'
@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / pageLimit))
 
-  function canModifyUser(row: typeof tableData[number]) {
+  function canModifyUser(row: TableRow) {
     return row.role !== 'ADMIN' && row.id !== currentUserId
   }
 

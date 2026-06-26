@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { ClockIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { useVendorApplicationStatus } from '@/lib/stores/api'
 import type { VendorApplication } from '@/lib/types'
 
-export default function ApplicationSubmittedPage() {
+function ApplicationSubmittedContent() {
   const searchParams = useSearchParams()
   const email = useMemo(() => (searchParams.get('email') || '').trim(), [searchParams])
   const { data, loading } = useVendorApplicationStatus(email, { enabled: !!email })
@@ -65,5 +65,13 @@ export default function ApplicationSubmittedPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ApplicationSubmittedPage() {
+  return (
+    <Suspense fallback={<div className="page-container py-12 text-center text-sm text-gray-500">Loading…</div>}>
+      <ApplicationSubmittedContent />
+    </Suspense>
   )
 }
