@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 
 	"github.com/cloudinary/cloudinary-go"
 	"github.com/cloudinary/cloudinary-go/api/uploader"

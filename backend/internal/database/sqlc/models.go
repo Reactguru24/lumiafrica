@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	"lumi-backend/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
 type CouponsType string

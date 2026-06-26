@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"fmt"
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 	"net/http"
 	"strings"
 	"time"

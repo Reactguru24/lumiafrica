@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"lumi-backend/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/config"
 
 	goredis "github.com/redis/go-redis/v9"
 )

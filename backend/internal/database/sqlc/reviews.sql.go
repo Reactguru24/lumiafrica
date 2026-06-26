@@ -10,7 +10,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"lumi-backend/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
 const avgRatingByProduct = `-- name: AvgRatingByProduct :one

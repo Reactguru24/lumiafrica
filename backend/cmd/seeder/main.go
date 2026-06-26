@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/database"
-	"lumi-backend/internal/seeder"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/database"
+	"github.com/Reactguru24/lumiafrica/internal/seeder"
 )
 
 func main() {

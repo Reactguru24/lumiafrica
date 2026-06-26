@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"lumi-backend/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/config"
 
 	"github.com/gin-gonic/gin"
 )

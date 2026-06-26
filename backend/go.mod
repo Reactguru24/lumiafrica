@@ -1,4 +1,4 @@
-module lumi-backend
+module github.com/Reactguru24/lumiafrica
 
 go 1.25.0
 

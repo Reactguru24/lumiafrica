@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"database/sql"
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/middleware"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/middleware"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

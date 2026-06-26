@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/database/types"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
 var (

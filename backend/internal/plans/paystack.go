@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/paystack"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/paystack"
 )
 
 type planMeta struct {

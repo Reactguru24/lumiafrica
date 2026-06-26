@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 
 	_ "github.com/go-sql-driver/mysql"
 )

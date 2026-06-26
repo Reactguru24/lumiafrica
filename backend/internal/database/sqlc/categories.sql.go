@@ -8,7 +8,7 @@ package sqlc
 import (
 	"context"
 
-	"lumi-backend/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
 const createCategory = `-- name: CreateCategory :exec

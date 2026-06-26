@@ -33,19 +33,19 @@ sql:
           # automatically via emit_pointers_for_null_types above.
           - db_type: "binary"
             go_type:
-              import: "lumi-backend/internal/database/types"
+              import: "github.com/Reactguru24/lumiafrica/internal/database/types"
               type: "BinaryUUID"
 
           - db_type: "binary"
             nullable: true
             go_type:
-              import: "lumi-backend/internal/database/types"
+              import: "github.com/Reactguru24/lumiafrica/internal/database/types"
               type: "BinaryUUID"
               pointer: true
 
           - column: "categories.parent_id"
             go_type:
-              import: "lumi-backend/internal/database/types"
+              import: "github.com/Reactguru24/lumiafrica/internal/database/types"
               type: "BinaryUUID"
               pointer: true
 

@@ -1,8 +1,8 @@
 package store
 
 import (
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/models"
 )
 
 func ToDeliveryZone(z sqlc.DeliveryZone) models.DeliveryZoneResponse {

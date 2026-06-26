@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"strings"
 
-	"lumi-backend/internal/commerce"
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/database/types"
-	"lumi-backend/internal/middleware"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/commerce"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/middleware"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

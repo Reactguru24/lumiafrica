@@ -6,10 +6,10 @@ import (
 	"log"
 	"time"
 
-	"lumi-backend/internal/database"
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/database/types"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/database"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
 func seedCommerce(db *database.DB) error {

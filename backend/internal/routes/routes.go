@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/handlers"
-	"lumi-backend/internal/middleware"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/redis"
-	"lumi-backend/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/handlers"
+	"github.com/Reactguru24/lumiafrica/internal/middleware"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/redis"
+	"github.com/Reactguru24/lumiafrica/internal/store"
 
 	"github.com/gin-gonic/gin"
 )

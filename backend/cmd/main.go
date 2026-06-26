@@ -32,15 +32,15 @@ import (
 	"fmt"
 	"log"
 
-	"lumi-backend/internal/catalog"
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/cron"
-	"lumi-backend/internal/database"
-	"lumi-backend/internal/email"
-	"lumi-backend/internal/redis"
-	"lumi-backend/internal/routes"
-	"lumi-backend/internal/server"
-	"lumi-backend/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/catalog"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/cron"
+	"github.com/Reactguru24/lumiafrica/internal/database"
+	"github.com/Reactguru24/lumiafrica/internal/email"
+	"github.com/Reactguru24/lumiafrica/internal/redis"
+	"github.com/Reactguru24/lumiafrica/internal/routes"
+	"github.com/Reactguru24/lumiafrica/internal/server"
+	"github.com/Reactguru24/lumiafrica/internal/store"
 )
 
 func main() {

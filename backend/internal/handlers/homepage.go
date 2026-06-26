@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/redis"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/redis"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

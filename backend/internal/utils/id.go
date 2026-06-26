@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"lumi-backend/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 
 	"github.com/google/uuid"
 )

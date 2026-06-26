@@ -3,8 +3,8 @@ package server
 import (
 	"strings"
 
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/store"
 
 	"github.com/gin-gonic/gin"
 )

@@ -8,14 +8,14 @@ import (
 	"log"
 	"time"
 
-	"lumi-backend/internal/catalog"
-	"lumi-backend/internal/cron"
-	"lumi-backend/internal/database"
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/database/types"
-	"lumi-backend/internal/models"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/catalog"
+	"github.com/Reactguru24/lumiafrica/internal/cron"
+	"github.com/Reactguru24/lumiafrica/internal/database"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
 func SeedAll(db *database.DB) error {

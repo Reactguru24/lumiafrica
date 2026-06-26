@@ -1,6 +1,6 @@
 package seeder
 
-import "lumi-backend/internal/models"
+import "github.com/Reactguru24/lumiafrica/internal/models"
 
 type productSeed struct {
 	name        string

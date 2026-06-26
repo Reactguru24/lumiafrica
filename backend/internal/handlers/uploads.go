@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/storage"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/storage"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

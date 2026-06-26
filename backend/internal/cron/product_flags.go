@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"lumi-backend/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 )
 
 const productFlagRefreshLimit = 20

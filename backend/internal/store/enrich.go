@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"lumi-backend/internal/database/sqlc"
-	"lumi-backend/internal/database/types"
-	"lumi-backend/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/models"
 )
 
 func LoadProduct(ctx context.Context, q *sqlc.Queries, p sqlc.Product) models.Product {

@@ -10,7 +10,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"lumi-backend/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
 const approveApplication = `-- name: ApproveApplication :exec

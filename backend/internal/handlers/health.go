@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"lumi-backend/internal/redis"
-	"lumi-backend/internal/store"
-	"lumi-backend/internal/utils"
+	"github.com/Reactguru24/lumiafrica/internal/redis"
+	"github.com/Reactguru24/lumiafrica/internal/store"
+	"github.com/Reactguru24/lumiafrica/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )

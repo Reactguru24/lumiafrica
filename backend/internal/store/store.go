@@ -1,8 +1,8 @@
 package store
 
 import (
-	"lumi-backend/internal/database"
-	"lumi-backend/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database"
+	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 )
 
 type Store struct {

@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"lumi-backend/internal/config"
-	"lumi-backend/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/config"
+	"github.com/Reactguru24/lumiafrica/internal/models"
 	"strings"
 
 	"github.com/gin-gonic/gin"
