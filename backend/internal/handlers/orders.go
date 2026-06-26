@@ -108,6 +108,33 @@ func UpdateOrderStatus() gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
+
+		vendorIDStr, ok := getVendorID(c)
+		if !ok {
+			return
+		}
+		vendorID, err := utils.ParseID(vendorIDStr)
+		if err != nil {
+			utils.Error(c, http.StatusBadRequest, "Invalid vendor")
+			return
+		}
+		items, err := q.ListOrderItemsByOrder(ctx, orderID)
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to verify order access")
+			return
+		}
+		ownsOrder := false
+		for _, item := range items {
+			if item.VendorID == vendorID {
+				ownsOrder = true
+				break
+			}
+		}
+		if !ownsOrder {
+			utils.Error(c, http.StatusForbidden, "You cannot update this order")
+			return
+		}
+
 		if _, err := q.GetOrderByID(ctx, orderID); handleNotFound(c, err, "Order not found", "Failed to fetch order") {
 			return
 		}

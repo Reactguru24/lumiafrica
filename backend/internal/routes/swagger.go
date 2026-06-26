@@ -3,10 +3,15 @@ package routes
 import (
 	"net/http"
 
+	"lumi-backend/internal/config"
+
 	"github.com/gin-gonic/gin"
 )
 
-func registerSwaggerRoutes(router *gin.Engine) {
+func registerSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
+	if cfg.ServerEnv == "production" {
+		return
+	}
 	router.GET("/swagger/swagger.json", func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
 		c.Header("Cache-Control", "no-store, no-cache, must-revalidate")

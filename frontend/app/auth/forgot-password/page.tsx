@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
     try {
       const response = await forgotPassword(email)
       setSent(true)
-      if (response?.resetToken) {
+      if (process.env.NODE_ENV === 'development' && response?.resetToken) {
         setDevToken(response.resetToken)
       }
       toast.success(response?.message || 'Check your email for reset instructions.')
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
           <div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 text-sm text-green-800 dark:text-green-200">
             If an account exists with that email, password reset instructions have been sent.
           </div>
-          {devToken && (
+          {process.env.NODE_ENV === 'development' && devToken && (
             <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-sm">
               <p className="font-medium text-amber-900 dark:text-amber-100 mb-2">Development mode — reset token:</p>
               <Link href={`/auth/reset-password?token=${devToken}`} className="text-brand-teal dark:text-brand-orange underline break-all">

@@ -23,9 +23,7 @@ func OptionalAuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(cfg.JWTSecret), nil
-		})
+		token, err := jwt.ParseWithClaims(tokenString, claims, jwtSigningKey(cfg.JWTSecret))
 		if err == nil && token.Valid {
 			c.Set("user_id", claims.UserID)
 			c.Set("email", claims.Email)

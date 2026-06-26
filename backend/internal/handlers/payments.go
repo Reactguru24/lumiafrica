@@ -28,6 +28,20 @@ func paystackClient(cfg *config.Config) *paystack.Client {
 	return paystack.NewClient(cfg.PaystackSecretKey)
 }
 
+func validatePaystackAmount(payment sqlc.PaymentTransaction, verified *paystack.VerifyData) error {
+	if verified == nil {
+		return fmt.Errorf("missing paystack verification data")
+	}
+	expected := paystack.AmountToKobo(store.ToFloat(payment.Amount))
+	if verified.Amount != expected {
+		return fmt.Errorf("expected %d kobo, got %d", expected, verified.Amount)
+	}
+	if strings.ToUpper(strings.TrimSpace(verified.Currency)) != "KES" {
+		return fmt.Errorf("unexpected currency %q", verified.Currency)
+	}
+	return nil
+}
+
 func paymentReference(id string) string {
 	return "lumi_" + id
 }
@@ -372,6 +386,12 @@ func VerifyPayment(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		userID, err := utils.ParseID(middleware.GetUserID(c))
+		if err != nil || payment.UserID != userID {
+			utils.Error(c, http.StatusForbidden, "You cannot verify this payment")
+			return
+		}
+
 		if outcome, done := existingPaymentOutcome(payment); done {
 			if payment.Status == sqlc.PaymentTransactionsStatusSuccess {
 				logPayment("callback_already_fulfilled", map[string]interface{}{
@@ -416,6 +436,15 @@ func VerifyPayment(cfg *config.Config) gin.HandlerFunc {
 				Type:      models.PaymentType(payment.Type),
 				Reference: reference,
 			})
+			return
+		}
+		if err := validatePaystackAmount(payment, verified); err != nil {
+			logPayment("callback_failed", map[string]interface{}{
+				"reference": reference,
+				"reason":    "amount mismatch",
+				"error":     err.Error(),
+			})
+			utils.Error(c, http.StatusBadRequest, "Payment amount verification failed")
 			return
 		}
 
@@ -536,6 +565,21 @@ func PaystackWebhook(cfg *config.Config) gin.HandlerFunc {
 			}
 			_ = outcome
 			utils.Success(c, gin.H{"received": true})
+			return
+		}
+
+		if err := validatePaystackAmount(payment, &paystack.VerifyData{
+			Status:    event.Data.Status,
+			Reference: reference,
+			Amount:    event.Data.Amount,
+			Currency:  event.Data.Currency,
+		}); err != nil {
+			logPayment("webhook_failed", map[string]interface{}{
+				"reference": reference,
+				"reason":    "amount mismatch",
+				"error":     err.Error(),
+			})
+			utils.Error(c, http.StatusBadRequest, "Payment amount verification failed")
 			return
 		}
 
@@ -746,6 +790,10 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 	qtx := q.WithTx(tx)
 
 	orderID := utils.GenerateBinaryID()
+	addrJSON, err := json.Marshal(meta.DeliveryAddress)
+	if err != nil {
+		return "", fmt.Errorf("invalid delivery address")
+	}
 	if err := qtx.CreateOrder(ctx, sqlc.CreateOrderParams{
 		ID:              orderID,
 		UserID:          payment.UserID,
@@ -757,7 +805,7 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 		TaxAmount:       store.FloatToDecimalString(meta.TaxAmount),
 		Total:           store.FloatToDecimalString(meta.Total),
 		PaymentMethod:   meta.PaymentMethod,
-		DeliveryAddress: json.RawMessage(`"` + meta.DeliveryAddress + `"`),
+		DeliveryAddress: json.RawMessage(addrJSON),
 		Notes:           sql.NullString{String: derefString(meta.Notes), Valid: meta.Notes != nil},
 	}); err != nil {
 		tx.Rollback()

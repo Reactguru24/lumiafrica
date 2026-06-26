@@ -85,6 +85,20 @@ export default function CartPage() {
   const tax = subtotal * TAX_RATE
   const total = subtotal + shipping + tax
 
+  const checkoutBlocked = useMemo(() => {
+    if (cart.activeItems.length === 0) return 'Your cart is empty'
+    if (loading) return 'Loading product details…'
+    if (cart.activeItems.some((item) => !productMap[item.productId])) {
+      return 'Some cart items could not be loaded — refresh and try again'
+    }
+    for (const item of cartItems) {
+      const stock = variantStockFor(item)
+      if (stock <= 0) return 'Remove out-of-stock items before checkout'
+      if (item.quantity > stock) return 'Reduce quantities to match available stock'
+    }
+    return null
+  }, [cart.activeItems, cartItems, loading, productMap])
+
   return (
     <div className="page-container">
       <h1 className="section-title mb-8">Shopping Cart</h1>
@@ -157,7 +171,16 @@ export default function CartPage() {
                 <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatCurrency(tax)}</span></div>
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between font-semibold text-base"><span>Total</span><span>{formatCurrency(total)}</span></div>
               </div>
-              <button className="btn-primary w-full mt-6" onClick={() => router.push('/checkout')}>Proceed to Checkout</button>
+              <button
+                className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!!checkoutBlocked}
+                onClick={() => router.push('/checkout')}
+              >
+                Proceed to Checkout
+              </button>
+              {checkoutBlocked && (
+                <p className="text-xs text-amber-600 mt-2">{checkoutBlocked}</p>
+              )}
             </div>
           ) : (
             <div className="card p-4 sm:p-6 h-fit text-sm text-gray-500">

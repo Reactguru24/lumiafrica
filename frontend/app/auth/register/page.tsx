@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 import { registerSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { safeRedirect } from '@/lib/utils/safeRedirect'
 import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 
 export default function RegisterPage() {
@@ -37,7 +38,7 @@ export default function RegisterPage() {
       const redirect = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('redirect')
         : null
-      router.push(redirect || '/account')
+      router.push(safeRedirect(redirect, '/account'))
     } catch (e: unknown) {
       toast.error(getFriendlyErrorMessage(e, 'Unable to create your account. Please try again.'))
     }

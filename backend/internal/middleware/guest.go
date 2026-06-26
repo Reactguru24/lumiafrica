@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"lumi-backend/internal/config"
 	"lumi-backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,8 @@ const (
 )
 
 // GuestSessionMiddleware ensures every shopper has a stable guest session ID.
-func GuestSessionMiddleware() gin.HandlerFunc {
+func GuestSessionMiddleware(cfg *config.Config) gin.HandlerFunc {
+	secure := cfg != nil && cfg.ServerEnv == "production"
 	return func(c *gin.Context) {
 		guestID, _ := c.Cookie(GuestSessionCookie)
 		if guestID == "" {
@@ -23,7 +25,7 @@ func GuestSessionMiddleware() gin.HandlerFunc {
 		}
 		c.Set("guest_session_id", guestID)
 		c.Header(GuestSessionHeader, guestID)
-		c.SetCookie(GuestSessionCookie, guestID, 60*60*24*30, "/", "", false, false)
+		c.SetCookie(GuestSessionCookie, guestID, 60*60*24*30, "/", "", secure, true)
 		c.Next()
 	}
 }

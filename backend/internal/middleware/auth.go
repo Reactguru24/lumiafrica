@@ -61,9 +61,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 		}
 
 		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte(cfg.JWTSecret), nil
-		})
+		token, err := jwt.ParseWithClaims(tokenString, claims, jwtSigningKey(cfg.JWTSecret))
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
@@ -110,6 +108,7 @@ func ActiveUserMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		c.Set("role", models.UserRole(row.Role))
 		c.Next()
 	}
 }

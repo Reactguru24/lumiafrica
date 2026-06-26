@@ -47,6 +47,12 @@ func parseQuery(c *gin.Context, key string, defaultValue int) int {
 func pagination(c *gin.Context, pageDefault, limitDefault int) (page, limit, offset int) {
 	page = parseQuery(c, "page", pageDefault)
 	limit = parseQuery(c, "limit", limitDefault)
+	if limit > 100 {
+		limit = 100
+	}
+	if limit < 1 {
+		limit = limitDefault
+	}
 	offset = (page - 1) * limit
 	return page, limit, offset
 }
@@ -96,6 +102,10 @@ func getVendorID(c *gin.Context) (string, bool) {
 	}
 	vendor, err := getStore(c).Queries().GetVendorByUserID(c.Request.Context(), userID)
 	if handleNotFound(c, err, "Vendor profile not found", "Failed to fetch vendor") {
+		return "", false
+	}
+	if vendor.Suspended != 0 {
+		utils.Error(c, http.StatusForbidden, "Vendor account is suspended")
 		return "", false
 	}
 	return vendor.ID.String(), true

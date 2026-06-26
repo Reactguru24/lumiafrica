@@ -11,6 +11,7 @@ import { checkoutShippingSchema } from '@/lib/utils/validation'
 import { formatCurrency } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES, TAX_RATE, PAYMENT_METHODS, SHIPPING_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
 import { CUSTOMER_ROLES } from '@/lib/constants/roles'
 import type { Product, CartItem } from '@/lib/types'
@@ -153,7 +154,7 @@ export default function CheckoutPage() {
         idempotencyKey: checkoutIdempotencyKey.current,
       }) as { authorizationUrl?: string; reference?: string }
       const payUrl = result?.authorizationUrl
-      if (!payUrl) {
+      if (!payUrl || !isAllowedPaystackUrl(payUrl)) {
         toast.error('Unable to start payment. Please try again.')
         return
       }

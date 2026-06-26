@@ -13,6 +13,7 @@ import {
   useVendorProducts,
 } from '@/lib/stores/api'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
 import { confirmAction } from '@/lib/utils/swal'
 import { unwrapItems } from '@/lib/utils/api'
 import { isFeaturedListingActive, subscriptionDaysRemaining } from '@/lib/utils/subscriptions'
@@ -105,7 +106,7 @@ export default function VendorSubscriptionPage() {
         paymentMethod: 'Paystack',
         productIds: selectedProducts,
       }) as { authorizationUrl?: string }
-      if (result?.authorizationUrl) {
+      if (result?.authorizationUrl && isAllowedPaystackUrl(result.authorizationUrl)) {
         window.location.href = result.authorizationUrl
         return
       }

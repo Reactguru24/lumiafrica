@@ -19,7 +19,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		c.Next()
 	})
 	guestCart := router.Group("")
-	guestCart.Use(middleware.GuestSessionMiddleware(), middleware.OptionalAuthMiddleware(cfg))
+	guestCart.Use(middleware.GuestSessionMiddleware(cfg), middleware.OptionalAuthMiddleware(cfg))
 	{
 		guestCart.GET("/cart", handlers.GetCart())
 		guestCart.POST("/cart/items", handlers.UpsertCartItem())
@@ -30,7 +30,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		guestCart.PUT("/cart/wishlist/:productID", handlers.SetWishlist())
 	}
 
-	registerSwaggerRoutes(router)
+	registerSwaggerRoutes(router, cfg)
 
 	router.GET("/health", handlers.Health())
 
@@ -55,12 +55,10 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/vendors/:vendorID", handlers.GetVendor())
 	router.POST("/vendors/applications", handlers.ApplyVendor())
 	router.GET("/vendors/applications/status", handlers.GetVendorApplicationStatus())
-	router.POST("/uploads/images", handlers.UploadImage(cfg))
 	router.POST("/uploads/documents", handlers.UploadDocument(cfg))
 
 	router.GET("/reviews/product/:productID", handlers.GetProductReviews())
 	router.GET("/subscriptions/plans", handlers.GetSubscriptionPlans(cfg))
-	router.GET("/payments/verify", handlers.VerifyPayment(cfg))
 	router.POST("/webhooks/paystack", handlers.PaystackWebhook(cfg))
 
 	// ── Commerce (public) ─────────────────────────────────────────────────
@@ -75,6 +73,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/auth/me", auth, activeUser, middleware.AuthenticatedRole(), handlers.GetCurrentUser())
 	router.PUT("/users/profile", auth, activeUser, middleware.AuthenticatedRole(), handlers.UpdateProfile())
 	router.PUT("/users/password", auth, activeUser, middleware.AuthenticatedRole(), handlers.ChangePassword())
+	router.GET("/payments/verify", auth, activeUser, middleware.AuthenticatedRole(), handlers.VerifyPayment(cfg))
 
 	// ── Customer — checkout, account, and UGC ────────────────────────────
 	customer := router.Group("")
@@ -90,7 +89,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 
 		customer.POST("/coupons/validate", handlers.ValidateCoupon())
 		customer.POST("/reviews", handlers.CreateReview())
-		customer.POST("/cart/merge", middleware.GuestSessionMiddleware(), handlers.MergeGuestCart())
+		customer.POST("/cart/merge", middleware.GuestSessionMiddleware(cfg), handlers.MergeGuestCart())
 	}
 
 	// ── Vendor — store operations ──────────────────────────────────────────

@@ -352,7 +352,7 @@ export const customerAPI = {
   },
 
   verifyPayment(reference: string) {
-    return get(`/payments/verify${buildQuery({ reference })}`, { skipAuth: true })
+    return get(`/payments/verify${buildQuery({ reference })}`)
   },
 
   getUserOrders() {

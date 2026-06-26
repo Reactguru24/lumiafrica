@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 import { loginSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { safeRedirect } from '@/lib/utils/safeRedirect'
 import { Modal } from '@/components/common/Modal'
 
 export default function LoginPage() {
@@ -46,7 +47,7 @@ export default function LoginPage() {
         ? new URLSearchParams(window.location.search).get('redirect')
         : null
       if (redirect) {
-        router.push(redirect)
+        router.push(safeRedirect(redirect))
         return
       }
       if (user.role === 'VENDOR') {

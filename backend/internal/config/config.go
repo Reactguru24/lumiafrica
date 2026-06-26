@@ -59,7 +59,7 @@ func LoadConfig() (*Config, error) {
 		DBName:        getEnv("DB_NAME", "lumi_marketplace"),
 		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key"),
 		JWTExpiry:     getEnv("JWT_EXPIRY", "24h"),
-		MaxUploadSize:       10485760, // 10MB
+		MaxUploadSize:       maxUploadSize(getEnv("MAX_UPLOAD_SIZE", "10485760")),
 		CloudinaryCloudName: getEnv("CLOUDINARY_CLOUD_NAME", ""),
 		CloudinaryAPIKey:    getEnv("CLOUDINARY_API_KEY", ""),
 		CloudinaryAPISecret: getEnv("CLOUDINARY_API_SECRET", ""),
@@ -81,8 +81,10 @@ func LoadConfig() (*Config, error) {
 	cfg.CORSOrigins = parseCORSOrigins(getEnv("CORS_ORIGINS", ""), cfg.FrontendURL)
 
 	// Validate required config
-	if cfg.JWTSecret == "your-secret-key" && cfg.ServerEnv == "production" {
-		return nil, fmt.Errorf("JWT_SECRET must be set in production")
+	if cfg.ServerEnv == "production" {
+		if cfg.JWTSecret == "your-secret-key" || len(cfg.JWTSecret) < 32 {
+			return nil, fmt.Errorf("JWT_SECRET must be at least 32 characters in production")
+		}
 	}
 
 	return cfg, nil
@@ -124,6 +126,14 @@ func redisDB(value string) int {
 		return 0
 	}
 	return db
+}
+
+func maxUploadSize(value string) int64 {
+	size, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+	if err != nil || size <= 0 {
+		return 10485760
+	}
+	return size
 }
 
 func parseCORSOrigins(raw, frontendURL string) []string {
