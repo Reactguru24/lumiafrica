@@ -345,3 +345,11 @@ LIMIT ? OFFSET ?;
 SELECT COUNT(*) FROM products
 WHERE status != 'archived'
   AND (sqlc.arg('search') = '' OR name LIKE sqlc.arg('search') OR brand LIKE sqlc.arg('search') OR sku LIKE sqlc.arg('search'));
+
+-- name: ListOnSaleProductIDs :many
+SELECT DISTINCT p.id FROM products p
+INNER JOIN product_variants pv ON pv.product_id = p.id AND pv.deleted_at IS NULL
+WHERE p.status = 'active'
+  AND p.total_stock > 0
+  AND pv.discount > 0
+ORDER BY p.created_at DESC;

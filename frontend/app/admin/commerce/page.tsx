@@ -47,10 +47,7 @@ function defaultPromoWindow() {
 
 const emptyPromoForm = () => ({
   name: '',
-  type: 'seasonal',
-  discountType: 'percentage',
-  discountValue: 10,
-  productIds: [] as string[],
+  type: 'flash_sale',
   ...defaultPromoWindow(),
 })
 
@@ -148,11 +145,8 @@ export default function AdminCommercePage() {
     const payload = {
       name: promoForm.name,
       type: promoForm.type,
-      discountType: promoForm.discountType,
-      discountValue: promoForm.discountValue,
       startsAt: toRFC3339(promoForm.startsAt),
       endsAt: toRFC3339(promoForm.endsAt),
-      productIds: promoForm.productIds,
     }
     try {
       if (editingPromoId) {
@@ -177,11 +171,8 @@ export default function AdminCommercePage() {
     setPromoForm({
       name: p.name,
       type: p.type,
-      discountType: p.discountType,
-      discountValue: p.discountValue,
       startsAt: fromISO(p.startsAt),
       endsAt: fromISO(p.endsAt),
-      productIds: p.productIds ?? [],
     })
   }
 
@@ -306,37 +297,31 @@ export default function AdminCommercePage() {
       />
 
       <section className="card p-6">
-        <h2 className="font-semibold mb-4">{editingPromoId ? 'Edit promotion' : 'New promotion'}</h2>
+        <h2 className="font-semibold mb-1">{editingPromoId ? 'Edit promotion' : 'New promotion'}</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Set a name, type, and dates. All discounted products from every vendor are included automatically while the promotion is active.
+        </p>
         <form className="space-y-4 mb-6" onSubmit={handlePromoSubmit}>
           <div className="grid md:grid-cols-2 gap-3">
-            <input className="input-field" placeholder="Name" required value={promoForm.name} onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })} />
-            <select className="input-field" value={promoForm.type} onChange={(e) => setPromoForm({ ...promoForm, type: e.target.value })}>
-              <option value="flash_sale">Flash sale</option>
-              <option value="seasonal">Seasonal</option>
-              <option value="clearance">Clearance</option>
-            </select>
-            <select className="input-field" value={promoForm.discountType} onChange={(e) => setPromoForm({ ...promoForm, discountType: e.target.value })}>
-              <option value="percentage">Percentage</option>
-              <option value="fixed">Fixed amount</option>
-            </select>
-            <input className="input-field" type="number" required placeholder="Discount value" value={promoForm.discountValue} onChange={(e) => setPromoForm({ ...promoForm, discountValue: Number(e.target.value) })} />
-            <input className="input-field" type="datetime-local" required value={promoForm.startsAt} onChange={(e) => setPromoForm({ ...promoForm, startsAt: e.target.value })} />
-            <input className="input-field" type="datetime-local" required value={promoForm.endsAt} onChange={(e) => setPromoForm({ ...promoForm, endsAt: e.target.value })} />
-          </div>
-          <div>
-            <p className="text-sm font-medium mb-2">Products ({promoForm.productIds.length} selected)</p>
-            <div className="max-h-40 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-1">
-              {products.map((p) => (
-                <label key={p.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={promoForm.productIds.includes(p.id)}
-                    onChange={() => setPromoForm({ ...promoForm, productIds: toggleProductId(promoForm.productIds, p.id) })}
-                  />
-                  <span className="truncate">{p.name}</span>
-                </label>
-              ))}
-              {products.length === 0 && <p className="text-xs text-gray-500">No products available.</p>}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Name</label>
+              <input className="input-field" placeholder="Summer flash sale" required value={promoForm.name} onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Type</label>
+              <select className="input-field" value={promoForm.type} onChange={(e) => setPromoForm({ ...promoForm, type: e.target.value })}>
+                <option value="flash_sale">Flash sale</option>
+                <option value="seasonal">Seasonal</option>
+                <option value="clearance">Clearance</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Starts</label>
+              <input className="input-field" type="datetime-local" required value={promoForm.startsAt} onChange={(e) => setPromoForm({ ...promoForm, startsAt: e.target.value })} />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Ends</label>
+              <input className="input-field" type="datetime-local" required value={promoForm.endsAt} onChange={(e) => setPromoForm({ ...promoForm, endsAt: e.target.value })} />
             </div>
           </div>
           <div className="flex gap-2">
@@ -351,7 +336,9 @@ export default function AdminCommercePage() {
             <li key={p.id} className="flex flex-wrap justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
               <div>
                 <p className="font-medium">{p.name}</p>
-                <p className="text-xs text-gray-500">{p.type} · {p.discountType} {p.discountValue} · {p.productIds?.length ?? 0} products</p>
+                <p className="text-xs text-gray-500">
+                  {p.type?.replace('_', ' ')} · {p.productIds?.length ?? 0} discounted products
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">{p.active ? 'Active' : 'Inactive'}</span>
@@ -367,7 +354,8 @@ export default function AdminCommercePage() {
       </section>
 
       <section className="card p-6">
-        <h2 className="font-semibold mb-4">{editingCollectionId ? 'Edit collection' : 'New collection'}</h2>
+        <h2 className="font-semibold mb-1">{editingCollectionId ? 'Edit curated collection' : 'Curated collection'}</h2>
+        <p className="text-sm text-gray-500 mb-4">Hand-picked product groups shown on the homepage under Curated Collections.</p>
         <form className="space-y-4 mb-6" onSubmit={handleCollectionSubmit}>
           <div className="grid md:grid-cols-2 gap-3">
             <input className="input-field" placeholder="Name" required value={collectionForm.name} onChange={(e) => setCollectionForm({ ...collectionForm, name: e.target.value })} />
@@ -380,15 +368,21 @@ export default function AdminCommercePage() {
                 value={collectionForm.image}
                 onChange={(url) => setCollectionForm({ ...collectionForm, image: url })}
               />
-              <input
-                className="input-field mt-2"
-                placeholder="Or paste image URL"
-                value={collectionForm.image}
-                onChange={(e) => setCollectionForm({ ...collectionForm, image: e.target.value })}
-              />
+              <p className="text-xs text-gray-500 mt-2">Upload a banner from your device. Images are stored on Cloudinary after upload.</p>
             </div>
             <textarea className="input-field md:col-span-2 min-h-[72px]" placeholder="Description" value={collectionForm.description} onChange={(e) => setCollectionForm({ ...collectionForm, description: e.target.value })} />
-            <input className="input-field" type="number" placeholder="Sort order" value={collectionForm.sortOrder} onChange={(e) => setCollectionForm({ ...collectionForm, sortOrder: Number(e.target.value) })} />
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Homepage order</label>
+              <input
+                className="input-field"
+                type="number"
+                min={0}
+                placeholder="1"
+                value={collectionForm.sortOrder}
+                onChange={(e) => setCollectionForm({ ...collectionForm, sortOrder: Number(e.target.value) })}
+              />
+              <p className="text-xs text-gray-500 mt-1">Lower numbers appear first on the homepage (max 4 collections shown).</p>
+            </div>
             <div className="md:col-span-2 grid md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-gray-500 block mb-1">Visible from (optional)</label>
@@ -416,7 +410,7 @@ export default function AdminCommercePage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : editingCollectionId ? 'Update collection' : 'Create collection'}</button>
+            <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : editingCollectionId ? 'Update curated collection' : 'Create curated collection'}</button>
             {editingCollectionId && (
               <button type="button" className="btn-secondary" onClick={() => { setEditingCollectionId(null); setCollectionForm(emptyCollectionForm()) }}>Cancel</button>
             )}
@@ -444,7 +438,7 @@ export default function AdminCommercePage() {
             </li>
           ))}
         </ul>
-        {collections.length === 0 && <p className="text-gray-500 text-sm">No collections yet.</p>}
+        {collections.length === 0 && <p className="text-gray-500 text-sm">No curated collections yet.</p>}
       </section>
     </div>
   )

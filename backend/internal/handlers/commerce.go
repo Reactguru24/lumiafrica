@@ -38,6 +38,16 @@ func promotionCoverImage(ctx context.Context, q *sqlc.Queries, productIDs []type
 	return ""
 }
 
+func promotionOnSaleProductIDs(ctx context.Context, q *sqlc.Queries) ([]types.BinaryUUID, error) {
+	return q.ListOnSaleProductIDs(ctx)
+}
+
+func buildPromotionResponse(ctx context.Context, q *sqlc.Queries, row sqlc.Promotion) models.PromotionResponse {
+	ids, _ := promotionOnSaleProductIDs(ctx, q)
+	pidStrs := binaryIDsToStrings(ids)
+	return store.ToPromotion(row, pidStrs, promotionCoverImage(ctx, q, ids))
+}
+
 // ListDeliveryZones godoc
 // @Summary List active delivery zones
 // @Description Returns delivery zones available for checkout.
@@ -79,10 +89,11 @@ func ListActivePromotions() gin.HandlerFunc {
 		}
 		out := make([]models.PromotionResponse, 0, len(rows))
 		for _, row := range rows {
-			ids, _ := q.ListPromotionProductIDs(ctx, row.ID)
-			pidStrs := binaryIDsToStrings(ids)
-			image := promotionCoverImage(ctx, q, ids)
-			out = append(out, store.ToPromotion(row, pidStrs, image))
+			resp := buildPromotionResponse(ctx, q, row)
+			if len(resp.ProductIDs) == 0 {
+				continue
+			}
+			out = append(out, resp)
 		}
 		utils.Success(c, out)
 	}

@@ -900,6 +900,38 @@ func (q *Queries) ListHomepageBestsellerProducts(ctx context.Context, limit int3
 	return items, nil
 }
 
+const listOnSaleProductIDs = `-- name: ListOnSaleProductIDs :many
+SELECT DISTINCT p.id FROM products p
+INNER JOIN product_variants pv ON pv.product_id = p.id AND pv.deleted_at IS NULL
+WHERE p.status = 'active'
+  AND p.total_stock > 0
+  AND pv.discount > 0
+ORDER BY p.created_at DESC
+`
+
+func (q *Queries) ListOnSaleProductIDs(ctx context.Context) ([]types.BinaryUUID, error) {
+	rows, err := q.db.QueryContext(ctx, listOnSaleProductIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []types.BinaryUUID{}
+	for rows.Next() {
+		var id types.BinaryUUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listHomepageFeaturedProducts = `-- name: ListHomepageFeaturedProducts :many
 SELECT id, vendor_id, category_id, name, description, brand, gender, sku, min_price, max_price, total_stock, rating, review_count, status, bestseller, new_arrival, featured, trending, created_at, updated_at FROM products
 WHERE status = 'active' AND total_stock > 0 AND featured = true

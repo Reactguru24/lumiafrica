@@ -265,8 +265,7 @@ func ListAdminPromotions() gin.HandlerFunc {
 		}
 		out := make([]models.PromotionResponse, 0, len(rows))
 		for _, row := range rows {
-			ids, _ := q.ListPromotionProductIDs(ctx, row.ID)
-			out = append(out, store.ToPromotion(row, binaryIDsToStrings(ids), promotionCoverImage(ctx, q, ids)))
+			out = append(out, buildPromotionResponse(ctx, q, row))
 		}
 		respondPaginated(c, out, total, page, limit)
 	}
@@ -310,23 +309,14 @@ func CreateAdminPromotion() gin.HandlerFunc {
 			ID:            promoID,
 			Name:          req.Name,
 			Type:          sqlc.PromotionsType(req.Type),
-			DiscountType:  sqlc.PromotionsDiscountType(req.DiscountType),
-			DiscountValue: store.FloatToDecimalString(req.DiscountValue),
+			DiscountType:  sqlc.PromotionsDiscountTypePercentage,
+			DiscountValue: store.FloatToDecimalString(0),
 			StartsAt:      startsAt,
 			EndsAt:        endsAt,
 			CreatedBy:     createdBy,
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to create promotion")
 			return
-		}
-		for _, pid := range req.ProductIDs {
-			productID, err := utils.ParseID(pid)
-			if err != nil {
-				continue
-			}
-			_ = q.AddPromotionProduct(ctx, sqlc.AddPromotionProductParams{
-				PromotionID: promoID, ProductID: productID,
-			})
 		}
 		utils.SuccessCreated(c, gin.H{"id": promoID.String()})
 	}
@@ -462,22 +452,20 @@ func UpdateAdminPromotion() gin.HandlerFunc {
 			ID:            promoID,
 			Name:          req.Name,
 			Type:          sqlc.PromotionsType(req.Type),
-			DiscountType:  sqlc.PromotionsDiscountType(req.DiscountType),
-			DiscountValue: store.FloatToDecimalString(req.DiscountValue),
+			DiscountType:  sqlc.PromotionsDiscountTypePercentage,
+			DiscountValue: store.FloatToDecimalString(0),
 			StartsAt:      startsAt,
 			EndsAt:        endsAt,
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to update promotion")
 			return
 		}
-		replacePromotionProducts(ctx, q, promoID, req.ProductIDs)
 		row, err := q.GetPromotionByID(ctx, promoID)
 		if err != nil {
 			utils.Success(c, gin.H{"id": promoID.String()})
 			return
 		}
-		ids, _ := q.ListPromotionProductIDs(ctx, promoID)
-		utils.Success(c, store.ToPromotion(row, binaryIDsToStrings(ids), promotionCoverImage(ctx, q, ids)))
+		utils.Success(c, buildPromotionResponse(ctx, q, row))
 	}
 }
 

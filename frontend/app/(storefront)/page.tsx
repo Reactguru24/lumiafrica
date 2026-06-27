@@ -77,7 +77,7 @@ export default function HomePage() {
       {activePromotions.length > 0 && (
         <section className="page-width py-8 sm:py-12">
           <p className="micro-label mb-1">Limited time</p>
-          <h2 className="section-title mb-6">Active Promotions</h2>
+          <h2 className="section-title mb-6">Promotions</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activePromotions.map((promo: any) => (
               <Link
@@ -90,10 +90,7 @@ export default function HomePage() {
                 </span>
                 <h3 className="font-semibold mt-1">{promo.name}</h3>
                 <p className="text-sm text-gray-500 mt-2">
-                  {promo.discountType === 'percentage'
-                    ? `${promo.discountValue}% off`
-                    : `Save KES ${promo.discountValue}`}
-                  {promo.productIds?.length ? ` · ${promo.productIds.length} items` : ''}
+                  {promo.productIds?.length ?? 0} discounted items
                 </p>
               </Link>
             ))}

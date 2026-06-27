@@ -169,6 +169,7 @@ type Querier interface {
 	ListHomepageNewArrivalProducts(ctx context.Context, limit int32) ([]Product, error)
 	ListHomepageRecentProducts(ctx context.Context, limit int32) ([]Product, error)
 	ListHomepageTrendingProducts(ctx context.Context, limit int32) ([]Product, error)
+	ListOnSaleProductIDs(ctx context.Context) ([]types.BinaryUUID, error)
 	ListLowStockByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]Product, error)
 	ListOrderItemsByOrder(ctx context.Context, orderID types.BinaryUUID) ([]OrderItem, error)
 	ListOrderItemsByOrderIDs(ctx context.Context, orderIds []types.BinaryUUID) ([]OrderItem, error)

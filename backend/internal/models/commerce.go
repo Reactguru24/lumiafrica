@@ -123,13 +123,10 @@ type UpdateCouponRequest struct {
 }
 
 type CreatePromotionRequest struct {
-	Name          string   `json:"name" binding:"required"`
-	Type          string   `json:"type" binding:"required,oneof=flash_sale seasonal clearance"`
-	DiscountType  string   `json:"discountType" binding:"required,oneof=percentage fixed"`
-	DiscountValue float64  `json:"discountValue" binding:"required,gt=0"`
-	StartsAt      string   `json:"startsAt" binding:"required"`
-	EndsAt        string   `json:"endsAt" binding:"required"`
-	ProductIDs    []string `json:"productIds"`
+	Name     string `json:"name" binding:"required"`
+	Type     string `json:"type" binding:"required,oneof=flash_sale seasonal clearance"`
+	StartsAt string `json:"startsAt" binding:"required"`
+	EndsAt   string `json:"endsAt" binding:"required"`
 }
 
 type CreateCollectionRequest struct {
@@ -148,13 +145,10 @@ type SetActiveRequest struct {
 }
 
 type UpdatePromotionRequest struct {
-	Name          string   `json:"name" binding:"required"`
-	Type          string   `json:"type" binding:"required,oneof=flash_sale seasonal clearance"`
-	DiscountType  string   `json:"discountType" binding:"required,oneof=percentage fixed"`
-	DiscountValue float64  `json:"discountValue" binding:"required,gt=0"`
-	StartsAt      string   `json:"startsAt" binding:"required"`
-	EndsAt        string   `json:"endsAt" binding:"required"`
-	ProductIDs    []string `json:"productIds"`
+	Name     string `json:"name" binding:"required"`
+	Type     string `json:"type" binding:"required,oneof=flash_sale seasonal clearance"`
+	StartsAt string `json:"startsAt" binding:"required"`
+	EndsAt   string `json:"endsAt" binding:"required"`
 }
 
 type UpdateCollectionRequest struct {

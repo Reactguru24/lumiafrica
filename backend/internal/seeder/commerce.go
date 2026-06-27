@@ -79,37 +79,25 @@ func seedCommerce(db *database.DB) error {
 
 	promoCount, _ := q.CountAllPromotions(ctx)
 	if promoCount == 0 {
-		vendor, err := getVendorByEmail(db, "vendor@lumiafrica.com")
-		if err == nil {
-			products, _ := q.ListProductsByVendor(ctx, vendor.ID)
-			promoID := utils.GenerateBinaryID()
-			now := time.Now()
-			var createdBy *types.BinaryUUID
-			if admin, adminErr := getUserByEmail(db, "admin@lumiafrica.com"); adminErr == nil {
-				createdBy = &admin.ID
-			}
-			if err := q.CreatePromotion(ctx, sqlc.CreatePromotionParams{
-				ID:            promoID,
-				Name:          "Summer Flash Sale",
-				Type:          sqlc.PromotionsTypeFlashSale,
-				DiscountType:  sqlc.PromotionsDiscountTypePercentage,
-				DiscountValue: "15.00",
-				StartsAt:      now.Add(-24 * time.Hour),
-				EndsAt:        now.AddDate(0, 1, 0),
-				CreatedBy:     createdBy,
-			}); err != nil {
-				return err
-			}
-			for i, p := range products {
-				if i >= 8 {
-					break
-				}
-				_ = q.AddPromotionProduct(ctx, sqlc.AddPromotionProductParams{
-					PromotionID: promoID, ProductID: p.ID,
-				})
-			}
-			log.Println("Created sample promotion")
+		promoID := utils.GenerateBinaryID()
+		now := time.Now()
+		var createdBy *types.BinaryUUID
+		if admin, adminErr := getUserByEmail(db, "admin@lumiafrica.com"); adminErr == nil {
+			createdBy = &admin.ID
 		}
+		if err := q.CreatePromotion(ctx, sqlc.CreatePromotionParams{
+			ID:            promoID,
+			Name:          "Summer Flash Sale",
+			Type:          sqlc.PromotionsTypeFlashSale,
+			DiscountType:  sqlc.PromotionsDiscountTypePercentage,
+			DiscountValue: "0.00",
+			StartsAt:      now.Add(-24 * time.Hour),
+			EndsAt:        now.AddDate(0, 1, 0),
+			CreatedBy:     createdBy,
+		}); err != nil {
+			return err
+		}
+		log.Println("Created sample promotion")
 	}
 
 	collCount, _ := q.CountAllCollections(ctx)
