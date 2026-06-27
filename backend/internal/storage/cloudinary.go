@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -227,11 +228,11 @@ func (s *Service) uploadCloudinary(ctx context.Context, data []byte, filename, m
 	}
 
 	publicID := fmt.Sprintf("%d_%s", time.Now().UnixNano(), randHex(8))
-	resp, err := cld.Upload.Upload(ctx, data, uploader.UploadParams{
+	dataURI := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(data))
+	resp, err := cld.Upload.Upload(ctx, dataURI, uploader.UploadParams{
 		PublicID:     publicID,
 		Folder:       "lumi",
-		ResourceType: "image",
-		Format:       cloudinaryFormat(mimeType),
+		ResourceType: "auto",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cloudinary upload: %w", err)
@@ -248,17 +249,6 @@ func (s *Service) uploadCloudinary(ctx context.Context, data []byte, filename, m
 		Size:     int64(len(data)),
 		MimeType: mimeType,
 	}, nil
-}
-
-func cloudinaryFormat(mimeType string) string {
-	switch mimeType {
-	case "image/png":
-		return "png"
-	case "image/webp":
-		return "webp"
-	default:
-		return "jpg"
-	}
 }
 
 func (s *Service) uploadLocal(data []byte, filename, mimeType, ext string) (*UploadResult, error) {
