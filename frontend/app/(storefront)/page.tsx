@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections } from '@/lib/stores/api'
 import { unwrapItems } from '@/lib/utils/api'
-import { filterStorefrontPromotions } from '@/lib/utils/promotions'
+import { filterStorefrontPromotions, type PromotionLike } from '@/lib/utils/promotions'
 import { ProductCard } from '@/components/product/ProductCard'
 import { HeroSlider } from '@/components/common/HeroSlider'
 import { FeaturedVendorsCarousel, type FeaturedVendorSlide } from '@/components/common/FeaturedVendorsCarousel'
@@ -36,7 +36,7 @@ export default function HomePage() {
   const trendingProducts = (collectionsData.trending || []) as any[]
   const bestsellerProducts = (collectionsData.bestsellers || []) as any[]
   const newArrivalProducts = (collectionsData.newArrivals || []) as any[]
-  const activePromotions = filterStorefrontPromotions(unwrapItems(promotions))
+  const activePromotions = filterStorefrontPromotions(unwrapItems<PromotionLike>(promotions))
   const curatedCollections = unwrapItems(collections)
 
   return (

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePromotions, useProducts } from '@/lib/stores/api'
 import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
-import { isStorefrontPromotionVisible } from '@/lib/utils/promotions'
+import { isStorefrontPromotionVisible, type PromotionLike } from '@/lib/utils/promotions'
 import { ProductCard } from '@/components/product/ProductCard'
 import type { Product } from '@/lib/types'
 
@@ -15,7 +15,9 @@ export default function PromotionProductsClient({ promotionId }: Props) {
   const { data: promotions } = usePromotions()
   const { data: saleProductsData } = useProducts({ onSale: true, limit: 100 })
 
-  const promoList = unwrapItems(promotions)
+type PromotionRow = PromotionLike & { id: string; name: string }
+
+  const promoList = unwrapItems<PromotionRow>(promotions)
   const promotion = promoList.find((p) => p.id === promotionId)
   const visible = promotion ? isStorefrontPromotionVisible(promotion) : false
   const { items: saleProducts } = unwrapPaginated<Product>(saleProductsData)
