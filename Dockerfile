@@ -1,5 +1,5 @@
 # Monorepo root Dockerfile — use with Railway Root Directory empty (/).
-FROM golang:1.25 AS builder
+FROM golang:1.26 AS builder
 
 WORKDIR /src
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
@@ -9,8 +9,10 @@ RUN go mod download
 
 COPY backend/ .
 
-RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
-RUN test -f internal/database/sqlc/db.go || sqlc generate -f sqlc.yaml
+RUN if [ ! -f internal/database/sqlc/db.go ]; then \
+      go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 && \
+      sqlc generate -f sqlc.yaml; \
+    fi
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/lumi-backend ./cmd/main.go
 
