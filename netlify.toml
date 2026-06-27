@@ -1,0 +1,14 @@
+# Monorepo: frontend lives in frontend/ — Netlify must build from here.
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[context.production.environment]
+  NEXT_PUBLIC_API_URL = "https://dazzling-smile-production-1014.up.railway.app"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

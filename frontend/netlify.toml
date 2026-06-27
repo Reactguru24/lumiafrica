@@ -1,7 +1,0 @@
-[build]
-  command = "npm run build"
-
-# Set NEXT_PUBLIC_API_URL in Netlify UI — see deploy/railway.env.example
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
