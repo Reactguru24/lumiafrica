@@ -34,5 +34,5 @@ frontend/dist/
 frontend/dist-ssr/
 frontend/.understand-anything
 
-# Root misc
-sqlc
+# Root misc — only ignore the sqlc binary at repo root, not internal/database/sqlc/
+/sqlc

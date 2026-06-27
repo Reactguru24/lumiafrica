@@ -7,6 +7,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+
+# Regenerate sqlc if missing (e.g. when deploy upload skipped generated files).
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
+RUN test -f internal/database/sqlc/db.go || sqlc generate -f sqlc.yaml
+
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/lumi-backend ./cmd/main.go
 
 FROM debian:bookworm-slim
