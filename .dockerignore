@@ -1,0 +1,7 @@
+frontend/
+.git/
+.gitignore
+*.md
+TODO.md
+render.yaml
+sqlc
