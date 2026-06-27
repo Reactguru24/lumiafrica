@@ -59,6 +59,17 @@ func SeedAll(db *database.DB) error {
 	return nil
 }
 
+// SeedAdmin creates or updates the default admin account.
+func SeedAdmin(db *database.DB) error {
+	return seedUser(db, struct {
+		fullName string
+		email    string
+		phone    string
+		password string
+		role     sqlc.UsersRole
+	}{"Admin User", "admin@lumiafrica.com", "+254700000001", "Admin123", sqlc.UsersRoleADMIN})
+}
+
 func seedCategories(db *database.DB) error {
 	if err := catalog.EnsureTree(context.Background(), db.Q); err != nil {
 		return err
@@ -68,9 +79,6 @@ func seedCategories(db *database.DB) error {
 }
 
 func seedUsers(db *database.DB) error {
-	ctx := context.Background()
-	q := db.Q
-
 	users := []struct {
 		fullName string
 		email    string
@@ -78,53 +86,69 @@ func seedUsers(db *database.DB) error {
 		password string
 		role     sqlc.UsersRole
 	}{
-		{"Admin User", "admin@lumiafrica.com", "+254700000001", "admin123", sqlc.UsersRoleADMIN},
+		{"Admin User", "admin@lumiafrica.com", "+254700000001", "Admin123", sqlc.UsersRoleADMIN},
 		{"Vendor User", "vendor@lumiafrica.com", "+254700000002", "vendor123", sqlc.UsersRoleVENDOR},
 		{"Customer One", "customer@lumiafrica.com", "+254700000003", "customer123", sqlc.UsersRoleCUSTOMER},
 		{"Customer Two", "customer2@lumiafrica.com", "+254700000004", "customer123", sqlc.UsersRoleCUSTOMER},
 	}
 
 	for _, u := range users {
-		hashedPwd, err := utils.HashPassword(u.password)
-		if err != nil {
+		if err := seedUser(db, u); err != nil {
 			return err
 		}
-
-		existing, err := q.GetUserByEmail(ctx, u.email)
-		if err == nil {
-			if err := q.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
-				ID:       existing.ID,
-				Password: hashedPwd,
-			}); err != nil {
-				return err
-			}
-			_ = q.MarkUserPasswordSet(ctx, existing.ID)
-			log.Printf("User %s already exists — password reset to demo value", u.email)
-			continue
-		}
-
-		userID := utils.GenerateBinaryID()
-		if err := q.CreateUser(ctx, sqlc.CreateUserParams{
-			ID:       userID,
-			FullName: u.fullName,
-			Email:    u.email,
-			Phone:    u.phone,
-			Password: hashedPwd,
-			Role:     u.role,
-			Disabled: 0,
-		}); err != nil {
-			return err
-		}
-		_ = q.MarkUserPasswordSet(ctx, userID)
-		log.Printf("Created user: %s", u.email)
 	}
 
 	log.Println("Demo accounts:")
-	log.Println("  admin    admin@lumiafrica.com    / admin123")
+	log.Println("  admin    admin@lumiafrica.com    / Admin123")
 	log.Println("  vendor   vendor@lumiafrica.com   / vendor123")
 	log.Println("  customer customer@lumiafrica.com / customer123")
 	log.Println("  customer customer2@lumiafrica.com / customer123")
 
+	return nil
+}
+
+func seedUser(db *database.DB, u struct {
+	fullName string
+	email    string
+	phone    string
+	password string
+	role     sqlc.UsersRole
+}) error {
+	ctx := context.Background()
+	q := db.Q
+
+	hashedPwd, err := utils.HashPassword(u.password)
+	if err != nil {
+		return err
+	}
+
+	existing, err := q.GetUserByEmail(ctx, u.email)
+	if err == nil {
+		if err := q.UpdateUserPassword(ctx, sqlc.UpdateUserPasswordParams{
+			ID:       existing.ID,
+			Password: hashedPwd,
+		}); err != nil {
+			return err
+		}
+		_ = q.MarkUserPasswordSet(ctx, existing.ID)
+		log.Printf("User %s already exists — password reset", u.email)
+		return nil
+	}
+
+	userID := utils.GenerateBinaryID()
+	if err := q.CreateUser(ctx, sqlc.CreateUserParams{
+		ID:       userID,
+		FullName: u.fullName,
+		Email:    u.email,
+		Phone:    u.phone,
+		Password: hashedPwd,
+		Role:     u.role,
+		Disabled: 0,
+	}); err != nil {
+		return err
+	}
+	_ = q.MarkUserPasswordSet(ctx, userID)
+	log.Printf("Created user: %s", u.email)
 	return nil
 }
 

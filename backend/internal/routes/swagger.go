@@ -117,7 +117,7 @@ const swaggerUIHTML = `
       guest:    { email: '', password: '' },
       customer: { email: 'customer@lumiafrica.com', password: 'customer123' },
       vendor:   { email: 'vendor@lumiafrica.com', password: 'vendor123' },
-      admin:    { email: 'admin@lumiafrica.com', password: 'admin123' },
+      admin:    { email: 'admin@lumiafrica.com', password: 'Admin123' },
     };
 
     function applyRolePreset(role) {
