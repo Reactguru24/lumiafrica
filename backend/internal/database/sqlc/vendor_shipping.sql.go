@@ -12,24 +12,10 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
-const deleteVendorShippingRate = `-- name: DeleteVendorShippingRate :exec
-DELETE FROM vendor_shipping_rates WHERE vendor_id = ? AND zone_id = ?
-`
-
-type DeleteVendorShippingRateParams struct {
-	VendorID types.BinaryUUID `json:"vendor_id"`
-	ZoneID   types.BinaryUUID `json:"zone_id"`
-}
-
-func (q *Queries) DeleteVendorShippingRate(ctx context.Context, arg DeleteVendorShippingRateParams) error {
-	_, err := q.db.ExecContext(ctx, deleteVendorShippingRate, arg.VendorID, arg.ZoneID)
-	return err
-}
-
 const getVendorShippingRate = `-- name: GetVendorShippingRate :one
 SELECT id, vendor_id, zone_id, fee, created_at, updated_at
 FROM vendor_shipping_rates
-WHERE vendor_id = ? AND zone_id = ?
+WHERE vendor_id = ? AND zone_id = ? AND deleted_at IS NULL
 LIMIT 1
 `
 
@@ -38,9 +24,18 @@ type GetVendorShippingRateParams struct {
 	ZoneID   types.BinaryUUID `json:"zone_id"`
 }
 
-func (q *Queries) GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (VendorShippingRate, error) {
+type GetVendorShippingRateRow struct {
+	ID        types.BinaryUUID `json:"id"`
+	VendorID  types.BinaryUUID `json:"vendor_id"`
+	ZoneID    types.BinaryUUID `json:"zone_id"`
+	Fee       string           `json:"fee"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+}
+
+func (q *Queries) GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (GetVendorShippingRateRow, error) {
 	row := q.db.QueryRowContext(ctx, getVendorShippingRate, arg.VendorID, arg.ZoneID)
-	var i VendorShippingRate
+	var i GetVendorShippingRateRow
 	err := row.Scan(
 		&i.ID,
 		&i.VendorID,
@@ -57,7 +52,7 @@ SELECT vsr.id, vsr.vendor_id, vsr.zone_id, vsr.fee, vsr.created_at, vsr.updated_
        dz.name AS zone_name, dz.estimated_days AS zone_estimated_days
 FROM vendor_shipping_rates vsr
 INNER JOIN delivery_zones dz ON dz.id = vsr.zone_id
-WHERE vsr.vendor_id = ?
+WHERE vsr.vendor_id = ? AND vsr.deleted_at IS NULL
 ORDER BY dz.name
 `
 
@@ -104,10 +99,25 @@ func (q *Queries) ListVendorShippingRatesByVendor(ctx context.Context, vendorID 
 	return items, nil
 }
 
+const softDeleteVendorShippingRate = `-- name: SoftDeleteVendorShippingRate :exec
+UPDATE vendor_shipping_rates SET deleted_at = NOW(), updated_at = NOW()
+WHERE vendor_id = ? AND zone_id = ? AND deleted_at IS NULL
+`
+
+type SoftDeleteVendorShippingRateParams struct {
+	VendorID types.BinaryUUID `json:"vendor_id"`
+	ZoneID   types.BinaryUUID `json:"zone_id"`
+}
+
+func (q *Queries) SoftDeleteVendorShippingRate(ctx context.Context, arg SoftDeleteVendorShippingRateParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteVendorShippingRate, arg.VendorID, arg.ZoneID)
+	return err
+}
+
 const upsertVendorShippingRate = `-- name: UpsertVendorShippingRate :exec
 INSERT INTO vendor_shipping_rates (id, vendor_id, zone_id, fee)
 VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE fee = VALUES(fee)
+ON DUPLICATE KEY UPDATE fee = VALUES(fee), deleted_at = NULL, updated_at = NOW()
 `
 
 type UpsertVendorShippingRateParams struct {

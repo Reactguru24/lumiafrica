@@ -43,7 +43,7 @@ func (q *Queries) AddPromotionProduct(ctx context.Context, arg AddPromotionProdu
 }
 
 const countAllCollections = `-- name: CountAllCollections :one
-SELECT COUNT(*) FROM collections
+SELECT COUNT(*) FROM collections WHERE deleted_at IS NULL
 `
 
 func (q *Queries) CountAllCollections(ctx context.Context) (int64, error) {
@@ -54,7 +54,7 @@ func (q *Queries) CountAllCollections(ctx context.Context) (int64, error) {
 }
 
 const countAllCoupons = `-- name: CountAllCoupons :one
-SELECT COUNT(*) FROM coupons
+SELECT COUNT(*) FROM coupons WHERE deleted_at IS NULL
 `
 
 func (q *Queries) CountAllCoupons(ctx context.Context) (int64, error) {
@@ -185,20 +185,22 @@ func (q *Queries) CreateCouponUse(ctx context.Context, arg CreateCouponUseParams
 }
 
 const createDeliveryZone = `-- name: CreateDeliveryZone :exec
-INSERT INTO delivery_zones (id, name, base_cost, estimated_days, active)
-VALUES (?, ?, ?, ?, true)
+INSERT INTO delivery_zones (id, vendor_id, name, base_cost, estimated_days, active)
+VALUES (?, ?, ?, ?, ?, true)
 `
 
 type CreateDeliveryZoneParams struct {
-	ID            types.BinaryUUID `json:"id"`
-	Name          string           `json:"name"`
-	BaseCost      string           `json:"base_cost"`
-	EstimatedDays string           `json:"estimated_days"`
+	ID            types.BinaryUUID  `json:"id"`
+	VendorID      *types.BinaryUUID `json:"vendor_id"`
+	Name          string            `json:"name"`
+	BaseCost      string            `json:"base_cost"`
+	EstimatedDays string            `json:"estimated_days"`
 }
 
 func (q *Queries) CreateDeliveryZone(ctx context.Context, arg CreateDeliveryZoneParams) error {
 	_, err := q.db.ExecContext(ctx, createDeliveryZone,
 		arg.ID,
+		arg.VendorID,
 		arg.Name,
 		arg.BaseCost,
 		arg.EstimatedDays,
@@ -277,10 +279,11 @@ func (q *Queries) DeletePromotionProducts(ctx context.Context, promotionID types
 }
 
 const findDeliveryZoneByCity = `-- name: FindDeliveryZoneByCity :one
-SELECT dz.id, dz.name, dz.base_cost, dz.estimated_days, dz.active, dz.created_at, dz.updated_at
+SELECT dz.id, dz.vendor_id, dz.name, dz.base_cost, dz.estimated_days, dz.active, dz.created_at, dz.updated_at
 FROM delivery_zones dz
 INNER JOIN delivery_zone_areas dza ON dza.zone_id = dz.id
-WHERE dz.active = true AND dza.area_type = 'city' AND LOWER(dza.area_name) = LOWER(?)
+WHERE dz.active = true AND dz.vendor_id IS NOT NULL
+  AND dza.area_type = 'city' AND LOWER(dza.area_name) = LOWER(?)
 LIMIT 1
 `
 
@@ -289,6 +292,7 @@ func (q *Queries) FindDeliveryZoneByCity(ctx context.Context, lower string) (Del
 	var i DeliveryZone
 	err := row.Scan(
 		&i.ID,
+		&i.VendorID,
 		&i.Name,
 		&i.BaseCost,
 		&i.EstimatedDays,
@@ -300,7 +304,7 @@ func (q *Queries) FindDeliveryZoneByCity(ctx context.Context, lower string) (Del
 }
 
 const getCollectionByID = `-- name: GetCollectionByID :one
-SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, created_at, updated_at FROM collections WHERE id = ? LIMIT 1
+SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, deleted_at, created_at, updated_at FROM collections WHERE id = ? AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetCollectionByID(ctx context.Context, id types.BinaryUUID) (Collection, error) {
@@ -317,6 +321,7 @@ func (q *Queries) GetCollectionByID(ctx context.Context, id types.BinaryUUID) (C
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -324,7 +329,7 @@ func (q *Queries) GetCollectionByID(ctx context.Context, id types.BinaryUUID) (C
 }
 
 const getCollectionBySlug = `-- name: GetCollectionBySlug :one
-SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, created_at, updated_at FROM collections WHERE slug = ? AND active = true LIMIT 1
+SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, deleted_at, created_at, updated_at FROM collections WHERE slug = ? AND active = true AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collection, error) {
@@ -341,6 +346,7 @@ func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collect
 		&i.StartsAt,
 		&i.EndsAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -348,7 +354,7 @@ func (q *Queries) GetCollectionBySlug(ctx context.Context, slug string) (Collect
 }
 
 const getCouponByCode = `-- name: GetCouponByCode :one
-SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, starts_at, expires_at, created_at, updated_at FROM coupons WHERE UPPER(code) = UPPER(?) LIMIT 1
+SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, deleted_at, starts_at, expires_at, created_at, updated_at FROM coupons WHERE UPPER(code) = UPPER(?) AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetCouponByCode(ctx context.Context, upper string) (Coupon, error) {
@@ -366,6 +372,7 @@ func (q *Queries) GetCouponByCode(ctx context.Context, upper string) (Coupon, er
 		&i.PerUserLimit,
 		&i.VendorID,
 		&i.Active,
+		&i.DeletedAt,
 		&i.StartsAt,
 		&i.ExpiresAt,
 		&i.CreatedAt,
@@ -375,7 +382,7 @@ func (q *Queries) GetCouponByCode(ctx context.Context, upper string) (Coupon, er
 }
 
 const getCouponByID = `-- name: GetCouponByID :one
-SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, starts_at, expires_at, created_at, updated_at FROM coupons WHERE id = ? LIMIT 1
+SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, deleted_at, starts_at, expires_at, created_at, updated_at FROM coupons WHERE id = ? AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupon, error) {
@@ -393,6 +400,7 @@ func (q *Queries) GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupo
 		&i.PerUserLimit,
 		&i.VendorID,
 		&i.Active,
+		&i.DeletedAt,
 		&i.StartsAt,
 		&i.ExpiresAt,
 		&i.CreatedAt,
@@ -402,7 +410,7 @@ func (q *Queries) GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupo
 }
 
 const getDeliveryZoneByID = `-- name: GetDeliveryZoneByID :one
-SELECT id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE id = ? LIMIT 1
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) (DeliveryZone, error) {
@@ -410,6 +418,34 @@ func (q *Queries) GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) 
 	var i DeliveryZone
 	err := row.Scan(
 		&i.ID,
+		&i.VendorID,
+		&i.Name,
+		&i.BaseCost,
+		&i.EstimatedDays,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getDeliveryZoneByVendorAndName = `-- name: GetDeliveryZoneByVendorAndName :one
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones
+WHERE vendor_id = ? AND active = true AND LOWER(name) = LOWER(?)
+LIMIT 1
+`
+
+type GetDeliveryZoneByVendorAndNameParams struct {
+	VendorID *types.BinaryUUID `json:"vendor_id"`
+	LOWER    string            `json:"LOWER"`
+}
+
+func (q *Queries) GetDeliveryZoneByVendorAndName(ctx context.Context, arg GetDeliveryZoneByVendorAndNameParams) (DeliveryZone, error) {
+	row := q.db.QueryRowContext(ctx, getDeliveryZoneByVendorAndName, arg.VendorID, arg.LOWER)
+	var i DeliveryZone
+	err := row.Scan(
+		&i.ID,
+		&i.VendorID,
 		&i.Name,
 		&i.BaseCost,
 		&i.EstimatedDays,
@@ -444,6 +480,31 @@ func (q *Queries) GetPromotionByID(ctx context.Context, id types.BinaryUUID) (Pr
 	return i, err
 }
 
+const getVendorDeliveryZoneByID = `-- name: GetVendorDeliveryZoneByID :one
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE id = ? AND vendor_id = ? LIMIT 1
+`
+
+type GetVendorDeliveryZoneByIDParams struct {
+	ID       types.BinaryUUID  `json:"id"`
+	VendorID *types.BinaryUUID `json:"vendor_id"`
+}
+
+func (q *Queries) GetVendorDeliveryZoneByID(ctx context.Context, arg GetVendorDeliveryZoneByIDParams) (DeliveryZone, error) {
+	row := q.db.QueryRowContext(ctx, getVendorDeliveryZoneByID, arg.ID, arg.VendorID)
+	var i DeliveryZone
+	err := row.Scan(
+		&i.ID,
+		&i.VendorID,
+		&i.Name,
+		&i.BaseCost,
+		&i.EstimatedDays,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const incrementCouponUses = `-- name: IncrementCouponUses :exec
 UPDATE coupons SET uses_count = uses_count + 1 WHERE id = ?
 `
@@ -454,8 +515,9 @@ func (q *Queries) IncrementCouponUses(ctx context.Context, id types.BinaryUUID) 
 }
 
 const listActiveCollections = `-- name: ListActiveCollections :many
-SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, created_at, updated_at FROM collections
+SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, deleted_at, created_at, updated_at FROM collections
 WHERE active = true
+  AND deleted_at IS NULL
   AND (starts_at IS NULL OR starts_at <= NOW())
   AND (ends_at IS NULL OR ends_at >= NOW())
 ORDER BY sort_order, name
@@ -481,41 +543,7 @@ func (q *Queries) ListActiveCollections(ctx context.Context) ([]Collection, erro
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.CreatedBy,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listActiveDeliveryZones = `-- name: ListActiveDeliveryZones :many
-SELECT id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE active = true ORDER BY name
-`
-
-func (q *Queries) ListActiveDeliveryZones(ctx context.Context) ([]DeliveryZone, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveDeliveryZones)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DeliveryZone{}
-	for rows.Next() {
-		var i DeliveryZone
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.BaseCost,
-			&i.EstimatedDays,
-			&i.Active,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -577,7 +605,7 @@ func (q *Queries) ListActivePromotions(ctx context.Context) ([]Promotion, error)
 }
 
 const listAllCollections = `-- name: ListAllCollections :many
-SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, created_at, updated_at FROM collections ORDER BY sort_order, name LIMIT ? OFFSET ?
+SELECT id, name, slug, description, image, active, sort_order, starts_at, ends_at, created_by, deleted_at, created_at, updated_at FROM collections WHERE deleted_at IS NULL ORDER BY sort_order, name LIMIT ? OFFSET ?
 `
 
 type ListAllCollectionsParams struct {
@@ -605,6 +633,7 @@ func (q *Queries) ListAllCollections(ctx context.Context, arg ListAllCollections
 			&i.StartsAt,
 			&i.EndsAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -622,7 +651,7 @@ func (q *Queries) ListAllCollections(ctx context.Context, arg ListAllCollections
 }
 
 const listAllCoupons = `-- name: ListAllCoupons :many
-SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, starts_at, expires_at, created_at, updated_at FROM coupons ORDER BY created_at DESC LIMIT ? OFFSET ?
+SELECT id, code, type, value, min_order_amount, max_discount, max_uses, uses_count, per_user_limit, vendor_id, active, deleted_at, starts_at, expires_at, created_at, updated_at FROM coupons WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT ? OFFSET ?
 `
 
 type ListAllCouponsParams struct {
@@ -651,6 +680,7 @@ func (q *Queries) ListAllCoupons(ctx context.Context, arg ListAllCouponsParams) 
 			&i.PerUserLimit,
 			&i.VendorID,
 			&i.Active,
+			&i.DeletedAt,
 			&i.StartsAt,
 			&i.ExpiresAt,
 			&i.CreatedAt,
@@ -716,6 +746,47 @@ func (q *Queries) ListAllPromotions(ctx context.Context, arg ListAllPromotionsPa
 	return items, nil
 }
 
+const listCheckoutDeliveryZones = `-- name: ListCheckoutDeliveryZones :many
+SELECT dz.name, dz.estimated_days, dz.base_cost
+FROM delivery_zones dz
+INNER JOIN (
+  SELECT name, MIN(id) AS id
+  FROM delivery_zones
+  WHERE active = true AND vendor_id IS NOT NULL
+  GROUP BY name
+) pick ON pick.id = dz.id
+ORDER BY dz.name
+`
+
+type ListCheckoutDeliveryZonesRow struct {
+	Name          string `json:"name"`
+	EstimatedDays string `json:"estimated_days"`
+	BaseCost      string `json:"base_cost"`
+}
+
+func (q *Queries) ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckoutDeliveryZonesRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCheckoutDeliveryZones)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCheckoutDeliveryZonesRow{}
+	for rows.Next() {
+		var i ListCheckoutDeliveryZonesRow
+		if err := rows.Scan(&i.Name, &i.EstimatedDays, &i.BaseCost); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCollectionProductIDs = `-- name: ListCollectionProductIDs :many
 SELECT product_id FROM collection_products WHERE collection_id = ? ORDER BY sort_order
 `
@@ -733,6 +804,42 @@ func (q *Queries) ListCollectionProductIDs(ctx context.Context, collectionID typ
 			return nil, err
 		}
 		items = append(items, product_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDeliveryZonesByVendor = `-- name: ListDeliveryZonesByVendor :many
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE vendor_id = ? AND active = true ORDER BY name
+`
+
+func (q *Queries) ListDeliveryZonesByVendor(ctx context.Context, vendorID *types.BinaryUUID) ([]DeliveryZone, error) {
+	rows, err := q.db.QueryContext(ctx, listDeliveryZonesByVendor, vendorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DeliveryZone{}
+	for rows.Next() {
+		var i DeliveryZone
+		if err := rows.Scan(
+			&i.ID,
+			&i.VendorID,
+			&i.Name,
+			&i.BaseCost,
+			&i.EstimatedDays,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -771,7 +878,7 @@ func (q *Queries) ListPromotionProductIDs(ctx context.Context, promotionID types
 }
 
 const setCollectionActive = `-- name: SetCollectionActive :exec
-UPDATE collections SET active = ? WHERE id = ?
+UPDATE collections SET active = ? WHERE id = ? AND deleted_at IS NULL
 `
 
 type SetCollectionActiveParams struct {
@@ -785,7 +892,7 @@ func (q *Queries) SetCollectionActive(ctx context.Context, arg SetCollectionActi
 }
 
 const setCouponActive = `-- name: SetCouponActive :exec
-UPDATE coupons SET active = ? WHERE id = ?
+UPDATE coupons SET active = ? WHERE id = ? AND deleted_at IS NULL
 `
 
 type SetCouponActiveParams struct {
@@ -798,8 +905,23 @@ func (q *Queries) SetCouponActive(ctx context.Context, arg SetCouponActiveParams
 	return err
 }
 
+const setDeliveryZoneActive = `-- name: SetDeliveryZoneActive :exec
+UPDATE delivery_zones SET active = ?, updated_at = NOW() WHERE id = ? AND vendor_id = ?
+`
+
+type SetDeliveryZoneActiveParams struct {
+	Active   int16             `json:"active"`
+	ID       types.BinaryUUID  `json:"id"`
+	VendorID *types.BinaryUUID `json:"vendor_id"`
+}
+
+func (q *Queries) SetDeliveryZoneActive(ctx context.Context, arg SetDeliveryZoneActiveParams) error {
+	_, err := q.db.ExecContext(ctx, setDeliveryZoneActive, arg.Active, arg.ID, arg.VendorID)
+	return err
+}
+
 const setPromotionActive = `-- name: SetPromotionActive :exec
-UPDATE promotions SET active = ? WHERE id = ?
+UPDATE promotions SET active = ? WHERE id = ? AND deleted_at IS NULL
 `
 
 type SetPromotionActiveParams struct {
@@ -809,6 +931,24 @@ type SetPromotionActiveParams struct {
 
 func (q *Queries) SetPromotionActive(ctx context.Context, arg SetPromotionActiveParams) error {
 	_, err := q.db.ExecContext(ctx, setPromotionActive, arg.Active, arg.ID)
+	return err
+}
+
+const softDeleteCollection = `-- name: SoftDeleteCollection :exec
+UPDATE collections SET deleted_at = NOW(), active = false, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteCollection(ctx context.Context, id types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, softDeleteCollection, id)
+	return err
+}
+
+const softDeleteCoupon = `-- name: SoftDeleteCoupon :exec
+UPDATE coupons SET deleted_at = NOW(), active = false, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeleteCoupon(ctx context.Context, id types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, softDeleteCoupon, id)
 	return err
 }
 
@@ -824,7 +964,7 @@ func (q *Queries) SoftDeletePromotion(ctx context.Context, id types.BinaryUUID) 
 const updateCollection = `-- name: UpdateCollection :exec
 UPDATE collections
 SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?, starts_at = ?, ends_at = ?
-WHERE id = ?
+WHERE id = ? AND deleted_at IS NULL
 `
 
 type UpdateCollectionParams struct {
@@ -863,7 +1003,7 @@ SET code = ?,
     per_user_limit = ?,
     starts_at = ?,
     expires_at = ?
-WHERE id = ?
+WHERE id = ? AND deleted_at IS NULL
 `
 
 type UpdateCouponParams struct {
@@ -895,10 +1035,35 @@ func (q *Queries) UpdateCoupon(ctx context.Context, arg UpdateCouponParams) erro
 	return err
 }
 
+const updateDeliveryZone = `-- name: UpdateDeliveryZone :exec
+UPDATE delivery_zones
+SET name = ?, base_cost = ?, estimated_days = ?, updated_at = NOW()
+WHERE id = ? AND vendor_id = ?
+`
+
+type UpdateDeliveryZoneParams struct {
+	Name          string            `json:"name"`
+	BaseCost      string            `json:"base_cost"`
+	EstimatedDays string            `json:"estimated_days"`
+	ID            types.BinaryUUID  `json:"id"`
+	VendorID      *types.BinaryUUID `json:"vendor_id"`
+}
+
+func (q *Queries) UpdateDeliveryZone(ctx context.Context, arg UpdateDeliveryZoneParams) error {
+	_, err := q.db.ExecContext(ctx, updateDeliveryZone,
+		arg.Name,
+		arg.BaseCost,
+		arg.EstimatedDays,
+		arg.ID,
+		arg.VendorID,
+	)
+	return err
+}
+
 const updatePromotion = `-- name: UpdatePromotion :exec
 UPDATE promotions
 SET name = ?, type = ?, discount_type = ?, discount_value = ?, starts_at = ?, ends_at = ?
-WHERE id = ?
+WHERE id = ? AND deleted_at IS NULL
 `
 
 type UpdatePromotionParams struct {

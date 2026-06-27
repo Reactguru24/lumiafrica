@@ -64,24 +64,25 @@ func (q *Queries) CountOrdersByVendor(ctx context.Context, vendorID types.Binary
 
 const createOrder = `-- name: CreateOrder :exec
 INSERT INTO orders (
-  id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total,
+  id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total,
   payment_method, status, delivery_address, notes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
 `
 
 type CreateOrderParams struct {
-	ID              types.BinaryUUID  `json:"id"`
-	UserID          types.BinaryUUID  `json:"user_id"`
-	DeliveryZoneID  *types.BinaryUUID `json:"delivery_zone_id"`
-	CouponID        *types.BinaryUUID `json:"coupon_id"`
-	Subtotal        string            `json:"subtotal"`
-	DiscountAmount  string            `json:"discount_amount"`
-	ShippingCost    string            `json:"shipping_cost"`
-	TaxAmount       string            `json:"tax_amount"`
-	Total           string            `json:"total"`
-	PaymentMethod   string            `json:"payment_method"`
-	DeliveryAddress json.RawMessage   `json:"delivery_address"`
-	Notes           sql.NullString    `json:"notes"`
+	ID               types.BinaryUUID  `json:"id"`
+	UserID           types.BinaryUUID  `json:"user_id"`
+	DeliveryZoneID   *types.BinaryUUID `json:"delivery_zone_id"`
+	DeliveryZoneName sql.NullString    `json:"delivery_zone_name"`
+	CouponID         *types.BinaryUUID `json:"coupon_id"`
+	Subtotal         string            `json:"subtotal"`
+	DiscountAmount   string            `json:"discount_amount"`
+	ShippingCost     string            `json:"shipping_cost"`
+	TaxAmount        string            `json:"tax_amount"`
+	Total            string            `json:"total"`
+	PaymentMethod    string            `json:"payment_method"`
+	DeliveryAddress  json.RawMessage   `json:"delivery_address"`
+	Notes            sql.NullString    `json:"notes"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error {
@@ -89,6 +90,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error 
 		arg.ID,
 		arg.UserID,
 		arg.DeliveryZoneID,
+		arg.DeliveryZoneName,
 		arg.CouponID,
 		arg.Subtotal,
 		arg.DiscountAmount,
@@ -103,7 +105,7 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) error 
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE id = ? LIMIT 1
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetOrderByID(ctx context.Context, id types.BinaryUUID) (Order, error) {
@@ -113,6 +115,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id types.BinaryUUID) (Order,
 		&i.ID,
 		&i.UserID,
 		&i.DeliveryZoneID,
+		&i.DeliveryZoneName,
 		&i.CouponID,
 		&i.Subtotal,
 		&i.DiscountAmount,
@@ -132,7 +135,7 @@ func (q *Queries) GetOrderByID(ctx context.Context, id types.BinaryUUID) (Order,
 }
 
 const getOrderByIDAndUser = `-- name: GetOrderByIDAndUser :one
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE id = ? AND user_id = ? LIMIT 1
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE id = ? AND user_id = ? LIMIT 1
 `
 
 type GetOrderByIDAndUserParams struct {
@@ -147,6 +150,7 @@ func (q *Queries) GetOrderByIDAndUser(ctx context.Context, arg GetOrderByIDAndUs
 		&i.ID,
 		&i.UserID,
 		&i.DeliveryZoneID,
+		&i.DeliveryZoneName,
 		&i.CouponID,
 		&i.Subtotal,
 		&i.DiscountAmount,
@@ -166,7 +170,7 @@ func (q *Queries) GetOrderByIDAndUser(ctx context.Context, arg GetOrderByIDAndUs
 }
 
 const listAllOrders = `-- name: ListAllOrders :many
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?
 `
 
 type ListAllOrdersParams struct {
@@ -187,6 +191,7 @@ func (q *Queries) ListAllOrders(ctx context.Context, arg ListAllOrdersParams) ([
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,
@@ -314,7 +319,7 @@ func (q *Queries) ListOrderItemsByOrderIDs(ctx context.Context, orderIds []types
 }
 
 const listOrdersByUser = `-- name: ListOrdersByUser :many
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE user_id = ?
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders WHERE user_id = ?
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
@@ -338,6 +343,7 @@ func (q *Queries) ListOrdersByUser(ctx context.Context, arg ListOrdersByUserPara
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,
@@ -367,7 +373,7 @@ func (q *Queries) ListOrdersByUser(ctx context.Context, arg ListOrdersByUserPara
 }
 
 const listOrdersByVendor = `-- name: ListOrdersByVendor :many
-SELECT DISTINCT o.id, o.user_id, o.delivery_zone_id, o.coupon_id, o.subtotal, o.discount_amount, o.shipping_cost, o.tax_amount, o.total, o.currency, o.payment_method, o.status, o.delivery_address, o.notes, o.delivered_at, o.created_at, o.updated_at
+SELECT DISTINCT o.id, o.user_id, o.delivery_zone_id, o.delivery_zone_name, o.coupon_id, o.subtotal, o.discount_amount, o.shipping_cost, o.tax_amount, o.total, o.currency, o.payment_method, o.status, o.delivery_address, o.notes, o.delivered_at, o.created_at, o.updated_at
 FROM orders o
 INNER JOIN order_items oi ON oi.order_id = o.id
 WHERE oi.vendor_id = ?
@@ -394,6 +400,7 @@ func (q *Queries) ListOrdersByVendor(ctx context.Context, arg ListOrdersByVendor
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,
@@ -423,7 +430,7 @@ func (q *Queries) ListOrdersByVendor(ctx context.Context, arg ListOrdersByVendor
 }
 
 const listOrdersByVendorSince = `-- name: ListOrdersByVendorSince :many
-SELECT DISTINCT o.id, o.user_id, o.delivery_zone_id, o.coupon_id, o.subtotal, o.discount_amount, o.shipping_cost, o.tax_amount, o.total, o.currency, o.payment_method, o.status, o.delivery_address, o.notes, o.delivered_at, o.created_at, o.updated_at
+SELECT DISTINCT o.id, o.user_id, o.delivery_zone_id, o.delivery_zone_name, o.coupon_id, o.subtotal, o.discount_amount, o.shipping_cost, o.tax_amount, o.total, o.currency, o.payment_method, o.status, o.delivery_address, o.notes, o.delivered_at, o.created_at, o.updated_at
 FROM orders o
 INNER JOIN order_items oi ON oi.order_id = o.id
 WHERE o.status != 'cancelled'
@@ -450,6 +457,7 @@ func (q *Queries) ListOrdersByVendorSince(ctx context.Context, arg ListOrdersByV
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,
@@ -479,7 +487,7 @@ func (q *Queries) ListOrdersByVendorSince(ctx context.Context, arg ListOrdersByV
 }
 
 const listOrdersSince = `-- name: ListOrdersSince :many
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders
 WHERE status != 'cancelled'
   AND (? IS NULL OR created_at >= ?)
 `
@@ -501,6 +509,7 @@ func (q *Queries) ListOrdersSince(ctx context.Context, arg ListOrdersSinceParams
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,
@@ -530,7 +539,7 @@ func (q *Queries) ListOrdersSince(ctx context.Context, arg ListOrdersSinceParams
 }
 
 const listRecentOrders = `-- name: ListRecentOrders :many
-SELECT id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT ?
+SELECT id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total, currency, payment_method, status, delivery_address, notes, delivered_at, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT ?
 `
 
 func (q *Queries) ListRecentOrders(ctx context.Context, limit int32) ([]Order, error) {
@@ -546,6 +555,7 @@ func (q *Queries) ListRecentOrders(ctx context.Context, limit int32) ([]Order, e
 			&i.ID,
 			&i.UserID,
 			&i.DeliveryZoneID,
+			&i.DeliveryZoneName,
 			&i.CouponID,
 			&i.Subtotal,
 			&i.DiscountAmount,

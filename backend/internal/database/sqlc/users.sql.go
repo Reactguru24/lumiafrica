@@ -106,20 +106,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
-const deleteAddress = `-- name: DeleteAddress :exec
-DELETE FROM addresses WHERE id = ? AND user_id = ?
-`
-
-type DeleteAddressParams struct {
-	ID     types.BinaryUUID `json:"id"`
-	UserID types.BinaryUUID `json:"user_id"`
-}
-
-func (q *Queries) DeleteAddress(ctx context.Context, arg DeleteAddressParams) error {
-	_, err := q.db.ExecContext(ctx, deleteAddress, arg.ID, arg.UserID)
-	return err
-}
-
 const disableUser = `-- name: DisableUser :exec
 UPDATE users SET disabled = true WHERE id = ?
 `
@@ -139,7 +125,7 @@ func (q *Queries) EnableUser(ctx context.Context, id types.BinaryUUID) error {
 }
 
 const getAddressByIDAndUser = `-- name: GetAddressByIDAndUser :one
-SELECT id, user_id, label, street, city, state, country, zip_code, is_default, created_at, updated_at FROM addresses WHERE id = ? AND user_id = ? LIMIT 1
+SELECT id, user_id, label, street, city, state, country, zip_code, is_default, deleted_at, created_at, updated_at FROM addresses WHERE id = ? AND user_id = ? AND deleted_at IS NULL LIMIT 1
 `
 
 type GetAddressByIDAndUserParams struct {
@@ -160,6 +146,7 @@ func (q *Queries) GetAddressByIDAndUser(ctx context.Context, arg GetAddressByIDA
 		&i.Country,
 		&i.ZipCode,
 		&i.IsDefault,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -242,7 +229,7 @@ func (q *Queries) InvalidateUserResetTokens(ctx context.Context, userID types.Bi
 }
 
 const listAddressesByUser = `-- name: ListAddressesByUser :many
-SELECT id, user_id, label, street, city, state, country, zip_code, is_default, created_at, updated_at FROM addresses WHERE user_id = ? ORDER BY created_at DESC
+SELECT id, user_id, label, street, city, state, country, zip_code, is_default, deleted_at, created_at, updated_at FROM addresses WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC
 `
 
 func (q *Queries) ListAddressesByUser(ctx context.Context, userID types.BinaryUUID) ([]Address, error) {
@@ -264,6 +251,7 @@ func (q *Queries) ListAddressesByUser(ctx context.Context, userID types.BinaryUU
 			&i.Country,
 			&i.ZipCode,
 			&i.IsDefault,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -352,6 +340,20 @@ UPDATE users SET password_set_at = CURRENT_TIMESTAMP WHERE id = ?
 
 func (q *Queries) MarkUserPasswordSet(ctx context.Context, id types.BinaryUUID) error {
 	_, err := q.db.ExecContext(ctx, markUserPasswordSet, id)
+	return err
+}
+
+const softDeleteAddress = `-- name: SoftDeleteAddress :exec
+UPDATE addresses SET deleted_at = NOW(), updated_at = NOW() WHERE id = ? AND user_id = ? AND deleted_at IS NULL
+`
+
+type SoftDeleteAddressParams struct {
+	ID     types.BinaryUUID `json:"id"`
+	UserID types.BinaryUUID `json:"user_id"`
+}
+
+func (q *Queries) SoftDeleteAddress(ctx context.Context, arg SoftDeleteAddressParams) error {
+	_, err := q.db.ExecContext(ctx, softDeleteAddress, arg.ID, arg.UserID)
 	return err
 }
 

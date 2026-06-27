@@ -407,11 +407,23 @@ export const vendorAPI = {
     return put('/vendor/profile', data)
   },
 
-  getShippingRates() {
-    return get('/vendor/shipping-rates')
+  listDeliveryZones() {
+    return get('/vendor/delivery-zones')
   },
 
-  updateShippingRates(data: { rates: { zoneId: string; fee: number }[]; freeShippingThreshold?: number | null }) {
+  createDeliveryZone(data: Record<string, unknown>) {
+    return post('/vendor/delivery-zones', data)
+  },
+
+  updateDeliveryZone(zoneId: string, data: Record<string, unknown>) {
+    return put(`/vendor/delivery-zones/${zoneId}`, data)
+  },
+
+  deleteDeliveryZone(zoneId: string) {
+    return del(`/vendor/delivery-zones/${zoneId}`)
+  },
+
+  updateFreeShipping(data: { freeShippingThreshold?: number | null }) {
     return put('/vendor/shipping-rates', data)
   },
 
@@ -589,6 +601,10 @@ export const adminAPI = {
     return put(`/admin/coupons/${couponId}/active`, { active })
   },
 
+  deleteCoupon(couponId: string) {
+    return del(`/admin/coupons/${couponId}`)
+  },
+
   listPromotions(params?: { page?: number; limit?: number }) {
     return get(`/admin/promotions${buildQuery(params)}`)
   },
@@ -623,5 +639,9 @@ export const adminAPI = {
 
   setCollectionActive(collectionId: string, active: boolean) {
     return put(`/admin/collections/${collectionId}/active`, { active })
+  },
+
+  deleteCollection(collectionId: string) {
+    return del(`/admin/collections/${collectionId}`)
   },
 }

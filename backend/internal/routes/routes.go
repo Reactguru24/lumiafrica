@@ -100,8 +100,11 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	{
 		vendor.GET("/profile", handlers.GetVendorProfile())
 		vendor.PUT("/profile", handlers.UpdateVendorProfile())
-		vendor.GET("/shipping-rates", handlers.ListVendorShippingRates())
-		vendor.PUT("/shipping-rates", handlers.UpdateVendorShippingRates())
+		vendor.GET("/delivery-zones", handlers.ListVendorDeliveryZones())
+		vendor.POST("/delivery-zones", handlers.CreateVendorDeliveryZone())
+		vendor.PUT("/delivery-zones/:zoneID", handlers.UpdateVendorDeliveryZone())
+		vendor.DELETE("/delivery-zones/:zoneID", handlers.DeleteVendorDeliveryZone())
+		vendor.PUT("/shipping-rates", handlers.UpdateVendorFreeShipping())
 		vendor.GET("/products", handlers.GetVendorProducts())
 		vendor.POST("/products", handlers.CreateProduct())
 		vendor.PUT("/products/:productID/featured", handlers.SetVendorProductFeatured())
@@ -149,6 +152,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.POST("/coupons", handlers.CreateAdminCoupon())
 		admin.PUT("/coupons/:couponID", handlers.UpdateAdminCoupon())
 		admin.PUT("/coupons/:couponID/active", handlers.SetAdminCouponActive())
+		admin.DELETE("/coupons/:couponID", handlers.DeleteAdminCoupon())
 		admin.GET("/promotions", handlers.ListAdminPromotions())
 		admin.POST("/promotions", handlers.CreateAdminPromotion())
 		admin.PUT("/promotions/:promotionID", handlers.UpdateAdminPromotion())
@@ -158,5 +162,6 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.POST("/collections", handlers.CreateAdminCollection())
 		admin.PUT("/collections/:collectionID", handlers.UpdateAdminCollection())
 		admin.PUT("/collections/:collectionID/active", handlers.SetAdminCollectionActive())
+		admin.DELETE("/collections/:collectionID", handlers.DeleteAdminCollection())
 	}
 }

@@ -894,6 +894,7 @@ type Address struct {
 	Country   string           `json:"country"`
 	ZipCode   string           `json:"zip_code"`
 	IsDefault int16            `json:"is_default"`
+	DeletedAt sql.NullTime     `json:"deleted_at"`
 	CreatedAt time.Time        `json:"created_at"`
 	UpdatedAt time.Time        `json:"updated_at"`
 }
@@ -952,6 +953,7 @@ type Collection struct {
 	StartsAt    sql.NullTime      `json:"starts_at"`
 	EndsAt      sql.NullTime      `json:"ends_at"`
 	CreatedBy   *types.BinaryUUID `json:"created_by"`
+	DeletedAt   sql.NullTime      `json:"deleted_at"`
 	CreatedAt   time.Time         `json:"created_at"`
 	UpdatedAt   time.Time         `json:"updated_at"`
 }
@@ -974,6 +976,7 @@ type Coupon struct {
 	PerUserLimit   int32             `json:"per_user_limit"`
 	VendorID       *types.BinaryUUID `json:"vendor_id"`
 	Active         int16             `json:"active"`
+	DeletedAt      sql.NullTime      `json:"deleted_at"`
 	StartsAt       sql.NullTime      `json:"starts_at"`
 	ExpiresAt      sql.NullTime      `json:"expires_at"`
 	CreatedAt      time.Time         `json:"created_at"`
@@ -990,13 +993,14 @@ type CouponUse struct {
 }
 
 type DeliveryZone struct {
-	ID            types.BinaryUUID `json:"id"`
-	Name          string           `json:"name"`
-	BaseCost      string           `json:"base_cost"`
-	EstimatedDays string           `json:"estimated_days"`
-	Active        int16            `json:"active"`
-	CreatedAt     time.Time        `json:"created_at"`
-	UpdatedAt     time.Time        `json:"updated_at"`
+	ID            types.BinaryUUID  `json:"id"`
+	VendorID      *types.BinaryUUID `json:"vendor_id"`
+	Name          string            `json:"name"`
+	BaseCost      string            `json:"base_cost"`
+	EstimatedDays string            `json:"estimated_days"`
+	Active        int16             `json:"active"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
 }
 
 type DeliveryZoneArea struct {
@@ -1041,23 +1045,24 @@ type Notification struct {
 }
 
 type Order struct {
-	ID              types.BinaryUUID  `json:"id"`
-	UserID          types.BinaryUUID  `json:"user_id"`
-	DeliveryZoneID  *types.BinaryUUID `json:"delivery_zone_id"`
-	CouponID        *types.BinaryUUID `json:"coupon_id"`
-	Subtotal        string            `json:"subtotal"`
-	DiscountAmount  string            `json:"discount_amount"`
-	ShippingCost    string            `json:"shipping_cost"`
-	TaxAmount       string            `json:"tax_amount"`
-	Total           string            `json:"total"`
-	Currency        string            `json:"currency"`
-	PaymentMethod   string            `json:"payment_method"`
-	Status          OrdersStatus      `json:"status"`
-	DeliveryAddress json.RawMessage   `json:"delivery_address"`
-	Notes           sql.NullString    `json:"notes"`
-	DeliveredAt     sql.NullTime      `json:"delivered_at"`
-	CreatedAt       time.Time         `json:"created_at"`
-	UpdatedAt       time.Time         `json:"updated_at"`
+	ID               types.BinaryUUID  `json:"id"`
+	UserID           types.BinaryUUID  `json:"user_id"`
+	DeliveryZoneID   *types.BinaryUUID `json:"delivery_zone_id"`
+	DeliveryZoneName sql.NullString    `json:"delivery_zone_name"`
+	CouponID         *types.BinaryUUID `json:"coupon_id"`
+	Subtotal         string            `json:"subtotal"`
+	DiscountAmount   string            `json:"discount_amount"`
+	ShippingCost     string            `json:"shipping_cost"`
+	TaxAmount        string            `json:"tax_amount"`
+	Total            string            `json:"total"`
+	Currency         string            `json:"currency"`
+	PaymentMethod    string            `json:"payment_method"`
+	Status           OrdersStatus      `json:"status"`
+	DeliveryAddress  json.RawMessage   `json:"delivery_address"`
+	Notes            sql.NullString    `json:"notes"`
+	DeliveredAt      sql.NullTime      `json:"delivered_at"`
+	CreatedAt        time.Time         `json:"created_at"`
+	UpdatedAt        time.Time         `json:"updated_at"`
 }
 
 type OrderItem struct {
@@ -1404,6 +1409,7 @@ type VendorShippingRate struct {
 	VendorID  types.BinaryUUID `json:"vendor_id"`
 	ZoneID    types.BinaryUUID `json:"zone_id"`
 	Fee       string           `json:"fee"`
+	DeletedAt sql.NullTime     `json:"deleted_at"`
 	CreatedAt time.Time        `json:"created_at"`
 	UpdatedAt time.Time        `json:"updated_at"`
 }

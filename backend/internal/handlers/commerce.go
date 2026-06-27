@@ -62,14 +62,14 @@ func buildPromotionResponse(ctx context.Context, q *sqlc.Queries, row sqlc.Promo
 func ListDeliveryZones() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := getStore(c).Queries().ListActiveDeliveryZones(ctx)
+		rows, err := getStore(c).Queries().ListCheckoutDeliveryZones(ctx)
 		if err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to load delivery zones")
 			return
 		}
 		out := make([]models.DeliveryZoneResponse, len(rows))
 		for i, row := range rows {
-			out[i] = store.ToDeliveryZone(row)
+			out[i] = store.ToCheckoutDeliveryZone(row)
 		}
 		utils.Success(c, out)
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -44,26 +45,32 @@ func prepareOrderPaymentMetadata(
 		total = 0
 	}
 
-	var zoneID *string
+	var zoneID, zoneName *string
 	if req.DeliveryZoneID != nil && strings.TrimSpace(*req.DeliveryZoneID) != "" {
-		zid := strings.TrimSpace(*req.DeliveryZoneID)
-		zoneID = &zid
+		key := strings.TrimSpace(*req.DeliveryZoneID)
+		if id, err := utils.ParseID(key); err == nil {
+			s := id.String()
+			zoneID = &s
+		} else {
+			zoneName = &key
+		}
 	}
 
 	return models.OrderPaymentMetadata{
-		Items:           req.Items,
-		PaymentMethod:   req.PaymentMethod,
-		DeliveryAddress: req.DeliveryAddress,
-		DeliveryCity:    req.DeliveryCity,
-		DeliveryZoneID:  zoneID,
-		CouponCode:      couponCode,
-		CouponID:        couponID,
-		Notes:           req.Notes,
-		Subtotal:        subtotal,
-		DiscountAmount:  discount,
-		ShippingCost:    shippingCost,
-		TaxAmount:       taxAmount,
-		Total:           total,
+		Items:            req.Items,
+		PaymentMethod:    req.PaymentMethod,
+		DeliveryAddress:  req.DeliveryAddress,
+		DeliveryCity:     req.DeliveryCity,
+		DeliveryZoneID:   zoneID,
+		DeliveryZoneName: zoneName,
+		CouponCode:       couponCode,
+		CouponID:         couponID,
+		Notes:            req.Notes,
+		Subtotal:         subtotal,
+		DiscountAmount:   discount,
+		ShippingCost:     shippingCost,
+		TaxAmount:        taxAmount,
+		Total:            total,
 	}, nil
 }
 
@@ -76,6 +83,13 @@ func optionalBinaryUUID(s *string) *types.BinaryUUID {
 		return nil
 	}
 	return &id
+}
+
+func optionalZoneName(s *string) sql.NullString {
+	if s == nil || strings.TrimSpace(*s) == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: strings.TrimSpace(*s), Valid: true}
 }
 
 func zoneIDFromRequest(req models.CreateOrderRequest) string {

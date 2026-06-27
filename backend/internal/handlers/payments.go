@@ -795,10 +795,11 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 		return "", fmt.Errorf("invalid delivery address")
 	}
 	if err := qtx.CreateOrder(ctx, sqlc.CreateOrderParams{
-		ID:              orderID,
-		UserID:          payment.UserID,
-		DeliveryZoneID:  optionalBinaryUUID(meta.DeliveryZoneID),
-		CouponID:        optionalBinaryUUID(meta.CouponID),
+		ID:               orderID,
+		UserID:           payment.UserID,
+		DeliveryZoneID:   optionalBinaryUUID(meta.DeliveryZoneID),
+		DeliveryZoneName: optionalZoneName(meta.DeliveryZoneName),
+		CouponID:         optionalBinaryUUID(meta.CouponID),
 		Subtotal:        store.FloatToDecimalString(meta.Subtotal),
 		DiscountAmount:  store.FloatToDecimalString(meta.DiscountAmount),
 		ShippingCost:    store.FloatToDecimalString(meta.ShippingCost),

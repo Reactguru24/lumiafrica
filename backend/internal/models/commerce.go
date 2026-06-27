@@ -7,6 +7,14 @@ type DeliveryZoneResponse struct {
 	Name          string  `json:"name"`
 	BaseCost      float64 `json:"baseCost"`
 	EstimatedDays string  `json:"estimatedDays"`
+	Active        bool    `json:"active,omitempty"`
+}
+
+type CreateDeliveryZoneRequest struct {
+	Name          string  `json:"name" binding:"required"`
+	EstimatedDays string  `json:"estimatedDays" binding:"required"`
+	BaseCost      float64 `json:"baseCost" binding:"min=0"`
+	CityName      string  `json:"cityName,omitempty"`
 }
 
 type CouponResponse struct {
@@ -61,8 +69,25 @@ type VendorShippingRateResponse struct {
 	Fee           float64 `json:"fee"`
 }
 
+type VendorDeliveryZoneResponse struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	EstimatedDays string  `json:"estimatedDays"`
+	Fee           float64 `json:"fee"`
+}
+
+type UpdateVendorDeliveryZoneRequest struct {
+	Name          string  `json:"name" binding:"required"`
+	EstimatedDays string  `json:"estimatedDays" binding:"required"`
+	Fee           float64 `json:"fee" binding:"min=0"`
+}
+
+type UpdateVendorFreeShippingRequest struct {
+	FreeShippingThreshold *float64 `json:"freeShippingThreshold"`
+}
+
 type UpdateVendorShippingRatesRequest struct {
-	Rates                 []VendorShippingRateInput `json:"rates" binding:"required"`
+	Rates                 []VendorShippingRateInput `json:"rates"`
 	FreeShippingThreshold *float64                  `json:"freeShippingThreshold"`
 }
 

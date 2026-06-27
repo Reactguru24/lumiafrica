@@ -38,13 +38,13 @@ INSERT INTO addresses (id, user_id, label, street, city, state, country, zip_cod
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: ListAddressesByUser :many
-SELECT * FROM addresses WHERE user_id = ? ORDER BY created_at DESC;
+SELECT * FROM addresses WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC;
 
 -- name: GetAddressByIDAndUser :one
-SELECT * FROM addresses WHERE id = ? AND user_id = ? LIMIT 1;
+SELECT * FROM addresses WHERE id = ? AND user_id = ? AND deleted_at IS NULL LIMIT 1;
 
--- name: DeleteAddress :exec
-DELETE FROM addresses WHERE id = ? AND user_id = ?;
+-- name: SoftDeleteAddress :exec
+UPDATE addresses SET deleted_at = NOW(), updated_at = NOW() WHERE id = ? AND user_id = ? AND deleted_at IS NULL;
 
 -- name: UpdateUserPassword :exec
 UPDATE users SET password = ? WHERE id = ?;

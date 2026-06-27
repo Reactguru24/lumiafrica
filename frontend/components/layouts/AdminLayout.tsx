@@ -40,12 +40,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RouteGuard requiresAuth roles={['ADMIN']}>
       <div className="dashboard-shell">
-        <aside className={`fixed inset-y-0 left-0 z-50 w-[min(16rem,85vw)] max-w-64 h-dvh overflow-hidden flex flex-col bg-gray-900 text-white transform transition-transform lg:translate-x-0 lg:static lg:shrink-0 lg:w-64 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <aside className={`fixed inset-y-0 left-0 z-50 w-[min(16rem,85vw)] max-w-64 h-dvh flex flex-col bg-gray-900 text-white transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           <div className="shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-gray-800">
             <span className="font-display text-lg font-bold tracking-tight">Lumi Admin</span>
             <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)} aria-label="Close menu"><XMarkIcon className="w-5 h-5" /></button>
           </div>
-          <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1 overflow-hidden">
             {navItems.map((item) => (
               <Link
                 key={item.to}
@@ -53,7 +53,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === item.to ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                 onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="w-5 h-5" />{item.name}
+                <item.icon className="w-5 h-5 shrink-0" />{item.name}
               </Link>
             ))}
             <Link
@@ -61,19 +61,19 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === '/admin/account' ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
               onClick={() => setSidebarOpen(false)}
             >
-              <UsersIcon className="w-5 h-5" />My Account
+              <UsersIcon className="w-5 h-5 shrink-0" />My Account
             </Link>
           </nav>
           <div className="shrink-0 p-4 border-t border-gray-800">
             <button className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 w-full" onClick={logout}>
-              <ArrowLeftOnRectangleIcon className="w-5 h-5" /> Sign Out
+              <ArrowLeftOnRectangleIcon className="w-5 h-5 shrink-0" /> Sign Out
             </button>
           </div>
         </aside>
 
         {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
           <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 min-w-0">
             <button className="lg:hidden p-2 shrink-0 -ml-1" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Bars3Icon className="w-6 h-6" /></button>
             <h1 className="flex-1 text-sm sm:text-lg font-semibold truncate">

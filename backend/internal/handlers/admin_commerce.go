@@ -152,6 +152,30 @@ func SetAdminCouponActive() gin.HandlerFunc {
 	}
 }
 
+// DeleteAdminCoupon godoc
+// @Summary Soft-delete coupon (admin)
+// @Description Marks a coupon as deleted and removes it from admin lists and checkout validation.
+// @Tags Admin
+// @Produce json
+// @Security Bearer
+// @Param couponID path string true "Coupon ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/coupons/{couponID} [delete]
+func DeleteAdminCoupon() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		couponID, ok := parsePathID(c, "couponID")
+		if !ok {
+			return
+		}
+		ctx := c.Request.Context()
+		if err := getStore(c).Queries().SoftDeleteCoupon(ctx, couponID); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to delete coupon")
+			return
+		}
+		utils.Success(c, gin.H{"id": couponID.String(), "deleted": true})
+	}
+}
+
 // UpdateAdminCoupon godoc
 // @Summary Update coupon (admin)
 // @Description Update an existing discount coupon.
@@ -583,6 +607,30 @@ func SetAdminCollectionActive() gin.HandlerFunc {
 		setAdminActive(c, "collectionID", "Failed to update collection", func(ctx context.Context, id types.BinaryUUID, active int16) error {
 			return getStore(c).Queries().SetCollectionActive(ctx, sqlc.SetCollectionActiveParams{ID: id, Active: active})
 		})
+	}
+}
+
+// DeleteAdminCollection godoc
+// @Summary Soft-delete collection (admin)
+// @Description Marks a curated collection as deleted and removes it from admin and storefront lists.
+// @Tags Admin
+// @Produce json
+// @Security Bearer
+// @Param collectionID path string true "Collection ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/collections/{collectionID} [delete]
+func DeleteAdminCollection() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		collID, ok := parsePathID(c, "collectionID")
+		if !ok {
+			return
+		}
+		ctx := c.Request.Context()
+		if err := getStore(c).Queries().SoftDeleteCollection(ctx, collID); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to delete collection")
+			return
+		}
+		utils.Success(c, gin.H{"id": collID.String(), "deleted": true})
 	}
 }
 

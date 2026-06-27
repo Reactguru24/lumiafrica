@@ -33,7 +33,9 @@ func LoadOrder(ctx context.Context, q *sqlc.Queries, o sqlc.Order) models.Order 
 			order.CouponCode = coupon.Code
 		}
 	}
-	if zoneID, ok := orderBinaryFK(o.DeliveryZoneID); ok {
+	if o.DeliveryZoneName.Valid && strings.TrimSpace(o.DeliveryZoneName.String) != "" {
+		order.DeliveryZoneName = strings.TrimSpace(o.DeliveryZoneName.String)
+	} else if zoneID, ok := orderBinaryFK(o.DeliveryZoneID); ok {
 		if zone, err := q.GetDeliveryZoneByID(ctx, zoneID); err == nil {
 			order.DeliveryZoneID = zone.ID.String()
 			order.DeliveryZoneName = zone.Name

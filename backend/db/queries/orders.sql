@@ -6,9 +6,9 @@ SELECT * FROM orders ORDER BY created_at DESC LIMIT ? OFFSET ?;
 
 -- name: CreateOrder :exec
 INSERT INTO orders (
-  id, user_id, delivery_zone_id, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total,
+  id, user_id, delivery_zone_id, delivery_zone_name, coupon_id, subtotal, discount_amount, shipping_cost, tax_amount, total,
   payment_method, status, delivery_address, notes
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?);
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?);
 
 -- name: GetOrderByIDAndUser :one
 SELECT * FROM orders WHERE id = ? AND user_id = ? LIMIT 1;

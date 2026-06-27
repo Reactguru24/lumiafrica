@@ -27,16 +27,13 @@ type variantLineKey struct {
 	color     string
 }
 
-func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.OrderItem, deliveryZoneID string) (float64, []VendorShippingLine, error) {
+func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.OrderItem, deliveryZoneKey string) (float64, []VendorShippingLine, error) {
 	if len(items) == 0 {
 		return 0, nil, fmt.Errorf("cart is empty")
 	}
-	zoneID, err := utils.ParseID(strings.TrimSpace(deliveryZoneID))
-	if err != nil {
+	zoneKey := strings.TrimSpace(deliveryZoneKey)
+	if zoneKey == "" {
 		return 0, nil, fmt.Errorf("delivery zone is required")
-	}
-	if _, err := q.GetDeliveryZoneByID(ctx, zoneID); err != nil {
-		return 0, nil, fmt.Errorf("delivery zone not found")
 	}
 
 	productCache := make(map[types.BinaryUUID]sqlc.Product)
@@ -94,7 +91,7 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 			}
 		}
 
-		cost, err := vendorShippingFeeForZone(ctx, q, vendor, zoneID, subtotal)
+		cost, err := vendorShippingFeeForZoneKey(ctx, q, vendor, zoneKey, subtotal)
 		if err != nil {
 			return 0, nil, err
 		}
@@ -110,7 +107,7 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 	return totalShipping, lines, nil
 }
 
-func vendorShippingFeeForZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zoneID types.BinaryUUID, vendorSubtotal float64) (float64, error) {
+func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zoneKey string, vendorSubtotal float64) (float64, error) {
 	if vendor.FreeShippingThreshold.Valid {
 		threshold := store.ParseDecimalString(vendor.FreeShippingThreshold.String)
 		if threshold > 0 && vendorSubtotal >= threshold {
@@ -118,12 +115,48 @@ func vendorShippingFeeForZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.
 		}
 	}
 
-	rate, err := q.GetVendorShippingRate(ctx, vendor.ID, zoneID)
+	zoneKey = strings.TrimSpace(zoneKey)
+	if zoneKey == "" {
+		return store.ParseDecimalString(vendor.ShippingCost), nil
+	}
+
+	var zone sqlc.DeliveryZone
+	var err error
+
+	if zoneID, parseErr := utils.ParseID(zoneKey); parseErr == nil {
+		z, zErr := q.GetDeliveryZoneByID(ctx, zoneID)
+		if zErr == nil {
+			zone = z
+			return feeForVendorZone(ctx, q, vendor, zone)
+		}
+	}
+
+	zone, err = q.GetDeliveryZoneByVendorAndName(ctx, sqlc.GetDeliveryZoneByVendorAndNameParams{
+		VendorID: &vendor.ID,
+		LOWER:    zoneKey,
+	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return store.ParseDecimalString(vendor.ShippingCost), nil
 		}
 		return 0, err
 	}
-	return store.ParseDecimalString(rate.Fee), nil
+	return feeForVendorZone(ctx, q, vendor, zone)
+}
+
+func feeForVendorZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zone sqlc.DeliveryZone) (float64, error) {
+	rate, err := q.GetVendorShippingRate(ctx, sqlc.GetVendorShippingRateParams{
+		VendorID: vendor.ID,
+		ZoneID:   zone.ID,
+	})
+	if err == nil {
+		fee := store.ParseDecimalString(rate.Fee)
+		if fee > 0 {
+			return fee, nil
+		}
+	}
+	if errors.Is(err, sql.ErrNoRows) || err == nil {
+		return store.ParseDecimalString(zone.BaseCost), nil
+	}
+	return 0, err
 }

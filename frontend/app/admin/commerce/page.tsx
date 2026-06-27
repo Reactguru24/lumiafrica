@@ -15,6 +15,7 @@ import {
   useCreateAdminCoupon,
   useUpdateAdminCoupon,
   useSetAdminCouponActive,
+  useDeleteAdminCoupon,
   useCreateAdminPromotion,
   useUpdateAdminPromotion,
   useSetAdminPromotionActive,
@@ -22,6 +23,7 @@ import {
   useCreateAdminCollection,
   useUpdateAdminCollection,
   useSetAdminCollectionActive,
+  useDeleteAdminCollection,
 } from '@/lib/stores/api'
 import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
 import { formatDateTime } from '@/lib/utils/storage'
@@ -75,6 +77,7 @@ export default function AdminCommercePage() {
   const createCoupon = useCreateAdminCoupon().mutate
   const updateCoupon = useUpdateAdminCoupon().mutate
   const setCouponActive = useSetAdminCouponActive().mutate
+  const deleteCoupon = useDeleteAdminCoupon().mutate
   const createPromotion = useCreateAdminPromotion().mutate
   const updatePromotion = useUpdateAdminPromotion().mutate
   const setPromotionActive = useSetAdminPromotionActive().mutate
@@ -82,6 +85,7 @@ export default function AdminCommercePage() {
   const createCollection = useCreateAdminCollection().mutate
   const updateCollection = useUpdateAdminCollection().mutate
   const setCollectionActive = useSetAdminCollectionActive().mutate
+  const deleteCollection = useDeleteAdminCollection().mutate
 
   const [couponModalOpen, setCouponModalOpen] = useState(false)
   const [editingCoupon, setEditingCoupon] = useState<any | null>(null)
@@ -138,6 +142,17 @@ export default function AdminCommercePage() {
       toast.success('Coupon updated')
     } catch (err: unknown) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to update coupon'))
+    }
+  }
+
+  async function removeCoupon(id: string, code: string) {
+    if (!window.confirm(`Delete coupon "${code}"? It will no longer work at checkout.`)) return
+    try {
+      await deleteCoupon({ id })
+      await refetchCoupons()
+      toast.success('Coupon deleted')
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Failed to delete coupon'))
     }
   }
 
@@ -270,6 +285,21 @@ export default function AdminCommercePage() {
       toast.success('Collection updated')
     } catch (err: unknown) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to update collection'))
+    }
+  }
+
+  async function removeCollection(id: string, name: string) {
+    if (!window.confirm(`Delete curated collection "${name}"? It will be removed from the homepage.`)) return
+    try {
+      await deleteCollection({ id })
+      if (editingCollectionId === id) {
+        setEditingCollectionId(null)
+        setCollectionForm(emptyCollectionForm())
+      }
+      await refetchCollections()
+      toast.success('Collection deleted')
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Failed to delete collection'))
     }
   }
 
@@ -453,9 +483,12 @@ export default function AdminCommercePage() {
                       <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => openEditCoupon(c)}>
                         Edit
                       </button>
-                      <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => toggleCoupon(c.id, c.active)}>
-                        {c.active ? 'Deactivate' : 'Activate'}
-                      </button>
+                        <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => toggleCoupon(c.id, c.active)}>
+                          {c.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button type="button" className="text-xs text-red-600 hover:underline py-1 px-2" onClick={() => removeCoupon(c.id, c.code)}>
+                          Delete
+                        </button>
                     </div>
                   </td>
                 </tr>
@@ -558,6 +591,9 @@ export default function AdminCommercePage() {
                 <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => startEditCollection(c)}>Edit</button>
                 <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => toggleCollection(c.id, c.active)}>
                   {c.active ? 'Deactivate' : 'Activate'}
+                </button>
+                <button type="button" className="text-xs text-red-600 hover:underline py-1 px-2" onClick={() => removeCollection(c.id, c.name)}>
+                  Delete
                 </button>
               </div>
             </li>

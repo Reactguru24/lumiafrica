@@ -82,14 +82,12 @@ type Querier interface {
 	DeactivateSubscription(ctx context.Context, id types.BinaryUUID) error
 	DeactivateVendorSubscriptions(ctx context.Context, vendorID types.BinaryUUID) error
 	DecrementProductStock(ctx context.Context, arg DecrementProductStockParams) (int64, error)
-	DeleteAddress(ctx context.Context, arg DeleteAddressParams) error
 	DeleteCartByID(ctx context.Context, id types.BinaryUUID) error
 	DeleteCartBySessionKey(ctx context.Context, sessionKey sql.NullString) error
 	DeleteCartItem(ctx context.Context, id types.BinaryUUID) error
 	DeleteCollectionProducts(ctx context.Context, collectionID types.BinaryUUID) error
 	DeleteProductImages(ctx context.Context, productID types.BinaryUUID) error
 	DeletePromotionProducts(ctx context.Context, promotionID types.BinaryUUID) error
-	DeleteVendorShippingRate(ctx context.Context, arg DeleteVendorShippingRateParams) error
 	DeleteWishlistBySessionKey(ctx context.Context, sessionKey sql.NullString) error
 	DisableUser(ctx context.Context, id types.BinaryUUID) error
 	EnableUser(ctx context.Context, id types.BinaryUUID) error
@@ -110,6 +108,7 @@ type Querier interface {
 	GetCouponByCode(ctx context.Context, upper string) (Coupon, error)
 	GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupon, error)
 	GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) (DeliveryZone, error)
+	GetDeliveryZoneByVendorAndName(ctx context.Context, arg GetDeliveryZoneByVendorAndNameParams) (DeliveryZone, error)
 	GetFeaturedVendors(ctx context.Context, limit int32) ([]Vendor, error)
 	GetIdempotencyKey(ctx context.Context, keyHash string) (IdempotencyKey, error)
 	GetLatestApplicationByBusinessEmail(ctx context.Context, lower string) (VendorApplication, error)
@@ -138,13 +137,13 @@ type Querier interface {
 	GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (Vendor, error)
 	GetVendorByUserID(ctx context.Context, userID types.BinaryUUID) (Vendor, error)
 	GetVendorCommissionRate(ctx context.Context, id types.BinaryUUID) (string, error)
-	GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (VendorShippingRate, error)
+	GetVendorDeliveryZoneByID(ctx context.Context, arg GetVendorDeliveryZoneByIDParams) (DeliveryZone, error)
+	GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (GetVendorShippingRateRow, error)
 	HideOutOfStockProductByVendor(ctx context.Context, arg HideOutOfStockProductByVendorParams) error
 	IncrementCouponUses(ctx context.Context, id types.BinaryUUID) error
 	InsertVendorCategory(ctx context.Context, arg InsertVendorCategoryParams) error
 	InvalidateUserResetTokens(ctx context.Context, userID types.BinaryUUID) error
 	ListActiveCollections(ctx context.Context) ([]Collection, error)
-	ListActiveDeliveryZones(ctx context.Context) ([]DeliveryZone, error)
 	ListActivePromotions(ctx context.Context) ([]Promotion, error)
 	ListAddressesByUser(ctx context.Context, userID types.BinaryUUID) ([]Address, error)
 	ListAdminProducts(ctx context.Context, arg ListAdminProductsParams) ([]Product, error)
@@ -156,8 +155,10 @@ type Querier interface {
 	ListAllPromotions(ctx context.Context, arg ListAllPromotionsParams) ([]Promotion, error)
 	ListAllSubscriptions(ctx context.Context, arg ListAllSubscriptionsParams) ([]VendorSubscription, error)
 	ListCartItemsByCartID(ctx context.Context, cartID types.BinaryUUID) ([]ListCartItemsByCartIDRow, error)
+	ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckoutDeliveryZonesRow, error)
 	ListChildCategories(ctx context.Context, parentID *types.BinaryUUID) ([]Category, error)
 	ListCollectionProductIDs(ctx context.Context, collectionID types.BinaryUUID) ([]types.BinaryUUID, error)
+	ListDeliveryZonesByVendor(ctx context.Context, vendorID *types.BinaryUUID) ([]DeliveryZone, error)
 	ListDistinctBrands(ctx context.Context) ([]string, error)
 	ListDistinctCategories(ctx context.Context) ([]string, error)
 	ListDistinctColors(ctx context.Context) ([]string, error)
@@ -218,19 +219,25 @@ type Querier interface {
 	SearchVendors(ctx context.Context, arg SearchVendorsParams) ([]Vendor, error)
 	SetCollectionActive(ctx context.Context, arg SetCollectionActiveParams) error
 	SetCouponActive(ctx context.Context, arg SetCouponActiveParams) error
+	SetDeliveryZoneActive(ctx context.Context, arg SetDeliveryZoneActiveParams) error
 	SetOrderTimestamps(ctx context.Context, arg SetOrderTimestampsParams) error
 	SetOrderUpdatedAt(ctx context.Context, arg SetOrderUpdatedAtParams) error
 	SetProductCreatedAt(ctx context.Context, arg SetProductCreatedAtParams) error
 	SetProductFeatured(ctx context.Context, arg SetProductFeaturedParams) error
 	SetProductFeaturedByVendor(ctx context.Context, arg SetProductFeaturedByVendorParams) error
 	SetPromotionActive(ctx context.Context, arg SetPromotionActiveParams) error
+	SoftDeleteAddress(ctx context.Context, arg SoftDeleteAddressParams) error
+	SoftDeleteCollection(ctx context.Context, id types.BinaryUUID) error
+	SoftDeleteCoupon(ctx context.Context, id types.BinaryUUID) error
 	SoftDeleteProductVariantsByProduct(ctx context.Context, productID types.BinaryUUID) error
 	SoftDeletePromotion(ctx context.Context, id types.BinaryUUID) error
+	SoftDeleteVendorShippingRate(ctx context.Context, arg SoftDeleteVendorShippingRateParams) error
 	UnfeatureVendorIfNoActiveSubscription(ctx context.Context, id types.BinaryUUID) error
 	UpdateAllVendorCommissionRates(ctx context.Context, commissionRate string) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
 	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) error
 	UpdateCoupon(ctx context.Context, arg UpdateCouponParams) error
+	UpdateDeliveryZone(ctx context.Context, arg UpdateDeliveryZoneParams) error
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error
 	UpdatePaymentInitMetadata(ctx context.Context, arg UpdatePaymentInitMetadataParams) error
 	UpdatePaymentStatus(ctx context.Context, arg UpdatePaymentStatusParams) error

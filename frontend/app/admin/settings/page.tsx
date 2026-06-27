@@ -72,7 +72,7 @@ export default function AdminSettingsPage() {
     <div>
       <AdminPageHeader
         title="Platform Settings"
-        subtitle="Commerce defaults, vendor revenue share, and catalog metadata."
+        subtitle="Vendor revenue share, checkout defaults, and catalog metadata."
       />
 
       <div className="grid md:grid-cols-2 gap-6 max-w-5xl">
@@ -120,9 +120,8 @@ export default function AdminSettingsPage() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4">Checkout — Shipping</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Each vendor sets zone fees (e.g. Nairobi Metro) and an optional free-shipping minimum in Store Profile.
+            Each vendor defines delivery zones and shipping fees in Store Profile. Multi-vendor carts combine one fee per seller.
           </p>
-          <p className="text-xs text-gray-500 mt-2">Customers pick a delivery zone at checkout; multi-vendor carts combine one fee per seller.</p>
         </div>
 
         <div className="card p-6 md:col-span-2">

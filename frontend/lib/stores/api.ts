@@ -268,6 +268,34 @@ export function useUpdateAdminPlatformSettings() {
   )
 }
 
+export function useVendorDeliveryZones() {
+  return useQuery('vendor-delivery-zones', () => vendorAPI.listDeliveryZones())
+}
+
+export function useCreateVendorDeliveryZone() {
+  return useMutation('create-vendor-delivery-zone', (data: Record<string, unknown>) =>
+    vendorAPI.createDeliveryZone(data),
+  )
+}
+
+export function useUpdateVendorDeliveryZone() {
+  return useMutation('update-vendor-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
+    vendorAPI.updateDeliveryZone(data.id, data.payload),
+  )
+}
+
+export function useDeleteVendorDeliveryZone() {
+  return useMutation('delete-vendor-delivery-zone', (data: { id: string }) =>
+    vendorAPI.deleteDeliveryZone(data.id),
+  )
+}
+
+export function useUpdateVendorFreeShipping() {
+  return useMutation('update-vendor-free-shipping', (data: { freeShippingThreshold?: number | null }) =>
+    vendorAPI.updateFreeShipping(data),
+  )
+}
+
 export function useModerateProduct() {
   return useMutation(
     'moderate-product',
@@ -349,10 +377,18 @@ export function useSetAdminCollectionActive() {
   )
 }
 
+export function useDeleteAdminCollection() {
+  return useMutation('delete-admin-collection', (data: { id: string }) => adminAPI.deleteCollection(data.id))
+}
+
 export function useSetAdminCouponActive() {
   return useMutation('set-admin-coupon-active', (data: { id: string; active: boolean }) =>
     adminAPI.setCouponActive(data.id, data.active),
   )
+}
+
+export function useDeleteAdminCoupon() {
+  return useMutation('delete-admin-coupon', (data: { id: string }) => adminAPI.deleteCoupon(data.id))
 }
 
 export function useVerifyPayment(reference: string, enabled = true) {
@@ -483,16 +519,6 @@ export function useVendorSubscribe() {
 
 export function useCancelVendorSubscription() {
   return useMutation('cancel-vendor-subscription', () => vendorAPI.cancelSubscription())
-}
-
-export function useVendorShippingRates() {
-  return useQuery('vendor-shipping-rates', () => vendorAPI.getShippingRates())
-}
-
-export function useUpdateVendorShippingRates() {
-  return useMutation('update-vendor-shipping-rates', (data: { rates: { zoneId: string; fee: number }[]; freeShippingThreshold?: number | null }) =>
-    vendorAPI.updateShippingRates(data),
-  )
 }
 
 export function useUpdateVendorProfile() {

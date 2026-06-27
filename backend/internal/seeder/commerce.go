@@ -12,39 +12,64 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
+func seedVendorDeliveryZones(db *database.DB, vendorID types.BinaryUUID) error {
+	ctx := context.Background()
+	q := db.Q
+
+	existing, _ := q.ListDeliveryZonesByVendor(ctx, &vendorID)
+	if len(existing) > 0 {
+		return nil
+	}
+
+	nairobiID := utils.GenerateBinaryID()
+	vendorCopy := vendorID
+	if err := q.CreateDeliveryZone(ctx, sqlc.CreateDeliveryZoneParams{
+		ID:            nairobiID,
+		VendorID:      &vendorCopy,
+		Name:          "Nairobi Metro",
+		BaseCost:      "500.00",
+		EstimatedDays: "2-4 days",
+	}); err != nil {
+		return err
+	}
+	_ = q.CreateDeliveryZoneArea(ctx, sqlc.CreateDeliveryZoneAreaParams{
+		ID: utils.GenerateBinaryID(), ZoneID: nairobiID,
+		AreaType: sqlc.DeliveryZoneAreasAreaTypeCity, AreaName: "Nairobi",
+	})
+	_ = q.UpsertVendorShippingRate(ctx, sqlc.UpsertVendorShippingRateParams{
+		ID: utils.GenerateBinaryID(), VendorID: vendorID, ZoneID: nairobiID, Fee: "500.00",
+	})
+
+	mombasaID := utils.GenerateBinaryID()
+	if err := q.CreateDeliveryZone(ctx, sqlc.CreateDeliveryZoneParams{
+		ID:            mombasaID,
+		VendorID:      &vendorCopy,
+		Name:          "Coast Region",
+		BaseCost:      "800.00",
+		EstimatedDays: "4-6 days",
+	}); err != nil {
+		return err
+	}
+	_ = q.CreateDeliveryZoneArea(ctx, sqlc.CreateDeliveryZoneAreaParams{
+		ID: utils.GenerateBinaryID(), ZoneID: mombasaID,
+		AreaType: sqlc.DeliveryZoneAreasAreaTypeCity, AreaName: "Mombasa",
+	})
+	_ = q.UpsertVendorShippingRate(ctx, sqlc.UpsertVendorShippingRateParams{
+		ID: utils.GenerateBinaryID(), VendorID: vendorID, ZoneID: mombasaID, Fee: "800.00",
+	})
+
+	log.Println("Created vendor delivery zones")
+	return nil
+}
+
 func seedCommerce(db *database.DB) error {
 	ctx := context.Background()
 	q := db.Q
 
-	zones, _ := q.ListActiveDeliveryZones(ctx)
-	if len(zones) == 0 {
-		nairobiID := utils.GenerateBinaryID()
-		if err := q.CreateDeliveryZone(ctx, sqlc.CreateDeliveryZoneParams{
-			ID:            nairobiID,
-			Name:          "Nairobi Metro",
-			BaseCost:      "500.00",
-			EstimatedDays: "2-4 days",
-		}); err != nil {
+	if vendor, err := getVendorByEmail(db, "vendor@lumiafrica.com"); err == nil {
+		if err := seedVendorDeliveryZones(db, vendor.ID); err != nil {
 			return err
 		}
-		_ = q.CreateDeliveryZoneArea(ctx, sqlc.CreateDeliveryZoneAreaParams{
-			ID: utils.GenerateBinaryID(), ZoneID: nairobiID,
-			AreaType: sqlc.DeliveryZoneAreasAreaTypeCity, AreaName: "Nairobi",
-		})
-		mombasaID := utils.GenerateBinaryID()
-		if err := q.CreateDeliveryZone(ctx, sqlc.CreateDeliveryZoneParams{
-			ID:            mombasaID,
-			Name:          "Coast Region",
-			BaseCost:      "800.00",
-			EstimatedDays: "4-6 days",
-		}); err != nil {
-			return err
-		}
-		_ = q.CreateDeliveryZoneArea(ctx, sqlc.CreateDeliveryZoneAreaParams{
-			ID: utils.GenerateBinaryID(), ZoneID: mombasaID,
-			AreaType: sqlc.DeliveryZoneAreasAreaTypeCity, AreaName: "Mombasa",
-		})
-		log.Println("Created delivery zones")
 	}
 
 	count, _ := q.CountAllCoupons(ctx)

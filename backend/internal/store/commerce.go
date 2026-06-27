@@ -11,6 +11,16 @@ func ToDeliveryZone(z sqlc.DeliveryZone) models.DeliveryZoneResponse {
 		Name:          z.Name,
 		BaseCost:      ParseDecimalString(z.BaseCost),
 		EstimatedDays: z.EstimatedDays,
+		Active:        z.Active != 0,
+	}
+}
+
+func ToCheckoutDeliveryZone(row sqlc.ListCheckoutDeliveryZonesRow) models.DeliveryZoneResponse {
+	return models.DeliveryZoneResponse{
+		ID:            row.Name,
+		Name:          row.Name,
+		BaseCost:      ParseDecimalString(row.BaseCost),
+		EstimatedDays: row.EstimatedDays,
 	}
 }
 

@@ -144,6 +144,7 @@ CREATE TABLE addresses (
   country    VARCHAR(100) NOT NULL,
   zip_code   VARCHAR(20)  NOT NULL,
   is_default BOOLEAN      NOT NULL DEFAULT false,
+  deleted_at TIMESTAMP    NULL,
   created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -497,6 +498,7 @@ CREATE TABLE cart_items (
 
 CREATE TABLE delivery_zones (
   id             BINARY(16)    NOT NULL,
+  vendor_id      BINARY(16)    NULL,
   name           VARCHAR(100)  NOT NULL,
   base_cost      DECIMAL(10,2) NOT NULL,
   estimated_days VARCHAR(50)   NOT NULL,
@@ -505,8 +507,10 @@ CREATE TABLE delivery_zones (
   updated_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
-  UNIQUE KEY uq_name (name),
-  INDEX idx_active (active)
+  UNIQUE KEY uq_vendor_zone_name (vendor_id, name),
+  FOREIGN KEY fk_dz_vendor (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
+  INDEX idx_active (active),
+  INDEX idx_vendor_id (vendor_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -528,6 +532,7 @@ CREATE TABLE vendor_shipping_rates (
   vendor_id  BINARY(16)    NOT NULL,
   zone_id    BINARY(16)    NOT NULL,
   fee        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  deleted_at TIMESTAMP     NULL,
   created_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -556,6 +561,7 @@ CREATE TABLE coupons (
   per_user_limit   INT           NOT NULL DEFAULT 1,
   vendor_id        BINARY(16)    NULL,
   active           BOOLEAN       NOT NULL DEFAULT true,
+  deleted_at       TIMESTAMP     NULL,
   starts_at        TIMESTAMP     NULL,
   expires_at       TIMESTAMP     NULL,
   created_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -578,8 +584,9 @@ CREATE TABLE coupons (
 CREATE TABLE orders (
   id               BINARY(16)    NOT NULL,
   user_id          BINARY(16)    NOT NULL,
-  delivery_zone_id BINARY(16)    NULL,
-  coupon_id        BINARY(16)    NULL,
+  delivery_zone_id   BINARY(16)    NULL,
+  delivery_zone_name VARCHAR(100)  NULL,
+  coupon_id          BINARY(16)    NULL,
   subtotal         DECIMAL(10,2) NOT NULL,
   discount_amount  DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   shipping_cost    DECIMAL(10,2) NOT NULL,
@@ -998,6 +1005,7 @@ CREATE TABLE collections (
   starts_at   TIMESTAMP    NULL,
   ends_at     TIMESTAMP    NULL,
   created_by  BINARY(16)   NULL,
+  deleted_at  TIMESTAMP    NULL,
   created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

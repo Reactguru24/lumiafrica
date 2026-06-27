@@ -183,7 +183,7 @@ func DeleteAddress() gin.HandlerFunc {
 			return
 		}
 
-		if err := q.DeleteAddress(ctx, sqlc.DeleteAddressParams{ID: addressID, UserID: userID}); err != nil {
+		if err := q.SoftDeleteAddress(ctx, sqlc.SoftDeleteAddressParams{ID: addressID, UserID: userID}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to delete address")
 			return
 		}

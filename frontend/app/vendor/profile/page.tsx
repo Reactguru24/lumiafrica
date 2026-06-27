@@ -2,21 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useVendorProfile, useUpdateVendorProfile, useVendorShippingRates, useUpdateVendorShippingRates } from '@/lib/stores/api'
+import {
+  useVendorProfile,
+  useUpdateVendorProfile,
+  useVendorDeliveryZones,
+  useCreateVendorDeliveryZone,
+  useDeleteVendorDeliveryZone,
+  useUpdateVendorFreeShipping,
+} from '@/lib/stores/api'
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
+import { DeliveryZoneForm, type DeliveryZoneFormValues } from '@/components/vendor/DeliveryZoneForm'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { formatCurrency } from '@/lib/utils/storage'
 import type { Vendor } from '@/lib/types'
 
-type ZoneRate = { zoneId: string; zoneName: string; estimatedDays: string; fee: string }
+type VendorZone = {
+  id: string
+  name: string
+  estimatedDays: string
+  fee: number
+}
 
 export default function VendorProfilePage() {
   const { data: vendor, refetch } = useVendorProfile()
-  const { data: shippingData, refetch: refetchShipping } = useVendorShippingRates()
+  const { data: zonesData, refetch: refetchZones } = useVendorDeliveryZones()
   const updateProfile = useUpdateVendorProfile().mutate
-  const updateShipping = useUpdateVendorShippingRates().mutate
+  const createZone = useCreateVendorDeliveryZone().mutate
+  const deleteZone = useDeleteVendorDeliveryZone().mutate
+  const updateFreeShipping = useUpdateVendorFreeShipping().mutate
   const { loading: updateLoading } = useUpdateVendorProfile()
-  const { loading: shippingLoading } = useUpdateVendorShippingRates()
+  const { loading: zoneSaving } = useCreateVendorDeliveryZone()
 
   const [form, setForm] = useState({
     storeName: '',
@@ -29,8 +44,11 @@ export default function VendorProfilePage() {
     logo: '',
     banner: '',
   })
-  const [zoneRates, setZoneRates] = useState<ZoneRate[]>([])
   const [freeShippingThreshold, setFreeShippingThreshold] = useState('')
+  const [savingThreshold, setSavingThreshold] = useState(false)
+
+  const payload = zonesData as { zones?: VendorZone[]; freeShippingThreshold?: number | null } | null
+  const zones = payload?.zones ?? []
 
   useEffect(() => {
     const v = vendor as Vendor | null
@@ -52,20 +70,12 @@ export default function VendorProfilePage() {
   }, [vendor])
 
   useEffect(() => {
-    const payload = shippingData as { rates?: { zoneId: string; zoneName: string; estimatedDays: string; fee: number }[]; freeShippingThreshold?: number | null } | null
-    if (!payload?.rates) return
-    setZoneRates(payload.rates.map((r) => ({
-      zoneId: r.zoneId,
-      zoneName: r.zoneName,
-      estimatedDays: r.estimatedDays,
-      fee: r.fee > 0 ? String(r.fee) : '',
-    })))
-    setFreeShippingThreshold(
-      payload.freeShippingThreshold != null && payload.freeShippingThreshold > 0
-        ? String(payload.freeShippingThreshold)
-        : '',
-    )
-  }, [shippingData])
+    if (payload?.freeShippingThreshold != null && payload.freeShippingThreshold > 0) {
+      setFreeShippingThreshold(String(payload.freeShippingThreshold))
+    } else {
+      setFreeShippingThreshold('')
+    }
+  }, [payload?.freeShippingThreshold])
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()
@@ -88,27 +98,43 @@ export default function VendorProfilePage() {
     }
   }
 
-  async function saveShipping(e: React.FormEvent) {
-    e.preventDefault()
-    const rates = zoneRates.map((z) => ({
-      zoneId: z.zoneId,
-      fee: z.fee.trim() === '' ? 0 : Number(z.fee),
-    }))
-    const threshold = freeShippingThreshold.trim() === '' ? 0 : Number(freeShippingThreshold)
-    if (rates.some((r) => Number.isNaN(r.fee) || r.fee < 0)) {
-      toast.error('Enter valid shipping fees (0 or more) for each zone.')
-      return
+  async function handleAddZone(values: DeliveryZoneFormValues) {
+    try {
+      await createZone(values)
+      await refetchZones()
+      toast.success(`Added ${values.name}`)
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Unable to add delivery zone.'))
     }
+  }
+
+  async function handleRemoveZone(zone: VendorZone) {
+    if (!window.confirm(`Remove "${zone.name}"? Customers will no longer see this option at checkout.`)) return
+    try {
+      await deleteZone({ id: zone.id })
+      await refetchZones()
+      toast.success('Delivery zone removed')
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Unable to remove delivery zone.'))
+    }
+  }
+
+  async function saveFreeShipping(e: React.FormEvent) {
+    e.preventDefault()
+    const threshold = freeShippingThreshold.trim() === '' ? 0 : Number(freeShippingThreshold)
     if (Number.isNaN(threshold) || threshold < 0) {
       toast.error('Enter a valid free-shipping minimum, or leave it blank.')
       return
     }
+    setSavingThreshold(true)
     try {
-      await updateShipping({ rates, freeShippingThreshold: threshold })
-      toast.success('Shipping rates updated')
-      refetchShipping()
+      await updateFreeShipping({ freeShippingThreshold: threshold })
+      await refetchZones()
+      toast.success('Free shipping threshold updated')
     } catch (err: unknown) {
-      toast.error(getFriendlyErrorMessage(err, 'Unable to update shipping rates.'))
+      toast.error(getFriendlyErrorMessage(err, 'Unable to update free shipping threshold.'))
+    } finally {
+      setSavingThreshold(false)
     }
   }
 
@@ -118,7 +144,7 @@ export default function VendorProfilePage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-500">Update how customers see your store on Lumi.</p>
+      <p className="text-sm text-gray-500">Update how customers see your store and where you deliver.</p>
       <form className="card p-6 space-y-6 max-w-2xl" onSubmit={saveProfile}>
         <div className="space-y-2">
           <label className="text-sm font-medium">Logo</label>
@@ -141,43 +167,42 @@ export default function VendorProfilePage() {
         <button type="submit" className="btn-primary" disabled={updateLoading}>Save Profile</button>
       </form>
 
-      <form className="card p-6 space-y-6 max-w-2xl" onSubmit={saveShipping}>
+      <div className="card p-6 space-y-6 max-w-2xl">
         <div>
-          <h3 className="font-medium">Shipping by zone</h3>
+          <h3 className="font-medium">Delivery zones &amp; shipping</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Set a flat fee for each delivery zone (e.g. {formatCurrency(500)} for Nairobi Metro). Applied once per order from your store.
+            Define where you deliver and what you charge. Customers pick a region at checkout; your fee applies once per order from your store.
           </p>
         </div>
-        <div className="space-y-3">
-          {zoneRates.map((zone, index) => (
-            <div key={zone.zoneId} className="grid sm:grid-cols-[1fr_140px] gap-3 items-end border border-gray-100 dark:border-gray-800 rounded-lg p-3">
-              <div>
-                <p className="font-medium text-sm">{zone.zoneName}</p>
-                <p className="text-xs text-gray-500">{zone.estimatedDays}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Fee (KES)</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={zone.fee}
-                  onChange={(e) => {
-                    const next = [...zoneRates]
-                    next[index] = { ...zone, fee: e.target.value }
-                    setZoneRates(next)
-                  }}
-                  className="input-field mt-1"
-                  placeholder="e.g. 500"
-                />
-              </div>
-            </div>
-          ))}
-          {zoneRates.length === 0 && (
-            <p className="text-sm text-gray-500">No delivery zones configured yet. Contact support to add regions.</p>
+
+        <DeliveryZoneForm saving={zoneSaving} onSubmit={handleAddZone} />
+
+        <div>
+          <p className="text-sm font-medium mb-3">Your zones ({zones.length})</p>
+          {zones.length === 0 ? (
+            <p className="text-sm text-gray-500">No delivery zones yet. Add one above so customers can check out from your store.</p>
+          ) : (
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {zones.map((zone) => (
+                <li key={zone.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-gray-900/50">
+                  <div>
+                    <p className="font-medium text-sm">{zone.name}</p>
+                    <p className="text-xs text-gray-500">{zone.estimatedDays} · {formatCurrency(zone.fee)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs text-red-600 hover:underline"
+                    onClick={() => handleRemoveZone(zone)}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-        <div className="max-w-xs">
+
+        <form className="max-w-xs pt-2 border-t border-gray-100 dark:border-gray-800" onSubmit={saveFreeShipping}>
           <label className="text-sm font-medium">Free shipping above (KES)</label>
           <input
             type="number"
@@ -188,9 +213,11 @@ export default function VendorProfilePage() {
             className="input-field mt-1"
             placeholder="Optional"
           />
-        </div>
-        <button type="submit" className="btn-primary" disabled={shippingLoading}>Save Shipping Rates</button>
-      </form>
+          <button type="submit" className="btn-secondary mt-3" disabled={savingThreshold}>
+            {savingThreshold ? 'Saving...' : 'Save free shipping rule'}
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
