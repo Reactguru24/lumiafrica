@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePromotions, useProducts } from '@/lib/stores/api'
-import { unwrapPaginated } from '@/lib/utils/api'
+import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
+import { isStorefrontPromotionVisible } from '@/lib/utils/promotions'
 import { ProductCard } from '@/components/product/ProductCard'
 import type { Product } from '@/lib/types'
 
@@ -14,11 +15,12 @@ export default function PromotionProductsClient({ promotionId }: Props) {
   const { data: promotions } = usePromotions()
   const { data: saleProductsData } = useProducts({ onSale: true, limit: 100 })
 
-  const promoList = (promotions as any[]) || []
+  const promoList = unwrapItems(promotions)
   const promotion = promoList.find((p) => p.id === promotionId)
+  const visible = promotion ? isStorefrontPromotionVisible(promotion) : false
   const { items: saleProducts } = unwrapPaginated<Product>(saleProductsData)
 
-  if (!promotion) {
+  if (!promotion || !visible) {
     return (
       <div className="page-width py-8 sm:py-12">
         <p className="text-sm text-gray-500">This promotion is not available. It may have ended or been deactivated.</p>

@@ -23,7 +23,10 @@ import {
   useSetAdminCollectionActive,
 } from '@/lib/stores/api'
 import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
+import { formatDateTime } from '@/lib/utils/storage'
 import type { Product } from '@/lib/types'
+import { StatusBadge } from '@/components/common/StatusBadge'
+import { isStorefrontPromotionVisible, promotionStatus, PROMO_TYPE_LABELS } from '@/lib/utils/promotions'
 
 function toRFC3339(local: string) {
   if (!local) return new Date().toISOString()
@@ -83,6 +86,7 @@ export default function AdminCommercePage() {
   const [couponModalValues, setCouponModalValues] = useState(emptyCouponForm())
   const [promoForm, setPromoForm] = useState(emptyPromoForm)
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null)
+  const [promoFormOpen, setPromoFormOpen] = useState(false)
   const [collectionForm, setCollectionForm] = useState(emptyCollectionForm)
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -158,6 +162,7 @@ export default function AdminCommercePage() {
       }
       setPromoForm(emptyPromoForm())
       setEditingPromoId(null)
+      setPromoFormOpen(false)
       await refetchPromos()
     } catch (err: unknown) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to save promotion'))
@@ -168,12 +173,25 @@ export default function AdminCommercePage() {
 
   function startEditPromo(p: any) {
     setEditingPromoId(p.id)
+    setPromoFormOpen(true)
     setPromoForm({
       name: p.name,
       type: p.type,
       startsAt: fromISO(p.startsAt),
       endsAt: fromISO(p.endsAt),
     })
+  }
+
+  function openCreatePromo() {
+    setEditingPromoId(null)
+    setPromoForm(emptyPromoForm())
+    setPromoFormOpen(true)
+  }
+
+  function closePromoForm() {
+    setEditingPromoId(null)
+    setPromoFormOpen(false)
+    setPromoForm(emptyPromoForm())
   }
 
   async function togglePromo(id: string, active: boolean) {
@@ -245,13 +263,160 @@ export default function AdminCommercePage() {
     <div className="space-y-8 max-w-5xl">
       <AdminPageHeader
         title="Commerce"
-        subtitle="Manage coupons, promotions, and curated collections."
+        subtitle="Run sale campaigns, curated collections, and checkout coupons."
       />
 
       <section className="card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-semibold">Promotions</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+              Create a time-boxed sale campaign. Products are picked automatically — any active listing with a vendor discount is included.
+            </p>
+          </div>
+          {!promoFormOpen && (
+            <button type="button" className="btn-primary text-sm py-2 shrink-0" onClick={openCreatePromo}>
+              New promotion
+            </button>
+          )}
+        </div>
+
+        <div className="mb-6 rounded-lg border border-brand-teal/30 bg-brand-teal/5 dark:bg-brand-teal/10 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+          <p className="font-medium text-gray-900 dark:text-white mb-1">How it works</p>
+          <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+            <li>Vendors set discounts on their product variants (vendor → Products).</li>
+            <li>You only set the campaign name, type, and start/end dates here.</li>
+            <li>While live, the homepage shows a promotion card linking to all discounted items.</li>
+            <li>Deactivate or wait for the end date to remove it from the storefront.</li>
+          </ul>
+        </div>
+
+        {promoFormOpen && (
+          <form className="space-y-4 mb-6 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-900/40" onSubmit={handlePromoSubmit}>
+            <h3 className="font-medium text-sm">{editingPromoId ? 'Edit promotion' : 'Create promotion'}</h3>
+            <div className="grid md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Campaign name</label>
+                <input
+                  className="input-field"
+                  placeholder="e.g. Summer flash sale"
+                  required
+                  value={promoForm.name}
+                  onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Type</label>
+                <select className="input-field" value={promoForm.type} onChange={(e) => setPromoForm({ ...promoForm, type: e.target.value })}>
+                  <option value="flash_sale">Flash sale</option>
+                  <option value="seasonal">Seasonal</option>
+                  <option value="clearance">Clearance</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Starts</label>
+                <input
+                  className="input-field"
+                  type="datetime-local"
+                  required
+                  value={promoForm.startsAt}
+                  onChange={(e) => setPromoForm({ ...promoForm, startsAt: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Ends</label>
+                <input
+                  className="input-field"
+                  type="datetime-local"
+                  required
+                  value={promoForm.endsAt}
+                  onChange={(e) => setPromoForm({ ...promoForm, endsAt: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="submit" className="btn-primary" disabled={saving}>
+                {saving ? 'Saving...' : editingPromoId ? 'Save changes' : 'Create promotion'}
+              </button>
+              <button type="button" className="btn-secondary" onClick={closePromoForm}>Cancel</button>
+            </div>
+          </form>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                <th className="pb-2 pr-4 font-medium">Name</th>
+                <th className="pb-2 pr-4 font-medium">Type</th>
+                <th className="pb-2 pr-4 font-medium">Schedule</th>
+                <th className="pb-2 pr-4 font-medium">Products</th>
+                <th className="pb-2 pr-4 font-medium">Status</th>
+                <th className="pb-2 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {promotions.map((p) => {
+                const { label, status } = promotionStatus(p)
+                const visible = isStorefrontPromotionVisible(p)
+                return (
+                  <tr key={p.id} className="border-b border-gray-100 dark:border-gray-800 align-top">
+                    <td className="py-3 pr-4">
+                      <p className="font-medium">{p.name}</p>
+                      {visible && (
+                        <a
+                          href={`/promotions/${p.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-brand-teal hover:underline mt-0.5 inline-block"
+                        >
+                          View on storefront
+                        </a>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 capitalize">{PROMO_TYPE_LABELS[p.type] ?? p.type?.replace('_', ' ')}</td>
+                    <td className="py-3 pr-4 text-xs text-gray-500 whitespace-nowrap">
+                      {p.startsAt ? formatDateTime(p.startsAt) : '—'}
+                      <br />
+                      <span className="text-gray-400">to</span>{' '}
+                      {p.endsAt ? formatDateTime(p.endsAt) : '—'}
+                    </td>
+                    <td className="py-3 pr-4">
+                      <span className="font-medium">{p.productIds?.length ?? 0}</span>
+                      <p className="text-xs text-gray-500">discounted</p>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <StatusBadge status={status} />
+                      <p className="text-xs text-gray-500 mt-1">{label}</p>
+                    </td>
+                    <td className="py-3 text-right">
+                      <div className="flex justify-end gap-2 flex-wrap">
+                        <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => startEditPromo(p)}>
+                          Edit
+                        </button>
+                        <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => togglePromo(p.id, p.active)}>
+                          {p.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+          {promotions.length === 0 && (
+            <p className="text-gray-500 text-sm py-6 text-center">No promotions yet. Create one to highlight discounted products on the homepage.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <h2 className="font-semibold">Coupons</h2>
-          <button type="button" className="btn-primary text-sm py-2" onClick={openCreateCoupon}>
+          <div>
+            <h2 className="font-semibold">Checkout coupons</h2>
+            <p className="text-sm text-gray-500 mt-1">Discount codes shoppers enter at checkout — separate from homepage promotions.</p>
+          </div>
+          <button type="button" className="btn-primary text-sm py-2 shrink-0" onClick={openCreateCoupon}>
             New coupon
           </button>
         </div>
@@ -295,63 +460,6 @@ export default function AdminCommercePage() {
         }}
         onSubmit={handleCouponSubmit}
       />
-
-      <section className="card p-6">
-        <h2 className="font-semibold mb-1">{editingPromoId ? 'Edit promotion' : 'New promotion'}</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Set a name, type, and dates. All discounted products from every vendor are included automatically while the promotion is active.
-        </p>
-        <form className="space-y-4 mb-6" onSubmit={handlePromoSubmit}>
-          <div className="grid md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Name</label>
-              <input className="input-field" placeholder="Summer flash sale" required value={promoForm.name} onChange={(e) => setPromoForm({ ...promoForm, name: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Type</label>
-              <select className="input-field" value={promoForm.type} onChange={(e) => setPromoForm({ ...promoForm, type: e.target.value })}>
-                <option value="flash_sale">Flash sale</option>
-                <option value="seasonal">Seasonal</option>
-                <option value="clearance">Clearance</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Starts</label>
-              <input className="input-field" type="datetime-local" required value={promoForm.startsAt} onChange={(e) => setPromoForm({ ...promoForm, startsAt: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Ends</label>
-              <input className="input-field" type="datetime-local" required value={promoForm.endsAt} onChange={(e) => setPromoForm({ ...promoForm, endsAt: e.target.value })} />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : editingPromoId ? 'Update promotion' : 'Create promotion'}</button>
-            {editingPromoId && (
-              <button type="button" className="btn-secondary" onClick={() => { setEditingPromoId(null); setPromoForm(emptyPromoForm()) }}>Cancel</button>
-            )}
-          </div>
-        </form>
-        <ul className="space-y-3">
-          {promotions.map((p) => (
-            <li key={p.id} className="flex flex-wrap justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
-              <div>
-                <p className="font-medium">{p.name}</p>
-                <p className="text-xs text-gray-500">
-                  {p.type?.replace('_', ' ')} · {p.productIds?.length ?? 0} discounted products
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">{p.active ? 'Active' : 'Inactive'}</span>
-                <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => startEditPromo(p)}>Edit</button>
-                <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => togglePromo(p.id, p.active)}>
-                  {p.active ? 'Deactivate' : 'Activate'}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-        {promotions.length === 0 && <p className="text-gray-500 text-sm">No promotions yet.</p>}
-      </section>
 
       <section className="card p-6">
         <h2 className="font-semibold mb-1">{editingCollectionId ? 'Edit curated collection' : 'Curated collection'}</h2>
