@@ -127,7 +127,7 @@ export default function AdminSettingsPage() {
 
         <div className="card p-6 md:col-span-2">
           <h2 className="font-semibold mb-2">Vendor Subscription Plans ({plans.length})</h2>
-          <p className="text-xs text-gray-500 mb-4">Plans are loaded from your Paystack dashboard. Optional JSON in plan description: {`{"featuredSlots":3,"benefits":["..."]}`}</p>
+          <p className="text-sm text-gray-500 mb-4">Synced from Paystack. Set featured product slots in each plan&apos;s Paystack description.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {plans.map((plan) => (
               <div key={plan.label} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">

@@ -128,7 +128,7 @@ SELECT * FROM collections WHERE id = ? LIMIT 1;
 
 -- name: UpdateCollection :exec
 UPDATE collections
-SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?
+SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?, starts_at = ?, ends_at = ?
 WHERE id = ?;
 
 -- name: SetCollectionActive :exec

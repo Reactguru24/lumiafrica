@@ -85,15 +85,17 @@ type PromotionResponse struct {
 }
 
 type CollectionResponse struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Slug        string    `json:"slug"`
-	Description string    `json:"description,omitempty"`
-	Image       string    `json:"image,omitempty"`
-	SortOrder   int       `json:"sortOrder"`
-	Active      bool      `json:"active"`
-	ProductIDs  []string  `json:"productIds,omitempty"`
-	Products    []Product `json:"products,omitempty"`
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Slug        string     `json:"slug"`
+	Description string     `json:"description,omitempty"`
+	Image       string     `json:"image,omitempty"`
+	SortOrder   int        `json:"sortOrder"`
+	Active      bool       `json:"active"`
+	StartsAt    *time.Time `json:"startsAt,omitempty"`
+	EndsAt      *time.Time `json:"endsAt,omitempty"`
+	ProductIDs  []string   `json:"productIds,omitempty"`
+	Products    []Product  `json:"products,omitempty"`
 }
 
 type CreateCouponRequest struct {
@@ -136,6 +138,8 @@ type CreateCollectionRequest struct {
 	Description string   `json:"description"`
 	Image       string   `json:"image"`
 	SortOrder   int      `json:"sortOrder"`
+	StartsAt    *string  `json:"startsAt"`
+	EndsAt      *string  `json:"endsAt"`
 	ProductIDs  []string `json:"productIds"`
 }
 
@@ -159,5 +163,7 @@ type UpdateCollectionRequest struct {
 	Description string   `json:"description"`
 	Image       string   `json:"image"`
 	SortOrder   int      `json:"sortOrder"`
+	StartsAt    *string  `json:"startsAt"`
+	EndsAt      *string  `json:"endsAt"`
 	ProductIDs  []string `json:"productIds"`
 }

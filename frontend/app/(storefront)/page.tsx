@@ -126,14 +126,6 @@ export default function HomePage() {
         </section>
       )}
 
-      {!loadingFeatured && featuredVendorsList.length > 0 && (
-        <section className="page-width py-12 sm:py-16">
-          <p className="micro-label mb-1">Highlighted this week</p>
-          <h2 className="section-title mb-8">Featured Vendors</h2>
-          <FeaturedVendorsCarousel vendors={featuredVendorsList} />
-        </section>
-      )}
-
       {featuredProducts.length > 0 && (
         <section className="page-width py-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
@@ -207,6 +199,14 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {bestsellerProducts.map((p: any) => <ProductCard key={p.id} product={p} />)}
           </div>
+        </section>
+      )}
+
+      {!loadingFeatured && featuredVendorsList.length > 0 && (
+        <section className="page-width py-12 sm:py-16 border-t border-gray-200 dark:border-gray-800">
+          <p className="micro-label mb-1">Highlighted this week</p>
+          <h2 className="section-title mb-8">Featured Vendors</h2>
+          <FeaturedVendorsCarousel vendors={featuredVendorsList} />
         </section>
       )}
 

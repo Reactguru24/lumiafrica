@@ -75,5 +75,13 @@ func ToCollection(c sqlc.Collection, productIDs []string, products []models.Prod
 	if c.Image.Valid {
 		out.Image = sanitizeMediaURLString(c.Image.String)
 	}
+	if c.StartsAt.Valid {
+		t := c.StartsAt.Time
+		out.StartsAt = &t
+	}
+	if c.EndsAt.Valid {
+		t := c.EndsAt.Time
+		out.EndsAt = &t
+	}
 	return out
 }

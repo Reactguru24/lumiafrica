@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { CouponModal, couponFormToPayload, couponToFormValues, emptyCouponForm } from '@/components/admin/CouponModal'
+import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
 import { formatCurrency } from '@/lib/utils/storage'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import {
@@ -59,6 +60,8 @@ const emptyCollectionForm = () => ({
   description: '',
   image: '',
   sortOrder: 0,
+  startsAt: '',
+  endsAt: '',
   productIds: [] as string[],
 })
 
@@ -201,6 +204,8 @@ export default function AdminCommercePage() {
       description: collectionForm.description,
       image: collectionForm.image,
       sortOrder: collectionForm.sortOrder,
+      startsAt: collectionForm.startsAt ? toRFC3339(collectionForm.startsAt) : undefined,
+      endsAt: collectionForm.endsAt ? toRFC3339(collectionForm.endsAt) : undefined,
       productIds: collectionForm.productIds,
     }
     try {
@@ -229,6 +234,8 @@ export default function AdminCommercePage() {
       description: c.description ?? '',
       image: c.image ?? '',
       sortOrder: c.sortOrder ?? 0,
+      startsAt: fromISO(c.startsAt),
+      endsAt: fromISO(c.endsAt),
       productIds: c.productIds ?? [],
     })
   }
@@ -365,9 +372,33 @@ export default function AdminCommercePage() {
           <div className="grid md:grid-cols-2 gap-3">
             <input className="input-field" placeholder="Name" required value={collectionForm.name} onChange={(e) => setCollectionForm({ ...collectionForm, name: e.target.value })} />
             <input className="input-field" placeholder="Slug" required value={collectionForm.slug} onChange={(e) => setCollectionForm({ ...collectionForm, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })} />
-            <input className="input-field md:col-span-2" placeholder="Image URL" value={collectionForm.image} onChange={(e) => setCollectionForm({ ...collectionForm, image: e.target.value })} />
+            <div className="md:col-span-2">
+              <p className="text-sm font-medium mb-2">Cover image</p>
+              <ImageFieldUpload
+                presetId="banner"
+                variant="banner"
+                value={collectionForm.image}
+                onChange={(url) => setCollectionForm({ ...collectionForm, image: url })}
+              />
+              <input
+                className="input-field mt-2"
+                placeholder="Or paste image URL"
+                value={collectionForm.image}
+                onChange={(e) => setCollectionForm({ ...collectionForm, image: e.target.value })}
+              />
+            </div>
             <textarea className="input-field md:col-span-2 min-h-[72px]" placeholder="Description" value={collectionForm.description} onChange={(e) => setCollectionForm({ ...collectionForm, description: e.target.value })} />
             <input className="input-field" type="number" placeholder="Sort order" value={collectionForm.sortOrder} onChange={(e) => setCollectionForm({ ...collectionForm, sortOrder: Number(e.target.value) })} />
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Visible from (optional)</label>
+                <input className="input-field" type="datetime-local" value={collectionForm.startsAt} onChange={(e) => setCollectionForm({ ...collectionForm, startsAt: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Visible until (optional)</label>
+                <input className="input-field" type="datetime-local" value={collectionForm.endsAt} onChange={(e) => setCollectionForm({ ...collectionForm, endsAt: e.target.value })} />
+              </div>
+            </div>
           </div>
           <div>
             <p className="text-sm font-medium mb-2">Products ({collectionForm.productIds.length} selected)</p>
@@ -396,7 +427,12 @@ export default function AdminCommercePage() {
             <li key={c.id} className="flex flex-wrap justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
               <div>
                 <p className="font-medium">{c.name}</p>
-                <p className="text-xs text-gray-500">/{c.slug} · {c.productIds?.length ?? 0} products</p>
+                <p className="text-xs text-gray-500">
+                  /{c.slug} · {c.productIds?.length ?? 0} products
+                  {(c.startsAt || c.endsAt) && (
+                    <> · {c.startsAt ? new Date(c.startsAt).toLocaleDateString() : 'always'} – {c.endsAt ? new Date(c.endsAt).toLocaleDateString() : 'open'}</>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">{c.active ? 'Active' : 'Inactive'}</span>

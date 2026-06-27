@@ -850,7 +850,7 @@ func (q *Queries) SetPromotionActive(ctx context.Context, arg SetPromotionActive
 
 const updateCollection = `-- name: UpdateCollection :exec
 UPDATE collections
-SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?
+SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?, starts_at = ?, ends_at = ?
 WHERE id = ?
 `
 
@@ -860,6 +860,8 @@ type UpdateCollectionParams struct {
 	Description sql.NullString   `json:"description"`
 	Image       sql.NullString   `json:"image"`
 	SortOrder   int32            `json:"sort_order"`
+	StartsAt    sql.NullTime     `json:"starts_at"`
+	EndsAt      sql.NullTime     `json:"ends_at"`
 	ID          types.BinaryUUID `json:"id"`
 }
 
@@ -870,6 +872,8 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 		arg.Description,
 		arg.Image,
 		arg.SortOrder,
+		arg.StartsAt,
+		arg.EndsAt,
 		arg.ID,
 	)
 	return err

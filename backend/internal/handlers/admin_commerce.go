@@ -405,6 +405,8 @@ func CreateAdminCollection() gin.HandlerFunc {
 			Description: desc,
 			Image:       img,
 			SortOrder:   int32(req.SortOrder),
+			StartsAt:    parseOptionalRFC3339(req.StartsAt),
+			EndsAt:      parseOptionalRFC3339(req.EndsAt),
 			CreatedBy:   createdBy,
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to create collection")
@@ -536,6 +538,8 @@ func UpdateAdminCollection() gin.HandlerFunc {
 			Description: desc,
 			Image:       img,
 			SortOrder:   int32(req.SortOrder),
+			StartsAt:    parseOptionalRFC3339(req.StartsAt),
+			EndsAt:      parseOptionalRFC3339(req.EndsAt),
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to update collection")
 			return
@@ -594,4 +598,15 @@ func replaceCollectionProducts(ctx context.Context, q *sqlc.Queries, collID type
 			CollectionID: collID, ProductID: productID, SortOrder: int32(i),
 		})
 	}
+}
+
+func parseOptionalRFC3339(value *string) sql.NullTime {
+	if value == nil || strings.TrimSpace(*value) == "" {
+		return sql.NullTime{}
+	}
+	t, err := time.Parse(time.RFC3339, strings.TrimSpace(*value))
+	if err != nil {
+		return sql.NullTime{}
+	}
+	return sql.NullTime{Time: t, Valid: true}
 }
