@@ -202,10 +202,16 @@ func (s *Service) uploadFile(ctx context.Context, src io.Reader, filename, mimeT
 		if err == nil {
 			return result, nil
 		}
+		if s.cfg.ServerEnv == "production" {
+			return nil, fmt.Errorf("cloudinary upload: %w", err)
+		}
 		if strings.Contains(strings.ToLower(err.Error()), "unsupported file type") {
 			return s.uploadLocal(data, filename, mimeType, ext)
 		}
 		return nil, err
+	}
+	if s.cfg.ServerEnv == "production" {
+		return nil, fmt.Errorf("cloudinary is not configured")
 	}
 	return s.uploadLocal(data, filename, mimeType, ext)
 }

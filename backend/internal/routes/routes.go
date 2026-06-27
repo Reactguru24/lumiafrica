@@ -55,6 +55,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/vendors/:vendorID", handlers.GetVendor())
 	router.POST("/vendors/applications", handlers.ApplyVendor())
 	router.GET("/vendors/applications/status", handlers.GetVendorApplicationStatus())
+	router.POST("/uploads/images", handlers.UploadImage(cfg))
 	router.POST("/uploads/documents", handlers.UploadDocument(cfg))
 
 	router.GET("/reviews/product/:productID", handlers.GetProductReviews())
