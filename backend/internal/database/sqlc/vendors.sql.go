@@ -238,13 +238,16 @@ func (q *Queries) GetApprovedApplicationByBusinessEmail(ctx context.Context, low
 }
 
 const getFeaturedVendors = `-- name: GetFeaturedVendors :many
-SELECT DISTINCT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at FROM vendors v
-INNER JOIN vendor_subscriptions vs ON v.id = vs.vendor_id
+SELECT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at FROM vendors v
 WHERE v.suspended = false
   AND v.is_featured = true
-  AND vs.active = true
-  AND vs.expires_at > NOW()
-ORDER BY v.rating DESC, vs.plan DESC
+  AND EXISTS (
+    SELECT 1 FROM vendor_subscriptions vs
+    WHERE vs.vendor_id = v.id
+      AND vs.active = true
+      AND vs.expires_at > NOW()
+  )
+ORDER BY v.rating DESC
 LIMIT ?
 `
 

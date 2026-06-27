@@ -92,13 +92,17 @@ WHERE id = ?;
 UPDATE vendors SET is_featured = ? WHERE id = ?;
 
 -- name: GetFeaturedVendors :many
-SELECT DISTINCT v.* FROM vendors v
-INNER JOIN vendor_subscriptions vs ON v.id = vs.vendor_id
+SELECT v.*
+FROM vendors v
 WHERE v.suspended = false
   AND v.is_featured = true
-  AND vs.active = true
-  AND vs.expires_at > NOW()
-ORDER BY v.rating DESC, vs.plan DESC
+  AND EXISTS (
+    SELECT 1 FROM vendor_subscriptions vs
+    WHERE vs.vendor_id = v.id
+      AND vs.active = true
+      AND vs.expires_at > NOW()
+  )
+ORDER BY v.rating DESC
 LIMIT ?;
 
 -- name: UpdateVendorRating :exec
