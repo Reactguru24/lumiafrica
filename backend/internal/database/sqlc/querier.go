@@ -89,6 +89,7 @@ type Querier interface {
 	DeleteCollectionProducts(ctx context.Context, collectionID types.BinaryUUID) error
 	DeleteProductImages(ctx context.Context, productID types.BinaryUUID) error
 	DeletePromotionProducts(ctx context.Context, promotionID types.BinaryUUID) error
+	DeleteVendorShippingRate(ctx context.Context, arg DeleteVendorShippingRateParams) error
 	DeleteWishlistBySessionKey(ctx context.Context, sessionKey sql.NullString) error
 	DisableUser(ctx context.Context, id types.BinaryUUID) error
 	EnableUser(ctx context.Context, id types.BinaryUUID) error
@@ -137,6 +138,7 @@ type Querier interface {
 	GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (Vendor, error)
 	GetVendorByUserID(ctx context.Context, userID types.BinaryUUID) (Vendor, error)
 	GetVendorCommissionRate(ctx context.Context, id types.BinaryUUID) (string, error)
+	GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (VendorShippingRate, error)
 	HideOutOfStockProductByVendor(ctx context.Context, arg HideOutOfStockProductByVendorParams) error
 	IncrementCouponUses(ctx context.Context, id types.BinaryUUID) error
 	InsertVendorCategory(ctx context.Context, arg InsertVendorCategoryParams) error
@@ -169,8 +171,8 @@ type Querier interface {
 	ListHomepageNewArrivalProducts(ctx context.Context, limit int32) ([]Product, error)
 	ListHomepageRecentProducts(ctx context.Context, limit int32) ([]Product, error)
 	ListHomepageTrendingProducts(ctx context.Context, limit int32) ([]Product, error)
-	ListOnSaleProductIDs(ctx context.Context) ([]types.BinaryUUID, error)
 	ListLowStockByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]Product, error)
+	ListOnSaleProductIDs(ctx context.Context) ([]types.BinaryUUID, error)
 	ListOrderItemsByOrder(ctx context.Context, orderID types.BinaryUUID) ([]OrderItem, error)
 	ListOrderItemsByOrderIDs(ctx context.Context, orderIds []types.BinaryUUID) ([]OrderItem, error)
 	ListOrdersByUser(ctx context.Context, arg ListOrdersByUserParams) ([]Order, error)
@@ -196,6 +198,7 @@ type Querier interface {
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	ListVendorCategoryIDs(ctx context.Context, vendorID types.BinaryUUID) ([]types.BinaryUUID, error)
 	ListVendorProducts(ctx context.Context, arg ListVendorProductsParams) ([]Product, error)
+	ListVendorShippingRatesByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorShippingRatesByVendorRow, error)
 	ListVendorsAdmin(ctx context.Context, arg ListVendorsAdminParams) ([]Vendor, error)
 	ListWishlistBySessionKey(ctx context.Context, sessionKey sql.NullString) ([]types.BinaryUUID, error)
 	ListWishlistByUser(ctx context.Context, userID *types.BinaryUUID) ([]types.BinaryUUID, error)
@@ -222,6 +225,7 @@ type Querier interface {
 	SetProductFeaturedByVendor(ctx context.Context, arg SetProductFeaturedByVendorParams) error
 	SetPromotionActive(ctx context.Context, arg SetPromotionActiveParams) error
 	SoftDeleteProductVariantsByProduct(ctx context.Context, productID types.BinaryUUID) error
+	SoftDeletePromotion(ctx context.Context, id types.BinaryUUID) error
 	UnfeatureVendorIfNoActiveSubscription(ctx context.Context, id types.BinaryUUID) error
 	UpdateAllVendorCommissionRates(ctx context.Context, commissionRate string) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
@@ -241,12 +245,9 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 	UpdateVendorCommissionRate(ctx context.Context, arg UpdateVendorCommissionRateParams) error
-	DeleteVendorShippingRate(ctx context.Context, arg DeleteVendorShippingRateParams) error
-	GetVendorShippingRate(ctx context.Context, vendorID, zoneID types.BinaryUUID) (VendorShippingRate, error)
-	ListVendorShippingRatesByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorShippingRatesByVendorRow, error)
-	UpsertVendorShippingRate(ctx context.Context, arg UpsertVendorShippingRateParams) error
 	UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfileParams) error
 	UpdateVendorRating(ctx context.Context, arg UpdateVendorRatingParams) error
+	UpsertVendorShippingRate(ctx context.Context, arg UpsertVendorShippingRateParams) error
 	UserHasUsedPasswordResetToken(ctx context.Context, userID types.BinaryUUID) (bool, error)
 }
 

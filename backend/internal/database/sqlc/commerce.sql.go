@@ -65,7 +65,7 @@ func (q *Queries) CountAllCoupons(ctx context.Context) (int64, error) {
 }
 
 const countAllPromotions = `-- name: CountAllPromotions :one
-SELECT COUNT(*) FROM promotions
+SELECT COUNT(*) FROM promotions WHERE deleted_at IS NULL
 `
 
 func (q *Queries) CountAllPromotions(ctx context.Context) (int64, error) {
@@ -421,7 +421,7 @@ func (q *Queries) GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) 
 }
 
 const getPromotionByID = `-- name: GetPromotionByID :one
-SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, created_at, updated_at FROM promotions WHERE id = ? LIMIT 1
+SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, deleted_at, created_at, updated_at FROM promotions WHERE id = ? AND deleted_at IS NULL LIMIT 1
 `
 
 func (q *Queries) GetPromotionByID(ctx context.Context, id types.BinaryUUID) (Promotion, error) {
@@ -437,6 +437,7 @@ func (q *Queries) GetPromotionByID(ctx context.Context, id types.BinaryUUID) (Pr
 		&i.EndsAt,
 		&i.Active,
 		&i.CreatedBy,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -532,8 +533,10 @@ func (q *Queries) ListActiveDeliveryZones(ctx context.Context) ([]DeliveryZone, 
 }
 
 const listActivePromotions = `-- name: ListActivePromotions :many
-SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, created_at, updated_at FROM promotions
-WHERE active = true AND starts_at <= NOW() AND ends_at >= NOW()
+SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, deleted_at, created_at, updated_at FROM promotions
+WHERE active = true
+  AND deleted_at IS NULL
+  AND starts_at <= NOW() AND ends_at >= NOW()
 ORDER BY starts_at DESC
 `
 
@@ -556,6 +559,7 @@ func (q *Queries) ListActivePromotions(ctx context.Context) ([]Promotion, error)
 			&i.EndsAt,
 			&i.Active,
 			&i.CreatedBy,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -666,7 +670,9 @@ func (q *Queries) ListAllCoupons(ctx context.Context, arg ListAllCouponsParams) 
 }
 
 const listAllPromotions = `-- name: ListAllPromotions :many
-SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, created_at, updated_at FROM promotions ORDER BY starts_at DESC LIMIT ? OFFSET ?
+SELECT id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by, deleted_at, created_at, updated_at FROM promotions
+WHERE deleted_at IS NULL
+ORDER BY starts_at DESC LIMIT ? OFFSET ?
 `
 
 type ListAllPromotionsParams struct {
@@ -693,6 +699,7 @@ func (q *Queries) ListAllPromotions(ctx context.Context, arg ListAllPromotionsPa
 			&i.EndsAt,
 			&i.Active,
 			&i.CreatedBy,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -791,6 +798,60 @@ func (q *Queries) SetCouponActive(ctx context.Context, arg SetCouponActiveParams
 	return err
 }
 
+const setPromotionActive = `-- name: SetPromotionActive :exec
+UPDATE promotions SET active = ? WHERE id = ?
+`
+
+type SetPromotionActiveParams struct {
+	Active int16            `json:"active"`
+	ID     types.BinaryUUID `json:"id"`
+}
+
+func (q *Queries) SetPromotionActive(ctx context.Context, arg SetPromotionActiveParams) error {
+	_, err := q.db.ExecContext(ctx, setPromotionActive, arg.Active, arg.ID)
+	return err
+}
+
+const softDeletePromotion = `-- name: SoftDeletePromotion :exec
+UPDATE promotions SET deleted_at = NOW(), active = false, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL
+`
+
+func (q *Queries) SoftDeletePromotion(ctx context.Context, id types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, softDeletePromotion, id)
+	return err
+}
+
+const updateCollection = `-- name: UpdateCollection :exec
+UPDATE collections
+SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?, starts_at = ?, ends_at = ?
+WHERE id = ?
+`
+
+type UpdateCollectionParams struct {
+	Name        string           `json:"name"`
+	Slug        string           `json:"slug"`
+	Description sql.NullString   `json:"description"`
+	Image       sql.NullString   `json:"image"`
+	SortOrder   int32            `json:"sort_order"`
+	StartsAt    sql.NullTime     `json:"starts_at"`
+	EndsAt      sql.NullTime     `json:"ends_at"`
+	ID          types.BinaryUUID `json:"id"`
+}
+
+func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionParams) error {
+	_, err := q.db.ExecContext(ctx, updateCollection,
+		arg.Name,
+		arg.Slug,
+		arg.Description,
+		arg.Image,
+		arg.SortOrder,
+		arg.StartsAt,
+		arg.EndsAt,
+		arg.ID,
+	)
+	return err
+}
+
 const updateCoupon = `-- name: UpdateCoupon :exec
 UPDATE coupons
 SET code = ?,
@@ -829,51 +890,6 @@ func (q *Queries) UpdateCoupon(ctx context.Context, arg UpdateCouponParams) erro
 		arg.PerUserLimit,
 		arg.StartsAt,
 		arg.ExpiresAt,
-		arg.ID,
-	)
-	return err
-}
-
-const setPromotionActive = `-- name: SetPromotionActive :exec
-UPDATE promotions SET active = ? WHERE id = ?
-`
-
-type SetPromotionActiveParams struct {
-	Active int16            `json:"active"`
-	ID     types.BinaryUUID `json:"id"`
-}
-
-func (q *Queries) SetPromotionActive(ctx context.Context, arg SetPromotionActiveParams) error {
-	_, err := q.db.ExecContext(ctx, setPromotionActive, arg.Active, arg.ID)
-	return err
-}
-
-const updateCollection = `-- name: UpdateCollection :exec
-UPDATE collections
-SET name = ?, slug = ?, description = ?, image = ?, sort_order = ?, starts_at = ?, ends_at = ?
-WHERE id = ?
-`
-
-type UpdateCollectionParams struct {
-	Name        string           `json:"name"`
-	Slug        string           `json:"slug"`
-	Description sql.NullString   `json:"description"`
-	Image       sql.NullString   `json:"image"`
-	SortOrder   int32            `json:"sort_order"`
-	StartsAt    sql.NullTime     `json:"starts_at"`
-	EndsAt      sql.NullTime     `json:"ends_at"`
-	ID          types.BinaryUUID `json:"id"`
-}
-
-func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionParams) error {
-	_, err := q.db.ExecContext(ctx, updateCollection,
-		arg.Name,
-		arg.Slug,
-		arg.Description,
-		arg.Image,
-		arg.SortOrder,
-		arg.StartsAt,
-		arg.EndsAt,
 		arg.ID,
 	)
 	return err

@@ -36,5 +36,8 @@ export function promotionStatus(promo: PromotionLike) {
   const end = promo.endsAt ? new Date(promo.endsAt).getTime() : Number.POSITIVE_INFINITY
   if (end < now) return { label: 'Expired', status: 'archived' as const }
   if (start > now) return { label: 'Scheduled', status: 'pending' as const }
+  if ((promo.productIds?.length ?? 0) === 0) {
+    return { label: 'No discounted products', status: 'pending' as const }
+  }
   return { label: 'Live on storefront', status: 'active' as const }
 }

@@ -93,7 +93,11 @@ WHERE p.status = 'active'
   AND (sqlc.arg('bestseller_only') = false OR p.bestseller = true)
   AND (sqlc.arg('new_arrival_only') = false OR p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY))
   AND (sqlc.arg('on_sale_only') = false OR EXISTS (
-    SELECT 1 FROM product_variants pv WHERE pv.product_id = p.id AND pv.discount > 0 AND pv.deleted_at IS NULL
+    SELECT 1 FROM product_variants pv
+    WHERE pv.product_id = p.id
+      AND pv.discount > 0
+      AND pv.stock > 0
+      AND pv.deleted_at IS NULL
   ))
 ORDER BY
   CASE WHEN sqlc.arg('sort_by') = 'popular' THEN p.review_count END DESC,
@@ -134,7 +138,11 @@ WHERE p.status = 'active'
   AND (sqlc.arg('bestseller_only') = false OR p.bestseller = true)
   AND (sqlc.arg('new_arrival_only') = false OR p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY))
   AND (sqlc.arg('on_sale_only') = false OR EXISTS (
-    SELECT 1 FROM product_variants pv WHERE pv.product_id = p.id AND pv.discount > 0 AND pv.deleted_at IS NULL
+    SELECT 1 FROM product_variants pv
+    WHERE pv.product_id = p.id
+      AND pv.discount > 0
+      AND pv.stock > 0
+      AND pv.deleted_at IS NULL
   ));
 
 -- name: ListDistinctCategories :many
@@ -352,4 +360,5 @@ INNER JOIN product_variants pv ON pv.product_id = p.id AND pv.deleted_at IS NULL
 WHERE p.status = 'active'
   AND p.total_stock > 0
   AND pv.discount > 0
+  AND pv.stock > 0
 ORDER BY p.created_at DESC;

@@ -39,11 +39,15 @@ func promotionCoverImage(ctx context.Context, q *sqlc.Queries, productIDs []type
 }
 
 func promotionOnSaleProductIDs(ctx context.Context, q *sqlc.Queries) ([]types.BinaryUUID, error) {
+	// Only products with an in-stock variant that has a vendor discount qualify.
 	return q.ListOnSaleProductIDs(ctx)
 }
 
 func buildPromotionResponse(ctx context.Context, q *sqlc.Queries, row sqlc.Promotion) models.PromotionResponse {
-	ids, _ := promotionOnSaleProductIDs(ctx, q)
+	ids, err := promotionOnSaleProductIDs(ctx, q)
+	if err != nil || len(ids) == 0 {
+		return store.ToPromotion(row, nil, "")
+	}
 	pidStrs := binaryIDsToStrings(ids)
 	return store.ToPromotion(row, pidStrs, promotionCoverImage(ctx, q, ids))
 }

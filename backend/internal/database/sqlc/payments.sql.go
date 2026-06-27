@@ -219,7 +219,7 @@ func (q *Queries) ListFeaturedProductsAdmin(ctx context.Context, arg ListFeature
 }
 
 const listFeaturedVendorsAdmin = `-- name: ListFeaturedVendorsAdmin :many
-SELECT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at FROM vendors v
+SELECT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.shipping_cost, v.free_shipping_threshold, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at FROM vendors v
 WHERE v.is_featured = true AND v.suspended = false
 ORDER BY v.store_name ASC
 LIMIT ? OFFSET ?
@@ -251,6 +251,8 @@ func (q *Queries) ListFeaturedVendorsAdmin(ctx context.Context, arg ListFeatured
 			&i.BusinessEmail,
 			&i.Country,
 			&i.City,
+			&i.ShippingCost,
+			&i.FreeShippingThreshold,
 			&i.SocialLinks,
 			&i.CommissionRate,
 			&i.Rating,

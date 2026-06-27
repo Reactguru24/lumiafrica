@@ -32,7 +32,7 @@ func (q *Queries) CountCustomers(ctx context.Context) (int64, error) {
 }
 
 const listTopVendorsForAnalytics = `-- name: ListTopVendorsForAnalytics :many
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors ORDER BY rating DESC, created_at DESC LIMIT ?
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors ORDER BY rating DESC, created_at DESC LIMIT ?
 `
 
 func (q *Queries) ListTopVendorsForAnalytics(ctx context.Context, limit int32) ([]Vendor, error) {
@@ -56,6 +56,8 @@ func (q *Queries) ListTopVendorsForAnalytics(ctx context.Context, limit int32) (
 			&i.BusinessEmail,
 			&i.Country,
 			&i.City,
+			&i.ShippingCost,
+			&i.FreeShippingThreshold,
 			&i.SocialLinks,
 			&i.CommissionRate,
 			&i.Rating,

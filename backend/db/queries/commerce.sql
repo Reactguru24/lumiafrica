@@ -64,14 +64,18 @@ WHERE id = ?;
 
 -- name: ListActivePromotions :many
 SELECT * FROM promotions
-WHERE active = true AND starts_at <= NOW() AND ends_at >= NOW()
+WHERE active = true
+  AND deleted_at IS NULL
+  AND starts_at <= NOW() AND ends_at >= NOW()
 ORDER BY starts_at DESC;
 
 -- name: ListAllPromotions :many
-SELECT * FROM promotions ORDER BY starts_at DESC LIMIT ? OFFSET ?;
+SELECT * FROM promotions
+WHERE deleted_at IS NULL
+ORDER BY starts_at DESC LIMIT ? OFFSET ?;
 
 -- name: CountAllPromotions :one
-SELECT COUNT(*) FROM promotions;
+SELECT COUNT(*) FROM promotions WHERE deleted_at IS NULL;
 
 -- name: CreatePromotion :exec
 INSERT INTO promotions (id, name, type, discount_type, discount_value, starts_at, ends_at, active, created_by)
@@ -84,7 +88,10 @@ INSERT IGNORE INTO promotion_products (promotion_id, product_id) VALUES (?, ?);
 SELECT product_id FROM promotion_products WHERE promotion_id = ?;
 
 -- name: GetPromotionByID :one
-SELECT * FROM promotions WHERE id = ? LIMIT 1;
+SELECT * FROM promotions WHERE id = ? AND deleted_at IS NULL LIMIT 1;
+
+-- name: SoftDeletePromotion :exec
+UPDATE promotions SET deleted_at = NOW(), active = false, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL;
 
 -- name: UpdatePromotion :exec
 UPDATE promotions

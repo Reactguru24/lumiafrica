@@ -15,12 +15,14 @@ export default function PromotionProductsClient({ promotionId }: Props) {
   const { data: promotions } = usePromotions()
   const { data: saleProductsData } = useProducts({ onSale: true, limit: 100 })
 
-type PromotionRow = PromotionLike & { id: string; name: string }
+  type PromotionRow = PromotionLike & { id: string; name: string }
 
   const promoList = unwrapItems<PromotionRow>(promotions)
   const promotion = promoList.find((p) => p.id === promotionId)
-  const visible = promotion ? isStorefrontPromotionVisible(promotion) : false
-  const { items: saleProducts } = unwrapPaginated<Product>(saleProductsData)
+  const salePage = unwrapPaginated<Product>(saleProductsData)
+  const hasDiscountedProducts = salePage.total > 0
+  const visible = promotion ? isStorefrontPromotionVisible(promotion) && hasDiscountedProducts : false
+  const { items: saleProducts } = salePage
 
   if (!promotion || !visible) {
     return (

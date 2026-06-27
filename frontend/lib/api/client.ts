@@ -605,6 +605,10 @@ export const adminAPI = {
     return put(`/admin/promotions/${promotionId}/active`, { active })
   },
 
+  deletePromotion(promotionId: string) {
+    return del(`/admin/promotions/${promotionId}`)
+  },
+
   listCollections(params?: { page?: number; limit?: number }) {
     return get(`/admin/collections${buildQuery(params)}`)
   },

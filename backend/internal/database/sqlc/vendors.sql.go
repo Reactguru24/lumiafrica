@@ -66,7 +66,7 @@ func (q *Queries) CountVendorsAdmin(ctx context.Context) (int64, error) {
 const createVendor = `-- name: CreateVendor :exec
 INSERT INTO vendors (
   id, user_id, store_name, slug, description, logo, banner,
-  contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links
+  contact_phone, business_email, country, city, social_links
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
@@ -238,7 +238,8 @@ func (q *Queries) GetApprovedApplicationByBusinessEmail(ctx context.Context, low
 }
 
 const getFeaturedVendors = `-- name: GetFeaturedVendors :many
-SELECT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at FROM vendors v
+SELECT v.id, v.user_id, v.store_name, v.slug, v.description, v.logo, v.banner, v.contact_phone, v.business_email, v.country, v.city, v.shipping_cost, v.free_shipping_threshold, v.social_links, v.commission_rate, v.rating, v.verified, v.suspended, v.is_featured, v.created_at, v.updated_at
+FROM vendors v
 WHERE v.suspended = false
   AND v.is_featured = true
   AND EXISTS (

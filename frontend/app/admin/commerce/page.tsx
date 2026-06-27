@@ -18,6 +18,7 @@ import {
   useCreateAdminPromotion,
   useUpdateAdminPromotion,
   useSetAdminPromotionActive,
+  useDeleteAdminPromotion,
   useCreateAdminCollection,
   useUpdateAdminCollection,
   useSetAdminCollectionActive,
@@ -77,6 +78,7 @@ export default function AdminCommercePage() {
   const createPromotion = useCreateAdminPromotion().mutate
   const updatePromotion = useUpdateAdminPromotion().mutate
   const setPromotionActive = useSetAdminPromotionActive().mutate
+  const deletePromotion = useDeleteAdminPromotion().mutate
   const createCollection = useCreateAdminCollection().mutate
   const updateCollection = useUpdateAdminCollection().mutate
   const setCollectionActive = useSetAdminCollectionActive().mutate
@@ -201,6 +203,18 @@ export default function AdminCommercePage() {
       toast.success('Promotion updated')
     } catch (err: unknown) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to update promotion'))
+    }
+  }
+
+  async function removePromo(id: string, name: string) {
+    if (!window.confirm(`Delete "${name}"? This removes the campaign from admin and the storefront.`)) return
+    try {
+      await deletePromotion({ id })
+      if (editingPromoId === id) closePromoForm()
+      await refetchPromos()
+      toast.success('Promotion deleted')
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Failed to delete promotion'))
     }
   }
 
@@ -396,6 +410,9 @@ export default function AdminCommercePage() {
                         </button>
                         <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => togglePromo(p.id, p.active)}>
                           {p.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button type="button" className="text-xs text-red-600 hover:underline py-1 px-2" onClick={() => removePromo(p.id, p.name)}>
+                          Delete
                         </button>
                       </div>
                     </td>

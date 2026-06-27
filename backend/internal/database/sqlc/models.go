@@ -1204,6 +1204,7 @@ type Promotion struct {
 	EndsAt        time.Time              `json:"ends_at"`
 	Active        int16                  `json:"active"`
 	CreatedBy     *types.BinaryUUID      `json:"created_by"`
+	DeletedAt     sql.NullTime           `json:"deleted_at"`
 	CreatedAt     time.Time              `json:"created_at"`
 	UpdatedAt     time.Time              `json:"updated_at"`
 }
@@ -1299,27 +1300,27 @@ type User struct {
 }
 
 type Vendor struct {
-	ID             types.BinaryUUID `json:"id"`
-	UserID         types.BinaryUUID `json:"user_id"`
-	StoreName      string           `json:"store_name"`
-	Slug           string           `json:"slug"`
-	Description    sql.NullString   `json:"description"`
-	Logo           string           `json:"logo"`
-	Banner         sql.NullString   `json:"banner"`
-	ContactPhone   string           `json:"contact_phone"`
-	BusinessEmail  string           `json:"business_email"`
-	Country        string           `json:"country"`
-	City           string           `json:"city"`
-	ShippingCost   string           `json:"shipping_cost"`
-	FreeShippingThreshold sql.NullString `json:"free_shipping_threshold"`
-	SocialLinks    *json.RawMessage `json:"social_links"`
-	CommissionRate string           `json:"commission_rate"`
-	Rating         string           `json:"rating"`
-	Verified       int16            `json:"verified"`
-	Suspended      int16            `json:"suspended"`
-	IsFeatured     int16            `json:"is_featured"`
-	CreatedAt      time.Time        `json:"created_at"`
-	UpdatedAt      time.Time        `json:"updated_at"`
+	ID                    types.BinaryUUID `json:"id"`
+	UserID                types.BinaryUUID `json:"user_id"`
+	StoreName             string           `json:"store_name"`
+	Slug                  string           `json:"slug"`
+	Description           sql.NullString   `json:"description"`
+	Logo                  string           `json:"logo"`
+	Banner                sql.NullString   `json:"banner"`
+	ContactPhone          string           `json:"contact_phone"`
+	BusinessEmail         string           `json:"business_email"`
+	Country               string           `json:"country"`
+	City                  string           `json:"city"`
+	ShippingCost          string           `json:"shipping_cost"`
+	FreeShippingThreshold sql.NullString   `json:"free_shipping_threshold"`
+	SocialLinks           *json.RawMessage `json:"social_links"`
+	CommissionRate        string           `json:"commission_rate"`
+	Rating                string           `json:"rating"`
+	Verified              int16            `json:"verified"`
+	Suspended             int16            `json:"suspended"`
+	IsFeatured            int16            `json:"is_featured"`
+	CreatedAt             time.Time        `json:"created_at"`
+	UpdatedAt             time.Time        `json:"updated_at"`
 }
 
 type VendorAnalyticsDaily struct {
@@ -1396,6 +1397,15 @@ type VendorPayoutMethod struct {
 	IsDefault   int16                   `json:"is_default"`
 	CreatedAt   time.Time               `json:"created_at"`
 	UpdatedAt   time.Time               `json:"updated_at"`
+}
+
+type VendorShippingRate struct {
+	ID        types.BinaryUUID `json:"id"`
+	VendorID  types.BinaryUUID `json:"vendor_id"`
+	ZoneID    types.BinaryUUID `json:"zone_id"`
+	Fee       string           `json:"fee"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
 }
 
 type VendorSubscription struct {

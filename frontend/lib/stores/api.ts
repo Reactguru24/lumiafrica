@@ -327,6 +327,12 @@ export function useSetAdminPromotionActive() {
   )
 }
 
+export function useDeleteAdminPromotion() {
+  return useMutation('delete-admin-promotion', (data: { id: string }) =>
+    adminAPI.deletePromotion(data.id),
+  )
+}
+
 export function useCreateAdminCollection() {
   return useMutation('create-admin-collection', (data) => adminAPI.createCollection(data))
 }

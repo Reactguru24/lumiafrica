@@ -488,6 +488,30 @@ func SetAdminPromotionActive() gin.HandlerFunc {
 	}
 }
 
+// DeleteAdminPromotion godoc
+// @Summary Soft-delete promotion (admin)
+// @Description Marks a promotion as deleted and removes it from admin and storefront lists.
+// @Tags Admin
+// @Produce json
+// @Security Bearer
+// @Param promotionID path string true "Promotion ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /admin/promotions/{promotionID} [delete]
+func DeleteAdminPromotion() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		promoID, ok := parsePathID(c, "promotionID")
+		if !ok {
+			return
+		}
+		ctx := c.Request.Context()
+		if err := getStore(c).Queries().SoftDeletePromotion(ctx, promoID); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to delete promotion")
+			return
+		}
+		utils.Success(c, gin.H{"id": promoID.String(), "deleted": true})
+	}
+}
+
 // UpdateAdminCollection godoc
 // @Summary Update collection (admin)
 // @Description Update collection metadata and linked products.

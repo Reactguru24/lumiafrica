@@ -153,6 +153,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.POST("/promotions", handlers.CreateAdminPromotion())
 		admin.PUT("/promotions/:promotionID", handlers.UpdateAdminPromotion())
 		admin.PUT("/promotions/:promotionID/active", handlers.SetAdminPromotionActive())
+		admin.DELETE("/promotions/:promotionID", handlers.DeleteAdminPromotion())
 		admin.GET("/collections", handlers.ListAdminCollections())
 		admin.POST("/collections", handlers.CreateAdminCollection())
 		admin.PUT("/collections/:collectionID", handlers.UpdateAdminCollection())

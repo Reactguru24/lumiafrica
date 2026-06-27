@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections } from '@/lib/stores/api'
-import { unwrapItems } from '@/lib/utils/api'
+import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections, useProducts } from '@/lib/stores/api'
+import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
 import { filterStorefrontPromotions, type PromotionLike } from '@/lib/utils/promotions'
 import { ProductCard } from '@/components/product/ProductCard'
 import { HeroSlider } from '@/components/common/HeroSlider'
@@ -29,6 +29,7 @@ export default function HomePage() {
   const { data: homepageProducts } = useHomepageProducts()
   const { data: promotions } = usePromotions()
   const { data: collections } = useCollections()
+  const { data: saleProductsData } = useProducts({ onSale: true, limit: 1 })
 
   const featuredVendorsList = unwrapItems(featuredVendors) as FeaturedVendorSlide[]
   const collectionsData = (homepageProducts as any) || {}
@@ -36,7 +37,11 @@ export default function HomePage() {
   const trendingProducts = (collectionsData.trending || []) as any[]
   const bestsellerProducts = (collectionsData.bestsellers || []) as any[]
   const newArrivalProducts = (collectionsData.newArrivals || []) as any[]
-  const activePromotions = filterStorefrontPromotions(unwrapItems<PromotionLike>(promotions))
+  const saleProductTotal = unwrapPaginated(saleProductsData).total
+  const hasDiscountedProducts = saleProductTotal > 0
+  const activePromotions = hasDiscountedProducts
+    ? filterStorefrontPromotions(unwrapItems<PromotionLike>(promotions))
+    : []
   const curatedCollections = unwrapItems(collections)
 
   return (
@@ -91,7 +96,7 @@ export default function HomePage() {
                 </span>
                 <h3 className="font-semibold mt-1">{promo.name}</h3>
                 <p className="text-sm text-gray-500 mt-2">
-                  {promo.productIds?.length ?? 0} discounted items
+                  {(promo.productIds?.length ?? 0)} discounted item{(promo.productIds?.length ?? 0) === 1 ? '' : 's'}
                 </p>
               </Link>
             ))}

@@ -1030,6 +1030,7 @@ CREATE TABLE promotions (
   ends_at        TIMESTAMP     NOT NULL,
   active         BOOLEAN       NOT NULL DEFAULT true,
   created_by     BINARY(16)    NULL,
+  deleted_at     TIMESTAMP     NULL,
   created_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
