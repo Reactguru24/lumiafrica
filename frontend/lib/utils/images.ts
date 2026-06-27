@@ -134,3 +134,9 @@ export function storeBannerImage(index: number): string {
 }
 
 export { HERO_IMAGES, CLOTHING_IMAGES, CATEGORY_IMAGES }
+
+/** Absolute URLs (Unsplash, Cloudinary, etc.) — skip Netlify/Next image optimizer. */
+export function isExternalImageUrl(url?: string | null): boolean {
+  if (!url) return false
+  return url.startsWith('http://') || url.startsWith('https://')
+}

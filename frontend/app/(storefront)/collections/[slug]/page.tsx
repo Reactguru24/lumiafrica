@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { useCollection } from '@/lib/stores/api'
+import { isExternalImageUrl } from '@/lib/utils/images'
 import { ProductCard } from '@/components/product/ProductCard'
 
 export default function CollectionPage() {
@@ -31,7 +32,7 @@ export default function CollectionPage() {
     <div>
       <section className="relative h-48 sm:h-64 bg-gray-900 text-white overflow-hidden">
         {collection.image && (
-          <Image src={collection.image} alt={collection.name || ''} fill className="object-cover opacity-50" sizes="100vw" />
+          <Image src={collection.image} alt={collection.name || ''} fill className="object-cover opacity-50" sizes="100vw" unoptimized={isExternalImageUrl(collection.image)} />
         )}
         <div className="absolute inset-0 flex items-end">
           <div className="page-width pb-8">

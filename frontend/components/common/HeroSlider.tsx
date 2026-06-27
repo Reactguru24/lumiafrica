@@ -40,7 +40,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
         >
           {i === active && (
-            <Image src={slide.image} alt={slide.title} fill className="object-cover" priority />
+            <Image src={slide.image} alt={slide.title} fill className="object-cover" priority unoptimized />
           )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex items-center">
