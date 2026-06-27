@@ -6,18 +6,19 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
-import { useProducts, useCreateOrder, useDeliveryZones, useValidateCoupon } from '@/lib/stores/api'
+import { useProducts, useCreateOrder, useValidateCoupon, useShippingEstimate, useDeliveryZones } from '@/lib/stores/api'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
 import { formatCurrency } from '@/lib/utils/storage'
-import { FREE_SHIPPING_KES, TAX_RATE, PAYMENT_METHODS, SHIPPING_METHODS } from '@/lib/constants/commerce'
+import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
+import { toShippingEstimateItems } from '@/lib/utils/shipping'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
 import { CUSTOMER_ROLES } from '@/lib/constants/roles'
 import type { Product, CartItem } from '@/lib/types'
 import type { ProductListResponse } from '@/lib/types/filters'
 
-type DeliveryZone = { id: string; name: string; baseCost: number; estimatedDays: string }
+type DeliveryZone = { id: string; name: string; estimatedDays: string }
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -32,7 +33,6 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '',
     street: '', city: '', state: '', country: 'Kenya', zipCode: '',
-    deliveryMethod: SHIPPING_METHODS[0].name as string,
     paymentMethod: PAYMENT_METHODS[0] as (typeof PAYMENT_METHODS)[number],
   })
   const { data: allProducts } = useProducts({ limit: 200 })
@@ -58,6 +58,9 @@ export default function CheckoutPage() {
     }).filter(Boolean) as (CartItem & { product: Product })[]
   }, [cart.items, productMap])
 
+  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
+  const { data: shippingData } = useShippingEstimate(estimateItems, deliveryZoneId)
+
   useEffect(() => {
     if (auth.user) {
       setForm((f) => ({
@@ -80,11 +83,8 @@ export default function CheckoutPage() {
     return s + Math.max(0, i.product.price - discountAmount) * i.quantity
   }, 0), [cartItems])
 
-  const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId)
-  const fallbackShipping = SHIPPING_METHODS.find((m) => m.name === form.deliveryMethod) || SHIPPING_METHODS[0]
-  const shippingCost = subtotal > FREE_SHIPPING_KES
-    ? 0
-    : (selectedZone?.baseCost ?? fallbackShipping.price)
+  const shippingCost = shippingData?.shippingCost ?? 0
+  const shippingBreakdown = shippingData?.breakdown ?? []
   const discount = appliedCoupon?.discount ?? 0
   const tax = subtotal * TAX_RATE
   const total = Math.max(0, subtotal - discount + shippingCost + tax)
@@ -117,6 +117,10 @@ export default function CheckoutPage() {
         return
       }
     }
+    if (step === 2 && !deliveryZoneId) {
+      toast.error('Select a delivery zone')
+      return
+    }
     setStep(step + 1)
   }
 
@@ -125,6 +129,10 @@ export default function CheckoutPage() {
       if (!cartItems.length) {
         toast.error('Your cart is empty')
         router.push('/cart')
+        return
+      }
+      if (!deliveryZoneId) {
+        toast.error('Select a delivery zone')
         return
       }
       const payload: Record<string, unknown> = {
@@ -141,9 +149,9 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
         deliveryAddress: [form.street, form.city, form.state, form.country, form.zipCode].filter(Boolean).join(', '),
         deliveryCity: form.city,
+        deliveryZoneId,
         notes: `${form.fullName} · ${form.phone} · ${form.email}`,
       }
-      if (deliveryZoneId) payload.deliveryZoneId = deliveryZoneId
       if (appliedCoupon?.code) payload.couponCode = appliedCoupon.code
 
       if (!checkoutIdempotencyKey.current) {
@@ -165,10 +173,6 @@ export default function CheckoutPage() {
       toast.error(getFriendlyErrorMessage(e, 'Unable to start payment. Please try again.'))
     }
   }
-
-  const shippingOptions = deliveryZones.length > 0
-    ? deliveryZones.map((z) => ({ id: z.id, name: z.name, days: z.estimatedDays, price: z.baseCost }))
-    : SHIPPING_METHODS.map((m) => ({ id: m.id, name: m.name, days: m.days, price: m.price }))
 
   return (
     <RouteGuard requiresAuth roles={CUSTOMER_ROLES}>
@@ -194,30 +198,41 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
-            <button className="btn-primary w-full mt-6" onClick={nextStep}>Continue to Delivery</button>
+            <button className="btn-primary w-full mt-6" onClick={nextStep}>Continue to Delivery Zone</button>
           </div>
         )}
         {step === 2 && (
           <div className="animate-slide-up">
             <h2 className="font-semibold text-lg mb-4">Delivery Zone</h2>
+            <p className="text-sm text-gray-500 mb-4">Shipping is set by each seller for your area. Fees below are combined per store in your cart.</p>
             <div className="space-y-3">
-              {shippingOptions.map((method) => (
-                <label key={method.id} className={`card p-4 flex items-center justify-between cursor-pointer ${(deliveryZones.length > 0 ? deliveryZoneId === method.id : form.deliveryMethod === method.name) ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
+              {deliveryZones.map((zone) => (
+                <label key={zone.id} className={`card p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
                   <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      checked={deliveryZones.length > 0 ? deliveryZoneId === method.id : form.deliveryMethod === method.name}
-                      onChange={() => {
-                        if (deliveryZones.length > 0) setDeliveryZoneId(method.id)
-                        else setForm({ ...form, deliveryMethod: method.name })
-                      }}
-                    />
-                    <div><p className="font-medium text-sm">{method.name}</p><p className="text-xs text-gray-500">{method.days}</p></div>
+                    <input type="radio" checked={deliveryZoneId === zone.id} onChange={() => setDeliveryZoneId(zone.id)} />
+                    <div>
+                      <p className="font-medium text-sm">{zone.name}</p>
+                      <p className="text-xs text-gray-500">{zone.estimatedDays}</p>
+                    </div>
                   </div>
-                  <span className="font-medium">{subtotal > FREE_SHIPPING_KES ? 'FREE' : formatCurrency(method.price)}</span>
                 </label>
               ))}
             </div>
+            {shippingBreakdown.length > 0 && (
+              <div className="card p-4 mt-4 text-sm space-y-2">
+                <p className="font-medium">Estimated shipping</p>
+                {shippingBreakdown.map((line) => (
+                  <div key={line.vendorId} className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>{line.storeName}</span>
+                    <span>{line.shippingCost === 0 ? 'FREE' : formatCurrency(line.shippingCost)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-medium border-t pt-2">
+                  <span>Total shipping</span>
+                  <span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex gap-4 mt-6">
               <button className="btn-secondary flex-1" onClick={() => setStep(1)}>Back</button>
               <button className="btn-primary flex-1" onClick={nextStep}>Continue to Payment</button>

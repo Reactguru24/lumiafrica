@@ -76,7 +76,7 @@ func createProductWithDetails(ctx context.Context, q *sqlc.Queries, vendorID typ
 		MinPrice:    priceStr,
 		MaxPrice:    priceStr,
 		TotalStock:  totalStock,
-		Status:      sqlc.ProductsStatusPending,
+		Status:      sqlc.ProductsStatusActive,
 		NewArrival:  1,
 	}); err != nil {
 		return types.BinaryUUID{}, err

@@ -53,6 +53,8 @@ export interface Vendor {
   businessEmail: string
   country: string
   city: string
+  shippingCost?: number
+  freeShippingThreshold?: number | null
   socialLinks: Record<string, string>
   categories: string[]
   rating: number

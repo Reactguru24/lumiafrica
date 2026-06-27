@@ -240,6 +240,10 @@ type Querier interface {
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 	UpdateVendorCommissionRate(ctx context.Context, arg UpdateVendorCommissionRateParams) error
+	DeleteVendorShippingRate(ctx context.Context, arg DeleteVendorShippingRateParams) error
+	GetVendorShippingRate(ctx context.Context, vendorID, zoneID types.BinaryUUID) (VendorShippingRate, error)
+	ListVendorShippingRatesByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorShippingRatesByVendorRow, error)
+	UpsertVendorShippingRate(ctx context.Context, arg UpsertVendorShippingRateParams) error
 	UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfileParams) error
 	UpdateVendorRating(ctx context.Context, arg UpdateVendorRatingParams) error
 	UserHasUsedPasswordResetToken(ctx context.Context, userID types.BinaryUUID) (bool, error)

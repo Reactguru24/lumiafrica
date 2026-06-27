@@ -119,11 +119,10 @@ export default function AdminSettingsPage() {
 
         <div className="card p-6">
           <h2 className="font-semibold mb-4">Checkout — Shipping</h2>
-          <div className="flex justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
-            <span>Standard delivery</span>
-            <span className="font-medium">{formatCurrency(s?.shippingCost ?? 0)} · {s?.currency || 'KES'}</span>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Flat rate applied to all orders at payment initialization.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Each vendor sets zone fees (e.g. Nairobi Metro) and an optional free-shipping minimum in Store Profile.
+          </p>
+          <p className="text-xs text-gray-500 mt-2">Customers pick a delivery zone at checkout; multi-vendor carts combine one fee per seller.</p>
         </div>
 
         <div className="card p-6 md:col-span-2">

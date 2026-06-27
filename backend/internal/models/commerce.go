@@ -36,6 +36,41 @@ type ValidateCouponResponse struct {
 	Message        string  `json:"message,omitempty"`
 }
 
+type ShippingEstimateRequest struct {
+	Items          []OrderItem `json:"items" binding:"required"`
+	DeliveryZoneID string      `json:"deliveryZoneId" binding:"required"`
+}
+
+type VendorShippingBreakdown struct {
+	VendorID     string  `json:"vendorId"`
+	StoreName    string  `json:"storeName"`
+	Subtotal     float64 `json:"subtotal"`
+	ShippingCost float64 `json:"shippingCost"`
+}
+
+type ShippingEstimateResponse struct {
+	ShippingCost float64                   `json:"shippingCost"`
+	Breakdown    []VendorShippingBreakdown `json:"breakdown"`
+	DeliveryZoneID string                  `json:"deliveryZoneId"`
+}
+
+type VendorShippingRateResponse struct {
+	ZoneID        string  `json:"zoneId"`
+	ZoneName      string  `json:"zoneName"`
+	EstimatedDays string  `json:"estimatedDays"`
+	Fee           float64 `json:"fee"`
+}
+
+type UpdateVendorShippingRatesRequest struct {
+	Rates                 []VendorShippingRateInput `json:"rates" binding:"required"`
+	FreeShippingThreshold *float64                  `json:"freeShippingThreshold"`
+}
+
+type VendorShippingRateInput struct {
+	ZoneID string  `json:"zoneId" binding:"required"`
+	Fee    float64 `json:"fee" binding:"min=0"`
+}
+
 type PromotionResponse struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`

@@ -64,6 +64,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 
 	// ── Commerce (public) ─────────────────────────────────────────────────
 	router.GET("/delivery-zones", handlers.ListDeliveryZones())
+	router.POST("/commerce/shipping-estimate", handlers.EstimateShipping())
 	router.GET("/promotions", handlers.ListActivePromotions())
 	router.GET("/collections", handlers.ListCollections())
 	router.GET("/collections/:slug", handlers.GetCollection())
@@ -99,6 +100,8 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	{
 		vendor.GET("/profile", handlers.GetVendorProfile())
 		vendor.PUT("/profile", handlers.UpdateVendorProfile())
+		vendor.GET("/shipping-rates", handlers.ListVendorShippingRates())
+		vendor.PUT("/shipping-rates", handlers.UpdateVendorShippingRates())
 		vendor.GET("/products", handlers.GetVendorProducts())
 		vendor.POST("/products", handlers.CreateProduct())
 		vendor.PUT("/products/:productID/featured", handlers.SetVendorProductFeatured())

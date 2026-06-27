@@ -1,4 +1,4 @@
-# Monorepo root Dockerfile — use with Railway Root Directory empty (/).
+# Monorepo root Dockerfile (container deploy: Railway, Render, etc.)
 FROM golang:1.26 AS builder
 
 WORKDIR /src

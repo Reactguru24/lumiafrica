@@ -54,7 +54,7 @@ func ToPromotion(p sqlc.Promotion, productIDs []string, image string) models.Pro
 		StartsAt:      p.StartsAt,
 		EndsAt:        p.EndsAt,
 		Active:        p.Active != 0,
-		Image:         image,
+		Image:         sanitizeMediaURLString(image),
 		ProductIDs:    productIDs,
 	}
 }
@@ -73,7 +73,7 @@ func ToCollection(c sqlc.Collection, productIDs []string, products []models.Prod
 		out.Description = c.Description.String
 	}
 	if c.Image.Valid {
-		out.Image = c.Image.String
+		out.Image = sanitizeMediaURLString(c.Image.String)
 	}
 	return out
 }

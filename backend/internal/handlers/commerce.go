@@ -140,6 +140,44 @@ func GetCollection() gin.HandlerFunc {
 	}
 }
 
+// EstimateShipping godoc
+// @Summary Estimate order shipping
+// @Description Calculates shipping from each vendor's configured rates for the given cart items.
+// @Tags Guest
+// @Accept json
+// @Produce json
+// @Param estimate body models.ShippingEstimateRequest true "Cart items"
+// @Success 200 {object} models.ShippingEstimateResponse
+// @Router /commerce/shipping-estimate [post]
+func EstimateShipping() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.ShippingEstimateRequest
+		if !bindJSON(c, &req) {
+			return
+		}
+		ctx := c.Request.Context()
+		total, lines, err := commerce.ResolveVendorShipping(ctx, getStore(c).Queries(), req.Items, req.DeliveryZoneID)
+		if err != nil {
+			utils.Error(c, http.StatusBadRequest, err.Error())
+			return
+		}
+		breakdown := make([]models.VendorShippingBreakdown, len(lines))
+		for i, line := range lines {
+			breakdown[i] = models.VendorShippingBreakdown{
+				VendorID:     line.VendorID,
+				StoreName:    line.StoreName,
+				Subtotal:     line.Subtotal,
+				ShippingCost: line.ShippingCost,
+			}
+		}
+		utils.Success(c, models.ShippingEstimateResponse{
+			ShippingCost:   total,
+			Breakdown:      breakdown,
+			DeliveryZoneID: req.DeliveryZoneID,
+		})
+	}
+}
+
 // ValidateCoupon godoc
 // @Summary Validate a coupon code
 // @Description Checks whether a coupon is valid for the given subtotal and returns the discount amount.

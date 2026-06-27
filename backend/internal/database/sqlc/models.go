@@ -1310,6 +1310,8 @@ type Vendor struct {
 	BusinessEmail  string           `json:"business_email"`
 	Country        string           `json:"country"`
 	City           string           `json:"city"`
+	ShippingCost   string           `json:"shipping_cost"`
+	FreeShippingThreshold sql.NullString `json:"free_shipping_threshold"`
 	SocialLinks    *json.RawMessage `json:"social_links"`
 	CommissionRate string           `json:"commission_rate"`
 	Rating         string           `json:"rating"`

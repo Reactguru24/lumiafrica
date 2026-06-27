@@ -50,9 +50,23 @@ export function parseOrderItems(items: unknown): OrderItem[] {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
+function isLocalDevApi(): boolean {
+  return API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')
+}
+
+/** Paths stored before Cloudinary — files only persist on local dev disk. */
+export function isLegacyLocalUpload(url?: string | null): boolean {
+  if (!url) return false
+  const trimmed = url.trim()
+  return trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')
+}
+
 /** Resolve relative upload paths from the API to absolute URLs for display. */
 export function resolveMediaUrl(url?: string | null, transform?: MediaTransform): string {
   if (!url) return '/placeholder.png'
+  if (isLegacyLocalUpload(url) && !isLocalDevApi()) {
+    return '/placeholder.png'
+  }
   const resolved = url.startsWith('http://') || url.startsWith('https://')
     ? url
     : `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`

@@ -1,3 +1,5 @@
+# Host-specific URLs and Railway variable refs: deploy/railway.env.example
+
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"

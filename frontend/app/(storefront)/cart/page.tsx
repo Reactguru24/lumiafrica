@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MediaImage } from '@/components/common/MediaImage'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
-import { useProducts } from '@/lib/stores/api'
+import { useProducts, useShippingEstimate, useDeliveryZones } from '@/lib/stores/api'
 import { formatCurrency } from '@/lib/utils/storage'
-import { FREE_SHIPPING_KES, STANDARD_SHIPPING_KES, TAX_RATE } from '@/lib/constants/commerce'
+import { TAX_RATE } from '@/lib/constants/commerce'
+import { toShippingEstimateItems } from '@/lib/utils/shipping'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import type { Product, CartItem } from '@/lib/types'
@@ -16,8 +17,17 @@ import type { ProductListResponse } from '@/lib/types/filters'
 export default function CartPage() {
   const router = useRouter()
   const cart = useCartStore()
+  const [deliveryZoneId, setDeliveryZoneId] = useState('')
 
   const { data: allProducts, loading } = useProducts({ limit: 200 })
+  const { data: zonesData } = useDeliveryZones()
+  const deliveryZones = (zonesData as { id: string; name: string }[] | null) ?? []
+
+  useEffect(() => {
+    if (deliveryZones.length > 0 && !deliveryZoneId) {
+      setDeliveryZoneId(deliveryZones[0].id)
+    }
+  }, [deliveryZones, deliveryZoneId])
 
   const productMap = useMemo(() => {
     const map: Record<string, Product> = {}
@@ -81,7 +91,10 @@ export default function CartPage() {
     const discountAmount = i.product.discount > 100 ? i.product.discount : i.product.price * (i.product.discount / 100)
     return s + Math.max(0, i.product.price - discountAmount) * i.quantity
   }, 0), [cartItems])
-  const shipping = subtotal > FREE_SHIPPING_KES ? 0 : STANDARD_SHIPPING_KES
+
+  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
+  const { data: shippingData } = useShippingEstimate(estimateItems, deliveryZoneId)
+  const shipping = shippingData?.shippingCost ?? 0
   const tax = subtotal * TAX_RATE
   const total = subtotal + shipping + tax
 
@@ -165,6 +178,20 @@ export default function CartPage() {
           {cartItems.length > 0 ? (
             <div className="card p-4 sm:p-6 h-fit lg:sticky lg:top-24">
               <h2 className="font-semibold mb-4">Order Summary</h2>
+              {deliveryZones.length > 0 && (
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-gray-500">Delivery zone</label>
+                  <select
+                    value={deliveryZoneId}
+                    onChange={(e) => setDeliveryZoneId(e.target.value)}
+                    className="input-field mt-1 text-sm"
+                  >
+                    {deliveryZones.map((z) => (
+                      <option key={z.id} value={z.id}>{z.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{shipping === 0 ? 'FREE' : formatCurrency(shipping)}</span></div>

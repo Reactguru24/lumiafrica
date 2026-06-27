@@ -29,6 +29,8 @@ SET store_name = COALESCE(sqlc.narg('store_name'), store_name),
     business_email = COALESCE(sqlc.narg('business_email'), business_email),
     country = COALESCE(sqlc.narg('country'), country),
     city = COALESCE(sqlc.narg('city'), city),
+    shipping_cost = COALESCE(sqlc.narg('shipping_cost'), shipping_cost),
+    free_shipping_threshold = COALESCE(sqlc.narg('free_shipping_threshold'), free_shipping_threshold),
     social_links = COALESCE(sqlc.narg('social_links'), social_links)
 WHERE user_id = sqlc.arg('user_id');
 

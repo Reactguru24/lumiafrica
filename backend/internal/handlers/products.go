@@ -252,7 +252,7 @@ func CreateProduct() gin.HandlerFunc {
 
 		invalidateCatalogCache(c)
 		utils.SuccessCreated(c, gin.H{
-			"id": productID.String(), "name": req.Name, "vendor_id": vendorIDStr, "status": models.StatusPending,
+			"id": productID.String(), "name": req.Name, "vendor_id": vendorIDStr, "status": models.StatusActive,
 		})
 	}
 }

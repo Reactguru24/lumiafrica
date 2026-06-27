@@ -66,7 +66,7 @@ func (q *Queries) CountVendorsAdmin(ctx context.Context) (int64, error) {
 const createVendor = `-- name: CreateVendor :exec
 INSERT INTO vendors (
   id, user_id, store_name, slug, description, logo, banner,
-  contact_phone, business_email, country, city, social_links
+  contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
@@ -272,6 +272,8 @@ func (q *Queries) GetFeaturedVendors(ctx context.Context, limit int32) ([]Vendor
 			&i.BusinessEmail,
 			&i.Country,
 			&i.City,
+			&i.ShippingCost,
+			&i.FreeShippingThreshold,
 			&i.SocialLinks,
 			&i.CommissionRate,
 			&i.Rating,
@@ -438,7 +440,7 @@ func (q *Queries) GetPendingApplicationByUser(ctx context.Context, userID *types
 }
 
 const getVendorByBusinessEmail = `-- name: GetVendorByBusinessEmail :one
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE LOWER(business_email) = LOWER(?) LIMIT 1
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE LOWER(business_email) = LOWER(?) LIMIT 1
 `
 
 func (q *Queries) GetVendorByBusinessEmail(ctx context.Context, lower string) (Vendor, error) {
@@ -456,6 +458,8 @@ func (q *Queries) GetVendorByBusinessEmail(ctx context.Context, lower string) (V
 		&i.BusinessEmail,
 		&i.Country,
 		&i.City,
+		&i.ShippingCost,
+		&i.FreeShippingThreshold,
 		&i.SocialLinks,
 		&i.CommissionRate,
 		&i.Rating,
@@ -469,7 +473,7 @@ func (q *Queries) GetVendorByBusinessEmail(ctx context.Context, lower string) (V
 }
 
 const getVendorByID = `-- name: GetVendorByID :one
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE id = ? AND suspended = false LIMIT 1
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE id = ? AND suspended = false LIMIT 1
 `
 
 func (q *Queries) GetVendorByID(ctx context.Context, id types.BinaryUUID) (Vendor, error) {
@@ -487,6 +491,8 @@ func (q *Queries) GetVendorByID(ctx context.Context, id types.BinaryUUID) (Vendo
 		&i.BusinessEmail,
 		&i.Country,
 		&i.City,
+		&i.ShippingCost,
+		&i.FreeShippingThreshold,
 		&i.SocialLinks,
 		&i.CommissionRate,
 		&i.Rating,
@@ -500,7 +506,7 @@ func (q *Queries) GetVendorByID(ctx context.Context, id types.BinaryUUID) (Vendo
 }
 
 const getVendorByIDAdmin = `-- name: GetVendorByIDAdmin :one
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE id = ? LIMIT 1
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (Vendor, error) {
@@ -518,6 +524,8 @@ func (q *Queries) GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (
 		&i.BusinessEmail,
 		&i.Country,
 		&i.City,
+		&i.ShippingCost,
+		&i.FreeShippingThreshold,
 		&i.SocialLinks,
 		&i.CommissionRate,
 		&i.Rating,
@@ -531,7 +539,7 @@ func (q *Queries) GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (
 }
 
 const getVendorByUserID = `-- name: GetVendorByUserID :one
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE user_id = ? LIMIT 1
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors WHERE user_id = ? LIMIT 1
 `
 
 func (q *Queries) GetVendorByUserID(ctx context.Context, userID types.BinaryUUID) (Vendor, error) {
@@ -549,6 +557,8 @@ func (q *Queries) GetVendorByUserID(ctx context.Context, userID types.BinaryUUID
 		&i.BusinessEmail,
 		&i.Country,
 		&i.City,
+		&i.ShippingCost,
+		&i.FreeShippingThreshold,
 		&i.SocialLinks,
 		&i.CommissionRate,
 		&i.Rating,
@@ -662,7 +672,7 @@ func (q *Queries) ListVendorCategoryIDs(ctx context.Context, vendorID types.Bina
 }
 
 const listVendorsAdmin = `-- name: ListVendorsAdmin :many
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors ORDER BY created_at DESC LIMIT ? OFFSET ?
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors ORDER BY created_at DESC LIMIT ? OFFSET ?
 `
 
 type ListVendorsAdminParams struct {
@@ -691,6 +701,8 @@ func (q *Queries) ListVendorsAdmin(ctx context.Context, arg ListVendorsAdminPara
 			&i.BusinessEmail,
 			&i.Country,
 			&i.City,
+			&i.ShippingCost,
+			&i.FreeShippingThreshold,
 			&i.SocialLinks,
 			&i.CommissionRate,
 			&i.Rating,
@@ -731,7 +743,7 @@ func (q *Queries) RejectApplication(ctx context.Context, arg RejectApplicationPa
 }
 
 const searchVendors = `-- name: SearchVendors :many
-SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors
+SELECT id, user_id, store_name, slug, description, logo, banner, contact_phone, business_email, country, city, shipping_cost, free_shipping_threshold, social_links, commission_rate, rating, verified, suspended, is_featured, created_at, updated_at FROM vendors
 WHERE suspended = false
 ORDER BY rating DESC, created_at DESC
 LIMIT ? OFFSET ?
@@ -763,6 +775,8 @@ func (q *Queries) SearchVendors(ctx context.Context, arg SearchVendorsParams) ([
 			&i.BusinessEmail,
 			&i.Country,
 			&i.City,
+			&i.ShippingCost,
+			&i.FreeShippingThreshold,
 			&i.SocialLinks,
 			&i.CommissionRate,
 			&i.Rating,
@@ -795,21 +809,25 @@ SET store_name = COALESCE(?, store_name),
     business_email = COALESCE(?, business_email),
     country = COALESCE(?, country),
     city = COALESCE(?, city),
+    shipping_cost = COALESCE(?, shipping_cost),
+    free_shipping_threshold = COALESCE(?, free_shipping_threshold),
     social_links = COALESCE(?, social_links)
 WHERE user_id = ?
 `
 
 type UpdateVendorProfileParams struct {
-	StoreName     sql.NullString   `json:"store_name"`
-	Description   sql.NullString   `json:"description"`
-	Logo          sql.NullString   `json:"logo"`
-	Banner        sql.NullString   `json:"banner"`
-	ContactPhone  sql.NullString   `json:"contact_phone"`
-	BusinessEmail sql.NullString   `json:"business_email"`
-	Country       sql.NullString   `json:"country"`
-	City          sql.NullString   `json:"city"`
-	SocialLinks   *json.RawMessage `json:"social_links"`
-	UserID        types.BinaryUUID `json:"user_id"`
+	StoreName             sql.NullString   `json:"store_name"`
+	Description           sql.NullString   `json:"description"`
+	Logo                  sql.NullString   `json:"logo"`
+	Banner                sql.NullString   `json:"banner"`
+	ContactPhone          sql.NullString   `json:"contact_phone"`
+	BusinessEmail         sql.NullString   `json:"business_email"`
+	Country               sql.NullString   `json:"country"`
+	City                  sql.NullString   `json:"city"`
+	ShippingCost          sql.NullString   `json:"shipping_cost"`
+	FreeShippingThreshold sql.NullString   `json:"free_shipping_threshold"`
+	SocialLinks           *json.RawMessage `json:"social_links"`
+	UserID                types.BinaryUUID `json:"user_id"`
 }
 
 func (q *Queries) UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfileParams) error {
@@ -822,6 +840,8 @@ func (q *Queries) UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfi
 		arg.BusinessEmail,
 		arg.Country,
 		arg.City,
+		arg.ShippingCost,
+		arg.FreeShippingThreshold,
 		arg.SocialLinks,
 		arg.UserID,
 	)

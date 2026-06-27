@@ -127,6 +127,19 @@ export function useDeliveryZones() {
   return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
 }
 
+export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
+  const key = items.length && deliveryZoneId ? `shipping-${deliveryZoneId}-${JSON.stringify(items)}` : 'shipping-empty'
+  return useQuery(
+    key,
+    () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<{
+      shippingCost: number
+      deliveryZoneId: string
+      breakdown: { vendorId: string; storeName: string; subtotal: number; shippingCost: number }[]
+    }>,
+    { enabled: items.length > 0 && !!deliveryZoneId },
+  )
+}
+
 export function usePromotions() {
   return useQuery('promotions', () => publicAPI.getPromotions())
 }
@@ -464,6 +477,16 @@ export function useVendorSubscribe() {
 
 export function useCancelVendorSubscription() {
   return useMutation('cancel-vendor-subscription', () => vendorAPI.cancelSubscription())
+}
+
+export function useVendorShippingRates() {
+  return useQuery('vendor-shipping-rates', () => vendorAPI.getShippingRates())
+}
+
+export function useUpdateVendorShippingRates() {
+  return useMutation('update-vendor-shipping-rates', (data: { rates: { zoneId: string; fee: number }[]; freeShippingThreshold?: number | null }) =>
+    vendorAPI.updateShippingRates(data),
+  )
 }
 
 export function useUpdateVendorProfile() {

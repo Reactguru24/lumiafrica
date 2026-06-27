@@ -28,6 +28,14 @@ func nullStringPtr(s sql.NullString) *string {
 	return &v
 }
 
+func nullDecimalStringToFloatPtr(s sql.NullString) *float64 {
+	if !s.Valid || strings.TrimSpace(s.String) == "" {
+		return nil
+	}
+	v := parseDecimal(s.String)
+	return &v
+}
+
 func nullUUIDPtr(u *types.BinaryUUID) *string {
 	if u == nil || u.IsZero() {
 		return nil
@@ -52,6 +60,30 @@ func parseDecimal(s string) float64 {
 	return f
 }
 
+func isLegacyLocalUpload(url string) bool {
+	u := strings.TrimSpace(url)
+	return strings.HasPrefix(u, "/uploads/") || strings.HasPrefix(u, "uploads/")
+}
+
+func sanitizeMediaURLString(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" || isLegacyLocalUpload(s) {
+		return ""
+	}
+	return s
+}
+
+func optionalMediaURL(s sql.NullString) *string {
+	if !s.Valid {
+		return nil
+	}
+	cleaned := sanitizeMediaURLString(s.String)
+	if cleaned == "" {
+		return nil
+	}
+	return &cleaned
+}
+
 func ToUser(u sqlc.User) models.User {
 	var passwordSetAt *time.Time
 	if u.PasswordSetAt.Valid {
@@ -65,7 +97,7 @@ func ToUser(u sqlc.User) models.User {
 		Phone:         u.Phone,
 		Password:      u.Password,
 		Role:          models.UserRole(u.Role),
-		Avatar:        nullStringPtr(u.Avatar),
+		Avatar:        optionalMediaURL(u.Avatar),
 		Disabled:      boolFromInt16(u.Disabled),
 		PasswordSetAt: passwordSetAt,
 		CreatedAt:     u.CreatedAt,
@@ -174,9 +206,11 @@ func variantsToVariantArray(variants []sqlc.ProductVariant) models.VariantArray 
 }
 
 func imagesToURLs(images []sqlc.ProductImage) models.StringArray {
-	out := make(models.StringArray, len(images))
-	for i, img := range images {
-		out[i] = img.Url
+	out := make(models.StringArray, 0, len(images))
+	for _, img := range images {
+		if url := sanitizeMediaURLString(img.Url); url != "" {
+			out = append(out, url)
+		}
 	}
 	return out
 }
@@ -243,12 +277,14 @@ func ToVendor(v sqlc.Vendor) models.Vendor {
 		StoreName:         v.StoreName,
 		Slug:              v.Slug,
 		Description:       v.Description.String,
-		Logo:              v.Logo,
-		Banner:            v.Banner.String,
+		Logo:              sanitizeMediaURLString(v.Logo),
+		Banner:            sanitizeMediaURLString(v.Banner.String),
 		ContactPhone:      v.ContactPhone,
 		BusinessEmail:     v.BusinessEmail,
 		Country:           v.Country,
 		City:              v.City,
+		ShippingCost:      parseDecimal(v.ShippingCost),
+		FreeShippingThreshold: nullDecimalStringToFloatPtr(v.FreeShippingThreshold),
 		SocialLinks:       rawJSONToMapType(v.SocialLinks),
 		Categories:        models.StringArray{},
 		Rating:            rating,
@@ -321,7 +357,7 @@ func sqlcOrderItemToModel(item sqlc.OrderItem) models.OrderItem {
 	return models.OrderItem{
 		ProductID:    item.ProductID.String(),
 		ProductName:  item.ProductName,
-		ProductImage: item.ImageUrl.String,
+		ProductImage: sanitizeMediaURLString(item.ImageUrl.String),
 		VendorID:     item.VendorID.String(),
 		Price:        parseDecimal(item.UnitPrice),
 		Quantity:     int(item.Quantity),
@@ -396,9 +432,9 @@ func ToApplication(a sqlc.VendorApplication) models.VendorApplication {
 	if a.UserID != nil && !a.UserID.IsZero() {
 		userID = a.UserID.String()
 	}
-	logo := a.VendorPhoto
+	logo := sanitizeMediaURLString(a.VendorPhoto)
 	if logo == "" {
-		logo = a.Logo
+		logo = sanitizeMediaURLString(a.Logo)
 	}
 	return models.VendorApplication{
 		ID:                  a.ID.String(),
@@ -408,8 +444,8 @@ func ToApplication(a sqlc.VendorApplication) models.VendorApplication {
 		BusinessDescription: a.BusinessDescription,
 		Logo:                logo,
 		BusinessCertificate: a.BusinessCertificate,
-		VendorPhoto:         a.VendorPhoto,
-		BusinessPhoto:       a.BusinessPhoto,
+		VendorPhoto:         sanitizeMediaURLString(a.VendorPhoto),
+		BusinessPhoto:       sanitizeMediaURLString(a.BusinessPhoto),
 		BusinessEmail:       a.BusinessEmail,
 		ContactPhone:        a.ContactPhone,
 		Country:             a.Country,

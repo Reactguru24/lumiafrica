@@ -52,6 +52,8 @@ type Vendor struct {
 	BusinessEmail     string      `json:"businessEmail"`
 	Country           string      `json:"country"`
 	City              string      `json:"city"`
+	ShippingCost      float64     `json:"shippingCost"`
+	FreeShippingThreshold *float64 `json:"freeShippingThreshold,omitempty"`
 	SocialLinks       MapType     `json:"socialLinks"`
 	Categories        StringArray `json:"categories"`
 	Rating            float64     `json:"rating"`
@@ -125,9 +127,11 @@ type UpdateVendorProfileRequest struct {
 	Banner        *string      `json:"banner"`
 	ContactPhone  *string      `json:"contactPhone"`
 	BusinessEmail *string      `json:"businessEmail"`
-	Country       *string      `json:"country"`
-	City          *string      `json:"city"`
-	SocialLinks   *MapType     `json:"socialLinks"`
+	Country               *string      `json:"country"`
+	City                  *string      `json:"city"`
+	ShippingCost          *float64     `json:"shippingCost"`
+	FreeShippingThreshold *float64     `json:"freeShippingThreshold"`
+	SocialLinks           *MapType     `json:"socialLinks"`
 	Categories    *StringArray `json:"categories"`
 }
 

@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { MediaImage } from '@/components/common/MediaImage'
 import { getInitials } from '@/components/common/UserMenu'
+import { isLegacyLocalUpload } from '@/lib/utils/api'
 
 interface UserAvatarProps {
   fullName?: string | null
@@ -19,10 +21,15 @@ const sizeClasses = {
 const sizePixels = { sm: 32, md: 40, lg: 80 }
 
 export function UserAvatar({ fullName, avatar, size = 'md', className = '' }: UserAvatarProps) {
+  const [imageFailed, setImageFailed] = useState(false)
   const initials = getInitials(fullName)
   const px = sizePixels[size]
 
-  if (avatar) {
+  useEffect(() => {
+    setImageFailed(false)
+  }, [avatar])
+
+  if (avatar && !imageFailed && !isLegacyLocalUpload(avatar)) {
     return (
       <MediaImage
         src={avatar}
@@ -30,6 +37,7 @@ export function UserAvatar({ fullName, avatar, size = 'md', className = '' }: Us
         width={px}
         height={px}
         className={`rounded-full object-cover shrink-0 ${sizeClasses[size]} ${className}`}
+        onImageError={() => setImageFailed(true)}
       />
     )
   }

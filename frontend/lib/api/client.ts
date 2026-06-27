@@ -234,6 +234,10 @@ export const publicAPI = {
     return get('/delivery-zones', { skipAuth: true })
   },
 
+  estimateShipping(items: Record<string, unknown>[], deliveryZoneId: string) {
+    return post('/commerce/shipping-estimate', { items, deliveryZoneId }, { skipAuth: true })
+  },
+
   getPromotions() {
     return get('/promotions', { skipAuth: true })
   },
@@ -401,6 +405,14 @@ export const vendorAPI = {
 
   updateProfile(data: any) {
     return put('/vendor/profile', data)
+  },
+
+  getShippingRates() {
+    return get('/vendor/shipping-rates')
+  },
+
+  updateShippingRates(data: { rates: { zoneId: string; fee: number }[]; freeShippingThreshold?: number | null }) {
+    return put('/vendor/shipping-rates', data)
   },
 
   getProducts() {

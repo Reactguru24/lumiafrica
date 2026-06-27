@@ -1,6 +1,0 @@
-[build]
-builder = "dockerfile"
-dockerfilePath = "Dockerfile"
-
-[deploy]
-startCommand = "/app/lumi-backend"

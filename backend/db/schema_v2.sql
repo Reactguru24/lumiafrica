@@ -195,6 +195,8 @@ CREATE TABLE vendors (
   business_email  VARCHAR(255)  NOT NULL,
   country         VARCHAR(100)  NOT NULL,
   city            VARCHAR(100)  NOT NULL,
+  shipping_cost   DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  free_shipping_threshold DECIMAL(10,2) NULL DEFAULT NULL,
   social_links    JSON          NULL,
   commission_rate DECIMAL(5,2)  NOT NULL DEFAULT 10.00,
   rating          DECIMAL(3,2)  NOT NULL DEFAULT 0.00,
@@ -518,6 +520,23 @@ CREATE TABLE delivery_zone_areas (
   FOREIGN KEY fk_dza_zone (zone_id) REFERENCES delivery_zones(id) ON DELETE CASCADE,
   INDEX idx_zone_id     (zone_id),
   INDEX idx_area_lookup (area_type, area_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE vendor_shipping_rates (
+  id         BINARY(16)    NOT NULL,
+  vendor_id  BINARY(16)    NOT NULL,
+  zone_id    BINARY(16)    NOT NULL,
+  fee        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  created_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_vendor_zone (vendor_id, zone_id),
+  FOREIGN KEY fk_vsr_vendor (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
+  FOREIGN KEY fk_vsr_zone   (zone_id)   REFERENCES delivery_zones(id) ON DELETE CASCADE,
+  INDEX idx_vendor_id (vendor_id),
+  INDEX idx_zone_id   (zone_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Reactguru24/lumiafrica/internal/commerce"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
@@ -18,7 +19,7 @@ func prepareOrderPaymentMetadata(
 	req models.CreateOrderRequest,
 	subtotal float64,
 ) (models.OrderPaymentMetadata, error) {
-	shippingCost, zone, err := commerce.ResolveShippingCost(ctx, q, req.DeliveryCity, req.DeliveryZoneID)
+	shippingCost, _, err := commerce.ResolveVendorShipping(ctx, q, req.Items, zoneIDFromRequest(req))
 	if err != nil {
 		return models.OrderPaymentMetadata{}, err
 	}
@@ -44,8 +45,8 @@ func prepareOrderPaymentMetadata(
 	}
 
 	var zoneID *string
-	if zone != nil {
-		zid := zone.ID.String()
+	if req.DeliveryZoneID != nil && strings.TrimSpace(*req.DeliveryZoneID) != "" {
+		zid := strings.TrimSpace(*req.DeliveryZoneID)
 		zoneID = &zid
 	}
 
@@ -75,4 +76,11 @@ func optionalBinaryUUID(s *string) *types.BinaryUUID {
 		return nil
 	}
 	return &id
+}
+
+func zoneIDFromRequest(req models.CreateOrderRequest) string {
+	if req.DeliveryZoneID != nil {
+		return strings.TrimSpace(*req.DeliveryZoneID)
+	}
+	return ""
 }
