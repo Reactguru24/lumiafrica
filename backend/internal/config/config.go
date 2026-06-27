@@ -34,6 +34,7 @@ type Config struct {
 	SMTPPassword        string
 	SMTPFromEmail       string
 	SMTPFromName        string
+	ResendAPIKey        string
 	RedisEnabled        bool
 	RedisAddr           string
 	RedisPassword       string
@@ -74,6 +75,7 @@ func LoadConfig() (*Config, error) {
 		SMTPPassword:        normalizeSMTPPassword(getEnv("SMTP_PASSWORD", "")),
 		SMTPFromEmail:       getEnv("SMTP_FROM_EMAIL", ""),
 		SMTPFromName:        getEnv("SMTP_FROM_NAME", "Lumi Africa"),
+		ResendAPIKey:        getEnv("RESEND_API_KEY", ""),
 		RedisEnabled:        redisEnabled(getEnv("REDIS_ENABLED", "false")),
 		RedisAddr:           getEnv("REDIS_ADDR", "127.0.0.1:6379"),
 		RedisPassword:       getEnv("REDIS_PASSWORD", ""),

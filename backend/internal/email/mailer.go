@@ -42,12 +42,23 @@ func NewMailer(cfg *config.Config) *Mailer {
 }
 
 func (m *Mailer) Enabled() bool {
+	if strings.TrimSpace(m.cfg.ResendAPIKey) != "" {
+		return true
+	}
 	return strings.TrimSpace(m.cfg.SMTPHost) != "" && strings.TrimSpace(m.cfg.SMTPFromEmail) != ""
 }
 
 func LogSMTPStatus(cfg *config.Config) {
+	if strings.TrimSpace(cfg.ResendAPIKey) != "" {
+		from := strings.TrimSpace(cfg.SMTPFromEmail)
+		if from == "" {
+			from = "onboarding@resend.dev"
+		}
+		log.Printf("[EMAIL] Resend API ready (from: %s)", from)
+		return
+	}
 	if strings.TrimSpace(cfg.SMTPHost) == "" || strings.TrimSpace(cfg.SMTPFromEmail) == "" {
-		log.Println("[EMAIL] SMTP not configured — emails will be logged only")
+		log.Println("[EMAIL] Email not configured — emails will be logged only")
 		return
 	}
 	hasPassword := strings.TrimSpace(cfg.SMTPPassword) != ""
@@ -120,8 +131,14 @@ func (m *Mailer) send(to, subject, htmlBody string) error {
 	msg.WriteString(htmlBody)
 
 	addr := fmt.Sprintf("%s:%d", m.cfg.SMTPHost, m.cfg.SMTPPort)
-	if err := sendMail(addr, m.cfg.SMTPHost, m.cfg.SMTPUser, m.cfg.SMTPPassword, from, []string{to}, msg.Bytes()); err != nil {
-		log.Printf("[EMAIL] SMTP send failed to %s: %v", to, err)
+	var err error
+	if strings.TrimSpace(m.cfg.ResendAPIKey) != "" {
+		err = m.sendViaResend(to, subject, htmlBody)
+	} else {
+		err = sendMail(addr, m.cfg.SMTPHost, m.cfg.SMTPUser, m.cfg.SMTPPassword, from, []string{to}, msg.Bytes())
+	}
+	if err != nil {
+		log.Printf("[EMAIL] send failed to %s: %v", to, err)
 		return err
 	}
 	return nil

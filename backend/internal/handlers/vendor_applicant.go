@@ -125,6 +125,7 @@ func sendVendorActivationEmail(
 
 	if sendErr != nil {
 		log.Printf("vendor activation email failed for %s: %v", businessEmail, sendErr)
+		log.Printf("[EMAIL] Vendor activation link for %s: %s", businessEmail, resetURL)
 	}
 
 	return &vendorActivationResult{
@@ -141,7 +142,7 @@ func vendorAccountActivated(ctx context.Context, q *sqlc.Queries, user sqlc.User
 
 func vendorActivationResponse(cfg *config.Config, result *vendorActivationResult, sentMessage, skippedMessage string) gin.H {
 	response := gin.H{"message": sentMessage}
-	if result != nil && result.ResetURL != "" && (result.Mailer == nil || result.SendErr != nil || cfg.SMTPHost == "") {
+	if result != nil && result.ResetURL != "" && (result.Mailer == nil || !result.Mailer.Enabled() || result.SendErr != nil) {
 		response["message"] = skippedMessage
 		response["activationUrl"] = result.ResetURL
 	}
