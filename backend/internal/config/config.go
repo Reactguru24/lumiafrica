@@ -38,6 +38,7 @@ type Config struct {
 	RedisAddr           string
 	RedisPassword       string
 	RedisDB             int
+	SwaggerEnabled      bool
 }
 
 // LoadConfig loads configuration from environment variables
@@ -78,6 +79,7 @@ func LoadConfig() (*Config, error) {
 		RedisPassword:       getEnv("REDIS_PASSWORD", ""),
 		RedisDB:             redisDB(getEnv("REDIS_DB", "0")),
 	}
+	cfg.SwaggerEnabled = swaggerEnabled(getEnv("SWAGGER_ENABLED", ""), cfg.ServerEnv)
 	cfg.CORSOrigins = parseCORSOrigins(getEnv("CORS_ORIGINS", ""), cfg.FrontendURL)
 
 	// Validate required config
@@ -126,6 +128,17 @@ func redisDB(value string) int {
 		return 0
 	}
 	return db
+}
+
+// swaggerEnabled: unset = on in development, off in production; explicit env overrides.
+func swaggerEnabled(raw, serverEnv string) bool {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	}
+	return serverEnv != "production"
 }
 
 func maxUploadSize(value string) int64 {

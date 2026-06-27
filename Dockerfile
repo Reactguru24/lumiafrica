@@ -2,7 +2,7 @@
 FROM golang:1.26 AS builder
 
 WORKDIR /src
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates python3 && rm -rf /var/lib/apt/lists/*
 
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
@@ -13,6 +13,10 @@ RUN if [ ! -f internal/database/sqlc/db.go ]; then \
       go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 && \
       sqlc generate -f sqlc.yaml; \
     fi
+
+RUN go install github.com/swaggo/swag/cmd/swag@v1.16.6 \
+    && swag init -g cmd/main.go --parseDependency --parseInternal --output docs \
+    && python3 scripts/patch_swagger_tags.py docs/swagger.json
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/lumi-backend ./cmd/main.go
 
@@ -25,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=builder /out/lumi-backend /app/lumi-backend
 COPY --from=builder /src/internal/email/templates /app/internal/email/templates
 COPY --from=builder /src/db/ /app/db/
+COPY --from=builder /src/docs/ /app/docs/
 
 RUN mkdir -p /app/uploads && chown -R app:app /app
 USER app

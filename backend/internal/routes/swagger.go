@@ -9,7 +9,7 @@ import (
 )
 
 func registerSwaggerRoutes(router *gin.Engine, cfg *config.Config) {
-	if cfg.ServerEnv == "production" {
+	if !cfg.SwaggerEnabled {
 		return
 	}
 	router.GET("/swagger/swagger.json", func(c *gin.Context) {
