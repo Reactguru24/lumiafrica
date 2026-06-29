@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	ErrBusinessEmailNotVendor = errors.New("business email belongs to a non-vendor account")
-	ErrVendorAccountExists    = errors.New("vendor account already exists for business email")
+	ErrBusinessEmailNotVendor  = errors.New("business email belongs to a non-vendor account")
+	ErrVendorAccountExists     = errors.New("vendor account already exists for business email")
+	ErrBusinessEmailTaken     = errors.New("business email is already registered to another account")
 )
 
 func normalizeEmail(email string) string {
@@ -41,19 +42,79 @@ func isPendingBusinessEmail(ctx context.Context, q *sqlc.Queries, email string) 
 	return false, err
 }
 
+func userCanBecomeVendor(ctx context.Context, q *sqlc.Queries, user sqlc.User) error {
+	switch user.Role {
+	case sqlc.UsersRoleADMIN:
+		return ErrBusinessEmailNotVendor
+	case sqlc.UsersRoleVENDOR:
+		if _, err := q.GetVendorByUserID(ctx, user.ID); err == nil {
+			return ErrVendorAccountExists
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+	}
+	return nil
+}
+
+func promoteUserToVendor(ctx context.Context, q *sqlc.Queries, user sqlc.User, businessEmail string) (types.BinaryUUID, error) {
+	if err := userCanBecomeVendor(ctx, q, user); err != nil {
+		return types.BinaryUUID{}, err
+	}
+
+	if normalizeEmail(user.Email) != businessEmail {
+		if other, err := q.GetUserByEmail(ctx, businessEmail); err == nil && other.ID != user.ID {
+			return types.BinaryUUID{}, ErrBusinessEmailTaken
+		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return types.BinaryUUID{}, err
+		}
+		if err := q.UpdateUserVendorCredentials(ctx, sqlc.UpdateUserVendorCredentialsParams{
+			Email: businessEmail,
+			ID:    user.ID,
+		}); err != nil {
+			return types.BinaryUUID{}, err
+		}
+	} else if user.Role != sqlc.UsersRoleVENDOR {
+		if err := q.UpdateUserRole(ctx, sqlc.UpdateUserRoleParams{
+			Role: sqlc.UsersRoleVENDOR,
+			ID:   user.ID,
+		}); err != nil {
+			return types.BinaryUUID{}, err
+		}
+	}
+
+	return user.ID, nil
+}
+
 func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.VendorApplication) (types.BinaryUUID, error) {
 	businessEmail := normalizeEmail(app.BusinessEmail)
+	contactPhone := strings.TrimSpace(app.ContactPhone)
+
+	if app.UserID != nil && !app.UserID.IsZero() {
+		applicant, err := q.GetUserByID(ctx, *app.UserID)
+		if err != nil {
+			return types.BinaryUUID{}, err
+		}
+		if normalizeEmail(applicant.Email) == businessEmail {
+			return promoteUserToVendor(ctx, q, applicant, businessEmail)
+		}
+		if contactPhone != "" && applicant.Phone == contactPhone {
+			return promoteUserToVendor(ctx, q, applicant, businessEmail)
+		}
+	}
 
 	if existing, err := q.GetUserByEmail(ctx, businessEmail); err == nil {
-		if existing.Role != sqlc.UsersRoleVENDOR {
-			return types.BinaryUUID{}, ErrBusinessEmailNotVendor
-		}
-		if _, err := q.GetVendorByUserID(ctx, existing.ID); err == nil {
-			return types.BinaryUUID{}, ErrVendorAccountExists
-		}
-		return existing.ID, nil
+		return promoteUserToVendor(ctx, q, existing, businessEmail)
 	} else if !errors.Is(err, sql.ErrNoRows) {
 		return types.BinaryUUID{}, err
+	}
+
+	if contactPhone != "" {
+		if phoneUser, err := q.GetUserByPhone(ctx, contactPhone); err == nil {
+			return promoteUserToVendor(ctx, q, phoneUser, businessEmail)
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			return types.BinaryUUID{}, err
+		}
 	}
 
 	placeholderPassword, err := utils.HashPassword(utils.GenerateID() + utils.GenerateID())
@@ -76,11 +137,12 @@ func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.Ven
 		ID:       vendorUserID,
 		FullName: fullName,
 		Email:    businessEmail,
-		Phone:    app.ContactPhone,
+		Phone:    contactPhone,
 		Password: placeholderPassword,
 		Role:     sqlc.UsersRoleVENDOR,
 		Disabled: 0,
 	}); err != nil {
+		log.Printf("create vendor user failed for %s: %v", businessEmail, err)
 		return types.BinaryUUID{}, err
 	}
 	return vendorUserID, nil

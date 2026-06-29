@@ -130,6 +130,7 @@ type Querier interface {
 	GetReviewByID(ctx context.Context, id types.BinaryUUID) (Review, error)
 	GetReviewByProductAndUser(ctx context.Context, arg GetReviewByProductAndUserParams) (Review, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByPhone(ctx context.Context, phone string) (User, error)
 	GetUserByID(ctx context.Context, id types.BinaryUUID) (User, error)
 	GetVariantByProductSizeColor(ctx context.Context, arg GetVariantByProductSizeColorParams) (ProductVariant, error)
 	GetVendorByBusinessEmail(ctx context.Context, lower string) (Vendor, error)
@@ -251,6 +252,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) error
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
+	UpdateUserVendorCredentials(ctx context.Context, arg UpdateUserVendorCredentialsParams) error
 	UpdateVendorCommissionRate(ctx context.Context, arg UpdateVendorCommissionRateParams) error
 	UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfileParams) error
 	UpdateVendorRating(ctx context.Context, arg UpdateVendorRatingParams) error

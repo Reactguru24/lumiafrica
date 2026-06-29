@@ -378,6 +378,8 @@ func ApproveVendor(cfg *config.Config) gin.HandlerFunc {
 				utils.Error(c, http.StatusConflict, "Business email is already registered to a non-vendor account")
 			case errors.Is(err, ErrVendorAccountExists):
 				utils.Error(c, http.StatusConflict, "A vendor account already exists for this business email")
+			case errors.Is(err, ErrBusinessEmailTaken):
+				utils.Error(c, http.StatusConflict, "Business email is already registered to another account")
 			default:
 				utils.Error(c, http.StatusInternalServerError, "Failed to create vendor account")
 			}

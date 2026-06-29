@@ -2,7 +2,7 @@
  * API Client for communicating with Lumi Backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { getApiBaseUrl } from '@/lib/utils/apiConfig'
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean
@@ -78,7 +78,7 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const url = `${API_BASE_URL}${path}`
+  const url = `${getApiBaseUrl()}${path}`
   const headersObj: Record<string, string> = {}
 
   const isFormData = options.body instanceof FormData

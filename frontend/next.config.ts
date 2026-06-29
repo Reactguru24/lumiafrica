@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { API_PROXY_PREFIX, getConfiguredApiUrl, isRemoteApiUrl } from './lib/utils/apiConfig'
 
 function apiImagePattern(): { protocol: 'https' | 'http'; hostname: string; port?: string } | null {
   const raw = process.env.NEXT_PUBLIC_API_URL
@@ -21,6 +22,18 @@ const apiPattern = apiImagePattern()
 const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  async rewrites() {
+    const configuredApiUrl = getConfiguredApiUrl()
+    if (process.env.NODE_ENV !== 'development' || !isRemoteApiUrl(configuredApiUrl)) {
+      return []
+    }
+    return [
+      {
+        source: `${API_PROXY_PREFIX}/:path*`,
+        destination: `${configuredApiUrl}/:path*`,
+      },
+    ]
   },
   async headers() {
     return [

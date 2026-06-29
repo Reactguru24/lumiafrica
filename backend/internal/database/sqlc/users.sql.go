@@ -195,6 +195,30 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const getUserByPhone = `-- name: GetUserByPhone :one
+SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE phone = ? LIMIT 1
+`
+
+func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByPhone, phone)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.Phone,
+		&i.Password,
+		&i.Role,
+		&i.Avatar,
+		&i.Disabled,
+		&i.EmailVerifiedAt,
+		&i.PasswordSetAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
 SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE id = ? LIMIT 1
 `
@@ -407,6 +431,20 @@ type UpdateUserRoleParams struct {
 
 func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserRole, arg.Role, arg.ID)
+	return err
+}
+
+const updateUserVendorCredentials = `-- name: UpdateUserVendorCredentials :exec
+UPDATE users SET email = ?, role = 'VENDOR' WHERE id = ?
+`
+
+type UpdateUserVendorCredentialsParams struct {
+	Email string           `json:"email"`
+	ID    types.BinaryUUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserVendorCredentials(ctx context.Context, arg UpdateUserVendorCredentialsParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserVendorCredentials, arg.Email, arg.ID)
 	return err
 }
 

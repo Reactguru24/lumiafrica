@@ -7,6 +7,7 @@ import { publicAPI } from '@/lib/api/client'
 import { useApplyVendor, useProductFilters } from '@/lib/stores/api'
 import { vendorApplicationSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { resolveAssetUrl } from '@/lib/utils/api'
 import { MediaImage } from '@/components/common/MediaImage'
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -333,7 +334,7 @@ function PublicDocumentFieldUpload({
   return (
     <div className="flex items-center gap-3 flex-wrap">
       {value ? (
-        <a href={value} target="_blank" rel="noreferrer" className="text-sm underline">
+        <a href={resolveAssetUrl(value)} target="_blank" rel="noreferrer" className="text-sm underline">
           View uploaded certificate
         </a>
       ) : (

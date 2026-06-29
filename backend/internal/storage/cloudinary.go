@@ -122,15 +122,6 @@ func (s *Service) HandleDocumentUpload(c *gin.Context) *UploadResult {
 		return nil
 	}
 
-	if mimeType == "application/pdf" {
-		u, err := s.uploadLocal(data, file.Filename, mimeType, ext)
-		if err != nil {
-			utils.Error(c, 500, "upload error: "+err.Error())
-			return nil
-		}
-		return u
-	}
-
 	u, err := s.uploadFile(ctx, bytes.NewReader(data), file.Filename, mimeType, ext)
 	if err != nil {
 		utils.Error(c, 500, "upload error: "+err.Error())

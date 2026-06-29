@@ -1,6 +1,9 @@
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = ? LIMIT 1;
 
+-- name: GetUserByPhone :one
+SELECT * FROM users WHERE phone = ? LIMIT 1;
+
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = ? LIMIT 1;
 
@@ -32,6 +35,9 @@ UPDATE users SET disabled = false WHERE id = ?;
 
 -- name: UpdateUserRole :exec
 UPDATE users SET role = ? WHERE id = ?;
+
+-- name: UpdateUserVendorCredentials :exec
+UPDATE users SET email = ?, role = 'VENDOR' WHERE id = ?;
 
 -- name: CreateAddress :exec
 INSERT INTO addresses (id, user_id, label, street, city, state, country, zip_code, is_default)

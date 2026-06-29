@@ -7,7 +7,7 @@ import {
   useDisableUser, useEnableUser, useAdminVendors, useAdminFeaturedListings, useSetAdminProductFeatured,
 } from '@/lib/stores/api'
 import { formatDate, formatCurrency } from '@/lib/utils/storage'
-import { unwrapPaginated } from '@/lib/utils/api'
+import { unwrapPaginated, resolveAssetUrl } from '@/lib/utils/api'
 import { buildVendorApplicationChecklist } from '@/lib/utils/admin'
 import { confirmAction } from '@/lib/utils/swal'
 import { MediaImage } from '@/components/common/MediaImage'
@@ -292,7 +292,7 @@ export default function AdminVendorsPage() {
                   )}
                   {app.businessCertificate && (
                     <a
-                      href={app.businessCertificate}
+                      href={resolveAssetUrl(app.businessCertificate)}
                       target="_blank"
                       rel="noreferrer"
                       className="text-xs underline text-gray-600 dark:text-gray-300"

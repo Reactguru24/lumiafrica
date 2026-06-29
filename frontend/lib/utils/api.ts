@@ -48,11 +48,9 @@ export function parseOrderItems(items: unknown): OrderItem[] {
   return []
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+import { getConfiguredApiUrl, isLocalDevApi } from '@/lib/utils/apiConfig'
 
-function isLocalDevApi(): boolean {
-  return API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1')
-}
+const API_BASE = getConfiguredApiUrl()
 
 /** Paths stored before Cloudinary — files only persist on local dev disk. */
 export function isLegacyLocalUpload(url?: string | null): boolean {
@@ -62,14 +60,19 @@ export function isLegacyLocalUpload(url?: string | null): boolean {
 }
 
 /** Resolve relative upload paths from the API to absolute URLs for display. */
+export function resolveAssetUrl(url?: string | null): string {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+/** Resolve relative upload paths from the API to absolute URLs for display. */
 export function resolveMediaUrl(url?: string | null, transform?: MediaTransform): string {
   if (!url) return '/placeholder.png'
   if (isLegacyLocalUpload(url) && !isLocalDevApi()) {
     return '/placeholder.png'
   }
-  const resolved = url.startsWith('http://') || url.startsWith('https://')
-    ? url
-    : `${API_BASE}${url.startsWith('/') ? url : `/${url}`}`
+  const resolved = resolveAssetUrl(url)
 
   if (isCloudinaryUrl(resolved)) {
     return optimizeCloudinaryUrl(resolved, transform)
