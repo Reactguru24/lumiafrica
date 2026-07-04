@@ -13,6 +13,7 @@ import {
   type QueryEntry,
   type MutationEntry,
 } from '@/lib/stores/query'
+import type { ShippingEstimate } from '@/lib/utils/shipping'
 
 interface UseQueryResult<T> {
   data: T | null
@@ -131,11 +132,7 @@ export function useShippingEstimate(items: Record<string, unknown>[], deliveryZo
   const key = items.length && deliveryZoneId ? `shipping-${deliveryZoneId}-${JSON.stringify(items)}` : 'shipping-empty'
   return useQuery(
     key,
-    () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<{
-      shippingCost: number
-      deliveryZoneId: string
-      breakdown: { vendorId: string; storeName: string; subtotal: number; shippingCost: number }[]
-    }>,
+    () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<ShippingEstimate>,
     { enabled: items.length > 0 && !!deliveryZoneId },
   )
 }

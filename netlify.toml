@@ -10,5 +10,12 @@
 [context.production.environment]
   NEXT_PUBLIC_API_URL = "https://dazzling-smile-production-1014.up.railway.app"
 
+# Proxy API through Netlify (same-origin) — avoids CORS to Railway
+[[redirects]]
+  from = "/api-proxy/*"
+  to = "https://dazzling-smile-production-1014.up.railway.app/:splat"
+  status = 200
+  force = true
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"

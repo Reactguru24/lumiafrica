@@ -25,6 +25,7 @@ export type ShippingBreakdown = {
 export type ShippingEstimate = {
   shippingCost: number
   breakdown: ShippingBreakdown[]
+  deliveryZoneId?: string
 }
 
 export function toShippingEstimateItems(items: (CartItem & { product: Product })[]): ShippingEstimateItem[] {

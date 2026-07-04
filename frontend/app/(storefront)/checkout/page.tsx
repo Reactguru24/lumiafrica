@@ -12,7 +12,7 @@ import { formatCurrency } from '@/lib/utils/storage'
 import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
-import { toShippingEstimateItems } from '@/lib/utils/shipping'
+import { toShippingEstimateItems, type ShippingBreakdown } from '@/lib/utils/shipping'
 import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
 import { CUSTOMER_ROLES } from '@/lib/constants/roles'
@@ -93,7 +93,7 @@ export default function CheckoutPage() {
   }, 0), [cartItems])
 
   const shippingCost = shippingData?.shippingCost ?? 0
-  const shippingBreakdown = shippingData?.breakdown ?? []
+  const shippingBreakdown: ShippingBreakdown[] = shippingData?.breakdown ?? []
 
   const vendorGroups = useMemo(() => {
     const breakdownMap = new Map(shippingBreakdown.map((line) => [line.vendorId, line]))
@@ -101,7 +101,7 @@ export default function CheckoutPage() {
       vendorId: string
       storeName: string
       items: (CartItem & { product: Product })[]
-      shipping?: (typeof shippingBreakdown)[number]
+      shipping?: ShippingBreakdown
     }>()
 
     for (const item of cartItems) {
