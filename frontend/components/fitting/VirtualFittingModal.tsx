@@ -232,8 +232,12 @@ export function VirtualFittingModal({
 
 export function VirtualFittingButton({ onClick }: { onClick: () => void }) {
   return (
-    <button type="button" className="btn-secondary text-sm flex items-center gap-2" onClick={onClick}>
-      <SparklesIcon className="w-4 h-4" />
+    <button
+      type="button"
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-sm border-2 border-brand-teal bg-brand-teal/15 text-brand-teal dark:border-brand-orange dark:bg-brand-orange/15 dark:text-brand-orange hover:bg-brand-teal/25 dark:hover:bg-brand-orange/25 transition-colors shadow-sm"
+      onClick={onClick}
+    >
+      <SparklesIcon className="w-5 h-5" />
       AI Size Fitting
     </button>
   )

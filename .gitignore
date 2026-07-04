@@ -29,6 +29,7 @@ backend/db/*.db
 
 # Frontend (Next.js)
 frontend/node_modules/
+node_modules/
 frontend/.next/
 frontend/out/
 frontend/dist/

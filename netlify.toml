@@ -1,4 +1,5 @@
 # Monorepo: frontend lives in frontend/ — Netlify must build from here.
+# Redeploy trigger: 2026-07-04 (AI fitting button visibility)
 [build]
   base = "frontend"
   command = "npm ci && npm run build"

@@ -163,17 +163,17 @@ export default function ProductDetailPage() {
           </div>
           <p className="text-gray-600 dark:text-gray-400 mt-4 leading-relaxed text-sm sm:text-base text-left">{productAny.description || ''}</p>
           <div className="mt-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-medium text-sm">Size</h3>
-              {(productAny.sizes || []).length > 0 && (
-                <VirtualFittingButton onClick={() => setFittingOpen(true)} />
-              )}
-            </div>
+            <h3 className="font-medium text-sm mb-3">Size</h3>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               {(productAny.sizes || []).map((size: string) => (
                 <button key={size} type="button" className={`min-w-[2.5rem] px-4 py-2 text-sm border transition-colors ${selectedSize === size ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 border-gray-900' : 'border-gray-300 dark:border-gray-700 hover:border-gray-900'}`} onClick={() => setSelectedSize(size)}>{size}</button>
               ))}
             </div>
+            {(productAny.sizes || []).length > 0 && (
+              <div className="mt-4 flex justify-center md:justify-start">
+                <VirtualFittingButton onClick={() => setFittingOpen(true)} />
+              </div>
+            )}
           </div>
           <div className="mt-6">
             <h3 className="font-medium text-sm mb-3">Color{selectedColor ? `: ${selectedColor}` : ''}</h3>
