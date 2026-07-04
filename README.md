@@ -4,7 +4,7 @@ Lumi Africa fashion marketplace — monorepo.
 
 | Package | Stack | Production deploy |
 |---------|-------|-------------------|
-| [`frontend/`](frontend/) | Next.js 15 | [Netlify](https://lumiwebafric.netlify.app) |
+| [`frontend/`](frontend/) | Next.js 15 | [Netlify](https://lumiafricca.netlify.app) |
 | [`backend/`](backend/) | Go + Gin + MySQL | [Railway](https://dazzling-smile-production-1014.up.railway.app) |
 | [`ai-fitting-tool/`](ai-fitting-tool/) | FastAPI + MediaPipe | Railway or Render (optional) |
 
@@ -59,5 +59,5 @@ See [`deploy/railway.env.example`](deploy/railway.env.example) for all environme
 
 ## Live URLs
 
-- Frontend: https://lumiwebafric.netlify.app
+- Frontend: https://lumiafricca.netlify.app
 - Backend: https://dazzling-smile-production-1014.up.railway.app

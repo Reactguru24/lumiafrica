@@ -11,6 +11,6 @@ services:
       - key: PORT
         value: 80
       - key: ALLOWED_ORIGINS
-        value: https://lumiwebafric.netlify.app,http://localhost:3000
+        value: https://lumiafricca.netlify.app,http://localhost:3000
       - key: BACKEND_API_URL
         value: https://dazzling-smile-production-1014.up.railway.app
