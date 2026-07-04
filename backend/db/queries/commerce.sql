@@ -9,6 +9,16 @@ INNER JOIN (
 ) pick ON pick.id = dz.id
 ORDER BY dz.name;
 
+-- name: ListIntersectingCheckoutDeliveryZones :many
+SELECT dz.name, MIN(dz.estimated_days) AS estimated_days, MIN(dz.base_cost) AS base_cost
+FROM delivery_zones dz
+WHERE dz.active = true
+  AND dz.vendor_id IS NOT NULL
+  AND dz.vendor_id IN (sqlc.slice('vendor_ids'))
+GROUP BY dz.name
+HAVING COUNT(DISTINCT dz.vendor_id) = ?
+ORDER BY dz.name;
+
 -- name: ListDeliveryZonesByVendor :many
 SELECT * FROM delivery_zones WHERE vendor_id = ? AND active = true ORDER BY name;
 

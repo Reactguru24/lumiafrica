@@ -157,6 +157,7 @@ type Querier interface {
 	ListAllSubscriptions(ctx context.Context, arg ListAllSubscriptionsParams) ([]VendorSubscription, error)
 	ListCartItemsByCartID(ctx context.Context, cartID types.BinaryUUID) ([]ListCartItemsByCartIDRow, error)
 	ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckoutDeliveryZonesRow, error)
+	ListIntersectingCheckoutDeliveryZones(ctx context.Context, arg ListIntersectingCheckoutDeliveryZonesParams) ([]ListIntersectingCheckoutDeliveryZonesRow, error)
 	ListChildCategories(ctx context.Context, parentID *types.BinaryUUID) ([]Category, error)
 	ListCollectionProductIDs(ctx context.Context, collectionID types.BinaryUUID) ([]types.BinaryUUID, error)
 	ListDeliveryZonesByVendor(ctx context.Context, vendorID *types.BinaryUUID) ([]DeliveryZone, error)

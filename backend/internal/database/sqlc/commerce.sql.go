@@ -8,6 +8,7 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"time"
 
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
@@ -773,6 +774,62 @@ func (q *Queries) ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckout
 	items := []ListCheckoutDeliveryZonesRow{}
 	for rows.Next() {
 		var i ListCheckoutDeliveryZonesRow
+		if err := rows.Scan(&i.Name, &i.EstimatedDays, &i.BaseCost); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listIntersectingCheckoutDeliveryZones = `-- name: ListIntersectingCheckoutDeliveryZones :many
+SELECT dz.name, MIN(dz.estimated_days) AS estimated_days, MIN(dz.base_cost) AS base_cost
+FROM delivery_zones dz
+WHERE dz.active = true
+  AND dz.vendor_id IS NOT NULL
+  AND dz.vendor_id IN (/*SLICE:vendor_ids*/?)
+GROUP BY dz.name
+HAVING COUNT(DISTINCT dz.vendor_id) = ?
+ORDER BY dz.name
+`
+
+type ListIntersectingCheckoutDeliveryZonesParams struct {
+	VendorIds   []types.BinaryUUID `json:"vendor_ids"`
+	VendorCount int64              `json:"vendor_count"`
+}
+
+type ListIntersectingCheckoutDeliveryZonesRow struct {
+	Name          string `json:"name"`
+	EstimatedDays string `json:"estimated_days"`
+	BaseCost      string `json:"base_cost"`
+}
+
+func (q *Queries) ListIntersectingCheckoutDeliveryZones(ctx context.Context, arg ListIntersectingCheckoutDeliveryZonesParams) ([]ListIntersectingCheckoutDeliveryZonesRow, error) {
+	query := listIntersectingCheckoutDeliveryZones
+	var queryParams []interface{}
+	if len(arg.VendorIds) > 0 {
+		for _, v := range arg.VendorIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:vendor_ids*/?", strings.Repeat(",?", len(arg.VendorIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:vendor_ids*/?", "NULL", 1)
+	}
+	queryParams = append(queryParams, arg.VendorCount)
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListIntersectingCheckoutDeliveryZonesRow{}
+	for rows.Next() {
+		var i ListIntersectingCheckoutDeliveryZonesRow
 		if err := rows.Scan(&i.Name, &i.EstimatedDays, &i.BaseCost); err != nil {
 			return nil, err
 		}

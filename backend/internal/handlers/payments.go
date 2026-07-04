@@ -203,7 +203,7 @@ func InitializeOrderPayment(cfg *config.Config) gin.HandlerFunc {
 		ctx := c.Request.Context()
 		st := getStore(c)
 		q := st.Queries()
-		subtotal, err := validateOrderItems(ctx, q, req.Items)
+		subtotal, err := validateOrderItems(ctx, q, userID, req.Items)
 		if err != nil {
 			utils.Error(c, http.StatusBadRequest, err.Error())
 			return
@@ -779,7 +779,7 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 	if err := json.Unmarshal(payment.Metadata, &meta); err != nil {
 		return "", fmt.Errorf("invalid payment metadata")
 	}
-	if _, err := validateOrderItems(ctx, q, meta.Items); err != nil {
+	if _, err := validateOrderItems(ctx, q, payment.UserID, meta.Items); err != nil {
 		return "", err
 	}
 

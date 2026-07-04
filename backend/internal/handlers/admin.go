@@ -3,6 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/Reactguru24/lumiafrica/internal/config"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/middleware"
@@ -10,8 +14,6 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/plans"
 	"github.com/Reactguru24/lumiafrica/internal/store"
 	"github.com/Reactguru24/lumiafrica/internal/utils"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -380,7 +382,10 @@ func ApproveVendor(cfg *config.Config) gin.HandlerFunc {
 				utils.Error(c, http.StatusConflict, "A vendor account already exists for this business email")
 			case errors.Is(err, ErrBusinessEmailTaken):
 				utils.Error(c, http.StatusConflict, "Business email is already registered to another account")
+			case errors.Is(err, ErrDuplicateVendorUser):
+				utils.Error(c, http.StatusConflict, "Could not create vendor login — email or phone is already registered")
 			default:
+				log.Printf("approve vendor application %s: resolve account: %v", applicationID.String(), err)
 				utils.Error(c, http.StatusInternalServerError, "Failed to create vendor account")
 			}
 			return

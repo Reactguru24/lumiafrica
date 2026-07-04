@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ var (
 	ErrBusinessEmailNotVendor  = errors.New("business email belongs to a non-vendor account")
 	ErrVendorAccountExists     = errors.New("vendor account already exists for business email")
 	ErrBusinessEmailTaken     = errors.New("business email is already registered to another account")
+	ErrDuplicateVendorUser    = errors.New("could not create vendor login — email or phone already in use")
 )
 
 func normalizeEmail(email string) string {
@@ -87,6 +89,30 @@ func promoteUserToVendor(ctx context.Context, q *sqlc.Queries, user sqlc.User, b
 	return user.ID, nil
 }
 
+func isDuplicateUserError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "duplicate") ||
+		strings.Contains(msg, "unique constraint") ||
+		strings.Contains(msg, "duplicate entry")
+}
+
+func uniqueVendorPhone(ctx context.Context, q *sqlc.Queries) (string, error) {
+	for i := 0; i < 12; i++ {
+		candidate := fmt.Sprintf("+V%014x", time.Now().UnixNano()+int64(i))
+		_, err := q.GetUserByPhone(ctx, candidate)
+		if errors.Is(err, sql.ErrNoRows) {
+			return candidate, nil
+		}
+		if err != nil {
+			return "", err
+		}
+	}
+	return fmt.Sprintf("+V%s", strings.ReplaceAll(utils.GenerateID(), "-", "")[:14]), nil
+}
+
 func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.VendorApplication) (types.BinaryUUID, error) {
 	businessEmail := normalizeEmail(app.BusinessEmail)
 	contactPhone := strings.TrimSpace(app.ContactPhone)
@@ -96,12 +122,7 @@ func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.Ven
 		if err != nil {
 			return types.BinaryUUID{}, err
 		}
-		if normalizeEmail(applicant.Email) == businessEmail {
-			return promoteUserToVendor(ctx, q, applicant, businessEmail)
-		}
-		if contactPhone != "" && applicant.Phone == contactPhone {
-			return promoteUserToVendor(ctx, q, applicant, businessEmail)
-		}
+		return promoteUserToVendor(ctx, q, applicant, businessEmail)
 	}
 
 	if existing, err := q.GetUserByEmail(ctx, businessEmail); err == nil {
@@ -134,16 +155,37 @@ func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.Ven
 		fullName = app.StoreName
 	}
 
+	phone := contactPhone
+	if phone == "" {
+		var phoneErr error
+		phone, phoneErr = uniqueVendorPhone(ctx, q)
+		if phoneErr != nil {
+			return types.BinaryUUID{}, phoneErr
+		}
+	} else if existing, err := q.GetUserByPhone(ctx, phone); err == nil {
+		if normalizeEmail(existing.Email) != businessEmail {
+			phone, err = uniqueVendorPhone(ctx, q)
+			if err != nil {
+				return types.BinaryUUID{}, err
+			}
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return types.BinaryUUID{}, err
+	}
+
 	if err := q.CreateUser(ctx, sqlc.CreateUserParams{
 		ID:       vendorUserID,
 		FullName: fullName,
 		Email:    businessEmail,
-		Phone:    contactPhone,
+		Phone:    phone,
 		Password: placeholderPassword,
 		Role:     sqlc.UsersRoleVENDOR,
 		Disabled: 0,
 	}); err != nil {
 		log.Printf("create vendor user failed for %s: %v", businessEmail, err)
+		if isDuplicateUserError(err) {
+			return types.BinaryUUID{}, ErrDuplicateVendorUser
+		}
 		return types.BinaryUUID{}, err
 	}
 	return vendorUserID, nil

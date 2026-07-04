@@ -124,8 +124,11 @@ export function useFeaturedVendors() {
   return useQuery('featured-vendors', () => publicAPI.getFeaturedVendors())
 }
 
-export function useDeliveryZones() {
-  return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
+export function useDeliveryZones(vendorIds?: string[]) {
+  const key = vendorIds?.length
+    ? `delivery-zones-${[...vendorIds].sort().join(',')}`
+    : 'delivery-zones'
+  return useQuery(key, () => publicAPI.getDeliveryZones(vendorIds))
 }
 
 export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
@@ -446,8 +449,8 @@ export function useDeleteAddress() {
 
 // ── Vendor ────────────────────────────────────────────────────────────
 
-export function useVendorProfile() {
-  return useQuery('vendor-profile', () => vendorAPI.getProfile())
+export function useVendorProfile(options?: { enabled?: boolean }) {
+  return useQuery('vendor-profile', () => vendorAPI.getProfile(), { enabled: options?.enabled })
 }
 
 export function useVendorProducts() {

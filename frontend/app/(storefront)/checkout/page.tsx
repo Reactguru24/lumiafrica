@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
-import { useProducts, useCreateOrder, useValidateCoupon, useShippingEstimate, useDeliveryZones } from '@/lib/stores/api'
+import { useProducts, useCreateOrder, useValidateCoupon, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
 import { formatCurrency } from '@/lib/utils/storage'
 import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
@@ -15,7 +15,8 @@ import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
 import { toShippingEstimateItems, type ShippingBreakdown } from '@/lib/utils/shipping'
 import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
-import { CUSTOMER_ROLES } from '@/lib/constants/roles'
+import { SHOPPER_ROLES } from '@/lib/constants/roles'
+import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import type { Product, CartItem } from '@/lib/types'
 import type { ProductListResponse } from '@/lib/types/filters'
 
@@ -37,12 +38,11 @@ export default function CheckoutPage() {
     paymentMethod: PAYMENT_METHODS[0] as (typeof PAYMENT_METHODS)[number],
   })
   const { data: allProducts } = useProducts({ limit: 200 })
-  const { data: zonesData } = useDeliveryZones()
+  const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
+  const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
   const createOrder = useCreateOrder().mutate
   const validateCoupon = useValidateCoupon().mutate
   const checkoutIdempotencyKey = useRef<string | null>(null)
-
-  const deliveryZones = (zonesData as DeliveryZone[] | null) ?? []
 
   const productMap = useMemo(() => {
     const map: Record<string, Product> = {}
@@ -59,8 +59,35 @@ export default function CheckoutPage() {
     }).filter(Boolean) as (CartItem & { product: Product })[]
   }, [cart.items, productMap])
 
+  const cartVendorIds = useMemo(
+    () => [...new Set(cartItems.map((item) => item.product.vendorId).filter(Boolean))],
+    [cartItems],
+  )
+
+  const { data: filteredZonesData } = useDeliveryZones(
+    cartVendorIds.length > 0 ? cartVendorIds : undefined,
+  )
+  const { data: allZonesData } = useDeliveryZones()
+  const filteredZones = (filteredZonesData as DeliveryZone[] | null) ?? []
+  const allZones = (allZonesData as DeliveryZone[] | null) ?? []
+  const multiVendor = cartVendorIds.length > 1
+  const usingFallbackZones = multiVendor && filteredZones.length === 0 && allZones.length > 0
+  const deliveryZones = filteredZones.length > 0 ? filteredZones : allZones
+
+  const ownProductItems = useMemo(
+    () => cartItems.filter((item) => isOwnVendorProduct(item.product.vendorId, myVendorId)),
+    [cartItems, myVendorId],
+  )
+
   const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
   const { data: shippingData } = useShippingEstimate(estimateItems, deliveryZoneId)
+
+  useEffect(() => {
+    if (ownProductItems.length > 0) {
+      toast.error(VENDOR_SELF_PURCHASE_MSG)
+      router.replace('/cart')
+    }
+  }, [ownProductItems.length, router])
 
   useEffect(() => {
     if (auth.user) {
@@ -211,7 +238,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <RouteGuard requiresAuth roles={CUSTOMER_ROLES}>
+    <RouteGuard requiresAuth roles={SHOPPER_ROLES}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full min-w-0">
         <h1 className="section-title mb-6 sm:mb-8">Checkout</h1>
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 sm:mb-10 overflow-x-auto pb-1">
@@ -240,7 +267,19 @@ export default function CheckoutPage() {
         {step === 2 && (
           <div className="animate-slide-up">
             <h2 className="font-semibold text-lg mb-4">Delivery Zone</h2>
-            <p className="text-sm text-gray-500 mb-4">Shipping is set by each seller for your area. Fees below are combined per store in your cart.</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Shipping is set by each seller for your area. Fees below are combined per store in your cart.
+            </p>
+            {usingFallbackZones && (
+              <p className="text-sm text-amber-600 mb-4 p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
+                Sellers in your cart use different delivery areas. Some may use standard rates for the zone you select.
+              </p>
+            )}
+            {!usingFallbackZones && multiVendor && (
+              <p className="text-sm text-gray-500 mb-4">
+                Only showing areas that all sellers in your cart can deliver to.
+              </p>
+            )}
             <div className="space-y-3">
               {deliveryZones.map((zone) => (
                 <label key={zone.id} className={`card p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>

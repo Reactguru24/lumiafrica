@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
 	"github.com/Reactguru24/lumiafrica/internal/models"
@@ -16,21 +19,20 @@ type variantKey struct {
 	color     string
 }
 
-func validateVariantOrderItems(ctx context.Context, q *sqlc.Queries, items []models.OrderItem) (float64, error) {
+func validateVariantOrderItems(ctx context.Context, q *sqlc.Queries, items []models.OrderItem) (float64, map[types.BinaryUUID]sqlc.Product, error) {
 	qtyByVariant := make(map[variantKey]int)
 	for _, item := range items {
 		if item.Color == "" {
-			return 0, fmt.Errorf("color is required for every item")
+			return 0, nil, fmt.Errorf("color is required for every item")
 		}
 		productID, err := utils.ParseID(item.ProductID)
 		if err != nil {
-			return 0, fmt.Errorf("invalid product id")
+			return 0, nil, fmt.Errorf("invalid product id")
 		}
 		key := variantKey{productID: productID, size: item.Size, color: item.Color}
 		qtyByVariant[key] += item.Quantity
 	}
 
-	var subtotal float64
 	productCache := make(map[types.BinaryUUID]sqlc.Product)
 	variantCache := make(map[variantKey]sqlc.ProductVariant)
 
@@ -39,13 +41,13 @@ func validateVariantOrderItems(ctx context.Context, q *sqlc.Queries, items []mod
 		if !ok {
 			row, err := q.GetProductByID(ctx, key.productID)
 			if err != nil {
-				return 0, fmt.Errorf("product not found or unavailable")
+				return 0, nil, fmt.Errorf("product not found or unavailable")
 			}
 			product = row
 			productCache[key.productID] = product
 		}
 		if models.ProductStatus(product.Status) != models.StatusActive {
-			return 0, fmt.Errorf("\"%s\" is no longer available", product.Name)
+			return 0, nil, fmt.Errorf("\"%s\" is no longer available", product.Name)
 		}
 
 		variant, ok := variantCache[key]
@@ -54,26 +56,27 @@ func validateVariantOrderItems(ctx context.Context, q *sqlc.Queries, items []mod
 				ProductID: key.productID, Size: key.size, Color: key.color,
 			})
 			if err != nil {
-				return 0, fmt.Errorf("%s / %s is not available for \"%s\"", key.size, key.color, product.Name)
+				return 0, nil, fmt.Errorf("%s / %s is not available for \"%s\"", key.size, key.color, product.Name)
 			}
 			variant = row
 			variantCache[key] = variant
 		}
 		if variant.Stock < int32(totalQty) {
 			if variant.Stock == 0 {
-				return 0, fmt.Errorf("\"%s\" (%s, %s) is out of stock", product.Name, key.size, key.color)
+				return 0, nil, fmt.Errorf("\"%s\" (%s, %s) is out of stock", product.Name, key.size, key.color)
 			}
-			return 0, fmt.Errorf("only %d left in stock for \"%s\" (%s, %s)", variant.Stock, product.Name, key.size, key.color)
+			return 0, nil, fmt.Errorf("only %d left in stock for \"%s\" (%s, %s)", variant.Stock, product.Name, key.size, key.color)
 		}
 	}
 
+	var subtotal float64
 	for _, item := range items {
 		productID, _ := utils.ParseID(item.ProductID)
 		product := productCache[productID]
 		key := variantKey{productID: productID, size: item.Size, color: item.Color}
 		variant := variantCache[key]
 		if item.VendorID != "" && item.VendorID != product.VendorID.String() {
-			return 0, fmt.Errorf("vendor mismatch for \"%s\"", product.Name)
+			return 0, nil, fmt.Errorf("vendor mismatch for \"%s\"", product.Name)
 		}
 		price := store.ParseDecimalString(variant.Price)
 		if discount := store.ParseDecimalString(variant.Discount); discount > 0 {
@@ -81,7 +84,38 @@ func validateVariantOrderItems(ctx context.Context, q *sqlc.Queries, items []mod
 		}
 		subtotal += price * float64(item.Quantity)
 	}
-	return subtotal, nil
+	return subtotal, productCache, nil
+}
+
+func validateVendorSelfPurchase(ctx context.Context, q *sqlc.Queries, buyerUserID types.BinaryUUID, items []models.OrderItem, productCache map[types.BinaryUUID]sqlc.Product) error {
+	if buyerUserID.IsZero() {
+		return nil
+	}
+	vendor, err := q.GetVendorByUserID(ctx, buyerUserID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("failed to verify vendor account")
+	}
+	for _, item := range items {
+		productID, err := utils.ParseID(item.ProductID)
+		if err != nil {
+			continue
+		}
+		product, ok := productCache[productID]
+		if !ok {
+			row, err := q.GetProductByID(ctx, productID)
+			if err != nil {
+				continue
+			}
+			product = row
+		}
+		if product.VendorID == vendor.ID {
+			return fmt.Errorf("you cannot purchase your own products")
+		}
+	}
+	return nil
 }
 
 func decrementVariantOrderStock(ctx context.Context, q *sqlc.Queries, items []models.OrderItem) error {
@@ -132,7 +166,7 @@ func decrementVariantOrderStock(ctx context.Context, q *sqlc.Queries, items []mo
 	return nil
 }
 
-func validateOrderItems(ctx context.Context, q *sqlc.Queries, items []models.OrderItem) (float64, error) {
+func validateOrderItems(ctx context.Context, q *sqlc.Queries, buyerUserID types.BinaryUUID, items []models.OrderItem) (float64, error) {
 	if len(items) == 0 {
 		return 0, fmt.Errorf("order must contain at least one item")
 	}
@@ -147,7 +181,14 @@ func validateOrderItems(ctx context.Context, q *sqlc.Queries, items []models.Ord
 			return 0, fmt.Errorf("size is required for every item")
 		}
 	}
-	return validateVariantOrderItems(ctx, q, items)
+	subtotal, productCache, err := validateVariantOrderItems(ctx, q, items)
+	if err != nil {
+		return 0, err
+	}
+	if err := validateVendorSelfPurchase(ctx, q, buyerUserID, items, productCache); err != nil {
+		return 0, err
+	}
+	return subtotal, nil
 }
 
 func decrementOrderStock(ctx context.Context, q *sqlc.Queries, items []models.OrderItem) error {

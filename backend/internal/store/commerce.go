@@ -24,6 +24,15 @@ func ToCheckoutDeliveryZone(row sqlc.ListCheckoutDeliveryZonesRow) models.Delive
 	}
 }
 
+func ToCheckoutDeliveryZoneFromIntersect(row sqlc.ListIntersectingCheckoutDeliveryZonesRow) models.DeliveryZoneResponse {
+	return models.DeliveryZoneResponse{
+		ID:            row.Name,
+		Name:          row.Name,
+		BaseCost:      ParseDecimalString(row.BaseCost),
+		EstimatedDays: row.EstimatedDays,
+	}
+}
+
 func ToCoupon(c sqlc.Coupon) models.CouponResponse {
 	out := models.CouponResponse{
 		ID:             c.ID.String(),

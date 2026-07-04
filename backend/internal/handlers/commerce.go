@@ -62,7 +62,41 @@ func buildPromotionResponse(ctx context.Context, q *sqlc.Queries, row sqlc.Promo
 func ListDeliveryZones() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := getStore(c).Queries().ListCheckoutDeliveryZones(ctx)
+		q := getStore(c).Queries()
+
+		vendorIDStrs := strings.Split(strings.TrimSpace(c.Query("vendorIds")), ",")
+		var vendorIDs []types.BinaryUUID
+		for _, raw := range vendorIDStrs {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
+				continue
+			}
+			id, err := utils.ParseID(raw)
+			if err != nil {
+				utils.Error(c, http.StatusBadRequest, "Invalid vendor id in vendorIds")
+				return
+			}
+			vendorIDs = append(vendorIDs, id)
+		}
+
+		if len(vendorIDs) > 0 {
+			rows, err := q.ListIntersectingCheckoutDeliveryZones(ctx, sqlc.ListIntersectingCheckoutDeliveryZonesParams{
+				VendorIds:   vendorIDs,
+				VendorCount: int64(len(vendorIDs)),
+			})
+			if err != nil {
+				utils.Error(c, http.StatusInternalServerError, "Failed to load delivery zones")
+				return
+			}
+			out := make([]models.DeliveryZoneResponse, len(rows))
+			for i, row := range rows {
+				out[i] = store.ToCheckoutDeliveryZoneFromIntersect(row)
+			}
+			utils.Success(c, out)
+			return
+		}
+
+		rows, err := q.ListCheckoutDeliveryZones(ctx)
 		if err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to load delivery zones")
 			return

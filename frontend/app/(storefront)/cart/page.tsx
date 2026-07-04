@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { MediaImage } from '@/components/common/MediaImage'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
-import { useProducts, useShippingEstimate, useDeliveryZones } from '@/lib/stores/api'
+import { useProducts, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
+import { useAuthStore } from '@/lib/stores/auth'
+import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import { formatCurrency } from '@/lib/utils/storage'
 import { TAX_RATE } from '@/lib/constants/commerce'
 import { toShippingEstimateItems } from '@/lib/utils/shipping'
@@ -18,23 +20,12 @@ import type { ProductListResponse } from '@/lib/types/filters'
 export default function CartPage() {
   const router = useRouter()
   const cart = useCartStore()
+  const auth = useAuthStore()
+  const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
+  const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
   const [deliveryZoneId, setDeliveryZoneId] = useState('')
 
   const { data: allProducts, loading } = useProducts({ limit: 200 })
-  const { data: zonesData } = useDeliveryZones()
-  const deliveryZones = (zonesData as { id: string; name: string }[] | null) ?? []
-
-  useEffect(() => {
-    if (deliveryZones.length === 0) return
-    const stored = readStoredDeliveryZoneId()
-    if (stored && deliveryZones.some((z) => z.id === stored)) {
-      setDeliveryZoneId(stored)
-      return
-    }
-    if (!deliveryZoneId) {
-      setDeliveryZoneId(deliveryZones[0].id)
-    }
-  }, [deliveryZones, deliveryZoneId])
 
   const productMap = useMemo(() => {
     const map: Record<string, Product> = {}
@@ -51,6 +42,38 @@ export default function CartPage() {
       return { ...item, product }
     }).filter(Boolean) as (CartItem & { product: Product })[]
   }, [cart.activeItems, productMap])
+
+  const cartVendorIds = useMemo(
+    () => [...new Set(cartItems.map((item) => item.product.vendorId).filter(Boolean))],
+    [cartItems],
+  )
+
+  const { data: filteredZonesData } = useDeliveryZones(
+    cartVendorIds.length > 0 ? cartVendorIds : undefined,
+  )
+  const { data: allZonesData } = useDeliveryZones()
+  const filteredZones = (filteredZonesData as { id: string; name: string }[] | null) ?? []
+  const allZones = (allZonesData as { id: string; name: string }[] | null) ?? []
+  const multiVendor = cartVendorIds.length > 1
+  const usingFallbackZones = multiVendor && filteredZones.length === 0 && allZones.length > 0
+  const deliveryZones = filteredZones.length > 0 ? filteredZones : allZones
+
+  useEffect(() => {
+    if (deliveryZones.length === 0) return
+    const stored = readStoredDeliveryZoneId()
+    if (stored && deliveryZones.some((z) => z.id === stored)) {
+      setDeliveryZoneId(stored)
+      return
+    }
+    if (!deliveryZoneId) {
+      setDeliveryZoneId(deliveryZones[0].id)
+    }
+  }, [deliveryZones, deliveryZoneId])
+
+  const ownProductItems = useMemo(
+    () => cartItems.filter((item) => isOwnVendorProduct(item.product.vendorId, myVendorId)),
+    [cartItems, myVendorId],
+  )
 
   const savedItems = useMemo(() => {
     return cart.savedItems.map((item) => {
@@ -106,6 +129,7 @@ export default function CartPage() {
   const total = subtotal + shipping + tax
 
   const checkoutBlocked = useMemo(() => {
+    if (ownProductItems.length > 0) return VENDOR_SELF_PURCHASE_MSG
     if (cart.activeItems.length === 0) return 'Your cart is empty'
     if (loading) return 'Loading product details…'
     if (cart.activeItems.some((item) => !productMap[item.productId])) {
@@ -117,7 +141,19 @@ export default function CartPage() {
       if (item.quantity > stock) return 'Reduce quantities to match available stock'
     }
     return null
-  }, [cart.activeItems, cartItems, loading, productMap])
+  }, [cart.activeItems, cartItems, loading, productMap, ownProductItems])
+
+  function handleCheckout() {
+    if (ownProductItems.length > 0) {
+      toast.error(VENDOR_SELF_PURCHASE_MSG)
+      return
+    }
+    if (checkoutBlocked) {
+      toast.error(checkoutBlocked)
+      return
+    }
+    router.push('/checkout')
+  }
 
   return (
     <div className="page-container">
@@ -131,6 +167,11 @@ export default function CartPage() {
           <div className="lg:col-span-2 space-y-6">
             {cartItems.length > 0 && (
               <div className="space-y-4">
+                {ownProductItems.length > 0 && (
+                  <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 text-sm text-amber-900 dark:text-amber-200">
+                    {VENDOR_SELF_PURCHASE_MSG} Remove your own listings to continue.
+                  </div>
+                )}
                 {cartItems.map((item) => {
               const stock = variantStockFor(item)
               const key = `${item.productId}|${item.size}|${item.color}`
@@ -188,6 +229,16 @@ export default function CartPage() {
               {deliveryZones.length > 0 && (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-gray-500">Delivery zone</label>
+                  {usingFallbackZones && (
+                    <p className="text-xs text-amber-600 mt-1 mb-1">
+                      Sellers in your cart use different delivery areas. Rates shown may include standard shipping for some stores.
+                    </p>
+                  )}
+                  {!usingFallbackZones && multiVendor && (
+                    <p className="text-xs text-gray-500 mt-1 mb-1">
+                      Showing areas all sellers in your cart deliver to. Shipping is combined per store.
+                    </p>
+                  )}
                   <select
                     value={deliveryZoneId}
                     onChange={(e) => {
@@ -211,7 +262,7 @@ export default function CartPage() {
               <button
                 className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!checkoutBlocked}
-                onClick={() => router.push('/checkout')}
+                onClick={handleCheckout}
               >
                 Proceed to Checkout
               </button>

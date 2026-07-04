@@ -19,6 +19,8 @@ import { ProductCard } from '@/components/product/ProductCard'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import { parseProductColors } from '@/lib/constants/productColors'
 import { VirtualFittingModal, VirtualFittingButton } from '@/components/fitting/VirtualFittingModal'
+import { useVendorProfile } from '@/lib/stores/api'
+import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import type { Product } from '@/lib/types'
 
 export default function ProductDetailPage() {
@@ -28,6 +30,8 @@ export default function ProductDetailPage() {
   const productId = params.id as string
   const { addItem, toggleWishlist, isInWishlist, items: cartItems } = useCartStore()
   const auth = useAuthStore()
+  const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
+  const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -84,6 +88,10 @@ export default function ProductDetailPage() {
 
   async function handleAddToCart() {
     if (!productAny) return
+    if (isOwnVendorProduct(productAny.vendorId, myVendorId)) {
+      toast.error(VENDOR_SELF_PURCHASE_MSG)
+      return
+    }
     if (stockAvailable === 0) {
       toast.error(`"${productAny.name}" is out of stock`)
       return

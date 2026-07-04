@@ -323,7 +323,7 @@ export default function AdminVendorsPage() {
                   </button>
 
                   {expandedVerification === app.id && (
-                    <div className="mt-4 space-y-2">
+                    <div className="mt-2 max-h-64 overflow-y-auto rounded-lg border border-blue-100 dark:border-blue-900/50 space-y-2 p-2">
                       {checklist.map((item) => (
                         <div
                           key={item.id}

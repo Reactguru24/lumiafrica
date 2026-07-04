@@ -363,7 +363,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const baseRoutes = ['/', '/products', '/cart', '/account', '/account/orders', '/account/wishlist']
     switch (role) {
       case 'ADMIN': return [...baseRoutes, '/admin']
-      case 'VENDOR': return ['/', '/products', '/cart', '/vendor', '/vendor/account']
+      case 'VENDOR': return ['/', '/products', '/cart', '/checkout', '/vendor', '/vendor/account']
       case 'CUSTOMER': return baseRoutes
       default: return baseRoutes
     }

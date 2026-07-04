@@ -230,8 +230,10 @@ export const publicAPI = {
     return get('/subscriptions/plans', { skipAuth: true })
   },
 
-  getDeliveryZones() {
-    return get('/delivery-zones', { skipAuth: true })
+  getDeliveryZones(vendorIds?: string[]) {
+    const ids = vendorIds?.filter(Boolean)
+    const query = ids?.length ? buildQuery({ vendorIds: ids.join(',') }) : ''
+    return get(`/delivery-zones${query}`, { skipAuth: true })
   },
 
   estimateShipping(items: Record<string, unknown>[], deliveryZoneId: string) {
