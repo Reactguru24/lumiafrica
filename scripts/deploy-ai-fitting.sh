@@ -30,9 +30,12 @@ if ! "$RAILWAY" whoami >/dev/null 2>&1; then
 fi
 
 PROJECT_FLAG=()
+ENV_FLAG=(-e "${RAILWAY_ENVIRONMENT:-production}")
 if [[ -n "${RAILWAY_PROJECT_ID:-}" ]]; then
   PROJECT_FLAG=(-p "$RAILWAY_PROJECT_ID")
 fi
+
+SERVICE_FLAG=(-s "$SERVICE_NAME")
 
 echo "==> Ensuring Railway service '$SERVICE_NAME' exists..."
 if ! "$RAILWAY" add --service "$SERVICE_NAME" "${PROJECT_FLAG[@]}" --json 2>/dev/null; then
@@ -42,7 +45,8 @@ fi
 echo "==> Setting environment variables..."
 "$RAILWAY" variables set \
   "${PROJECT_FLAG[@]}" \
-  -s "$SERVICE_NAME" \
+  "${ENV_FLAG[@]}" \
+  "${SERVICE_FLAG[@]}" \
   "BACKEND_API_URL=$BACKEND_URL" \
   "ALLOWED_ORIGINS=$FRONTEND_URL,http://localhost:3000" \
   "PORT=80"
@@ -50,8 +54,8 @@ echo "==> Setting environment variables..."
 echo "==> Deploying from $ML_DIR ..."
 "$RAILWAY" up "$ML_DIR" -d -y \
   "${PROJECT_FLAG[@]}" \
-  -s "$SERVICE_NAME" \
-  -e "${RAILWAY_ENVIRONMENT:-production}"
+  "${ENV_FLAG[@]}" \
+  "${SERVICE_FLAG[@]}"
 
 echo ""
 echo "==> Generate a public URL (if needed):"

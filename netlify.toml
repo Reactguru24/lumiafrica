@@ -1,5 +1,5 @@
 # Monorepo: frontend lives in frontend/ — Netlify must build from here.
-# Redeploy trigger: 2026-07-04 (AI fitting button visibility)
+# Redeploy trigger: 2026-07-04 (ML deployed + AI fitting button)
 [build]
   base = "frontend"
   command = "npm ci && npm run build"
@@ -10,6 +10,7 @@
 
 [context.production.environment]
   NEXT_PUBLIC_API_URL = "https://dazzling-smile-production-1014.up.railway.app"
+  ML_API_URL = "https://ai-fitting-production.up.railway.app"
 
 # Proxy API through Netlify (same-origin) — avoids CORS to Railway
 [[redirects]]
