@@ -1,5 +1,5 @@
 # Monorepo: frontend lives in frontend/ — Netlify must build from here.
-# Redeploy trigger: 2026-07-04 (ML deployed + AI fitting button)
+# Redeploy trigger: 2026-07-04 (fix virtual fitting 503 timeout)
 [build]
   base = "frontend"
   command = "npm ci && npm run build"
@@ -21,3 +21,7 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# ML image analysis can take 30s+ — maxDuration set in the API route
+[functions]
+  node_bundler = "esbuild"
