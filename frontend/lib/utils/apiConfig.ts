@@ -14,10 +14,9 @@ export function isRemoteApiUrl(url: string = getConfiguredApiUrl()): boolean {
   }
 }
 
-/** Browser dev: same-origin proxy to avoid CORS against a deployed backend. */
+/** Browser: same-origin proxy when the API is on another host (avoids CORS). */
 export function shouldUseBrowserApiProxy(): boolean {
   if (typeof window === 'undefined') return false
-  if (process.env.NODE_ENV !== 'development') return false
   return isRemoteApiUrl()
 }
 

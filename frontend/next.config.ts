@@ -26,7 +26,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     const configuredApiUrl = getConfiguredApiUrl()
-    if (process.env.NODE_ENV !== 'development' || !isRemoteApiUrl(configuredApiUrl)) {
+    // Proxy remote API through same origin in all environments (avoids CORS on Netlify → Railway).
+    if (!isRemoteApiUrl(configuredApiUrl)) {
       return []
     }
     return [

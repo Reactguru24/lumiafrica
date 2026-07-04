@@ -1,5 +1,5 @@
 # Host-specific URLs and Railway variable refs: deploy/railway.env.example
-# Redeploy trigger: 2026-07-04 (AI fitting, delivery zones, unified docker)
+# Redeploy trigger: 2026-07-04 (Netlify API proxy — fix CORS)
 
 [build]
 builder = "dockerfile"
