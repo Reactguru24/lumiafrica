@@ -1,0 +1,10 @@
+# AI fitting ML service — deploy as a second Railway service in this monorepo.
+# Railway → New Service → same GitHub repo → Root Directory: ai-fitting-tool
+# Env: BACKEND_API_URL, ALLOWED_ORIGINS (see ../deploy/railway.env.example)
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"

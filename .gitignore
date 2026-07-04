@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !.env.docker.example
+!**/.env.example
 
 # OS
 .DS_Store
@@ -38,3 +39,12 @@ frontend/*.tsbuildinfo
 
 # Root misc — only ignore the sqlc binary at repo root, not internal/database/sqlc/
 /sqlc
+
+# AI fitting tool (Python)
+ai-fitting-tool/__pycache__/
+ai-fitting-tool/**/__pycache__/
+ai-fitting-tool/.venv/
+ai-fitting-tool/venv/
+ai-fitting-tool/.pytest_cache/
+ai-fitting-tool/.coverage
+ai-fitting-tool/htmlcov/

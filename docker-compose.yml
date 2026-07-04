@@ -100,6 +100,7 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://localhost:8080
       ML_API_URL: http://ml:80
+      NEXT_PUBLIC_VIRTUAL_FITTING_ENABLED: "true"
     ports:
       - "3000:3000"
     depends_on:

@@ -1,54 +1,16 @@
+# Optional: deploy ai-fitting-tool from monorepo root (backend uses Railway, frontend uses Netlify).
 services:
   - type: web
-    name: lumi-backend
+    name: lumi-ai-fitting
     runtime: docker
+    dockerfilePath: ai-fitting-tool/Dockerfile
+    dockerContext: ai-fitting-tool
     plan: free
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
     healthCheckPath: /health
     envVars:
-      - key: SERVER_ENV
-        value: production
-      - key: JWT_SECRET
-        generateValue: true
-      - key: FRONTEND_URL
-        sync: false
-      - key: CORS_ORIGINS
-        sync: false
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        value: "3306"
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
-        value: lumi_marketplace
-      - key: REDIS_ENABLED
-        value: "false"
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-      - key: PAYSTACK_SECRET_KEY
-        sync: false
-      - key: PAYSTACK_PUBLIC_KEY
-        sync: false
-      - key: PAYSTACK_CALLBACK_URL
-        sync: false
-      - key: SMTP_HOST
-        sync: false
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASSWORD
-        sync: false
-      - key: SMTP_FROM_EMAIL
-        sync: false
-      - key: SMTP_FROM_NAME
-        value: Lumi Africa
+      - key: PORT
+        value: 80
+      - key: ALLOWED_ORIGINS
+        value: https://lumiwebafric.netlify.app,http://localhost:3000
+      - key: BACKEND_API_URL
+        value: https://dazzling-smile-production-1014.up.railway.app

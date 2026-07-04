@@ -165,7 +165,7 @@ export default function ProductDetailPage() {
           <div className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-sm">Size</h3>
-              {(productAny.sizes || []).length > 0 && (
+          {(productAny.sizes || []).length > 0 && process.env.NEXT_PUBLIC_VIRTUAL_FITTING_ENABLED === 'true' && (
                 <VirtualFittingButton onClick={() => setFittingOpen(true)} />
               )}
             </div>
@@ -245,7 +245,7 @@ export default function ProductDetailPage() {
       </div>
 
       <VirtualFittingModal
-        open={fittingOpen}
+        open={fittingOpen && process.env.NEXT_PUBLIC_VIRTUAL_FITTING_ENABLED === 'true'}
         onClose={() => setFittingOpen(false)}
         productId={productAny.id}
         productName={productAny.name}

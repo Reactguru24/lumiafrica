@@ -2,6 +2,8 @@
 
 Machine Learning service for body measurement detection and size recommendation. Built with FastAPI, MediaPipe, and OpenCV.
 
+Part of the **lumiafrica monorepo** (`ai-fitting-tool/`). Deploy as a separate Railway or Render service; the Next.js frontend proxies requests via `/api/virtual-fitting/analyze`.
+
 ## Features
 
 - **Image Validation** - Ensures uploaded photos contain properly clothed human bodies (NEW!)
