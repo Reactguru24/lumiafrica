@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ai-fitting-tool
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 80
+      - key: ALLOWED_ORIGINS
+        value: https://yourdomain.com,http://localhost:3000
