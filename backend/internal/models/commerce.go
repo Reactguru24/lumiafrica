@@ -50,16 +50,26 @@ type ShippingEstimateRequest struct {
 }
 
 type VendorShippingBreakdown struct {
-	VendorID     string  `json:"vendorId"`
-	StoreName    string  `json:"storeName"`
-	Subtotal     float64 `json:"subtotal"`
-	ShippingCost float64 `json:"shippingCost"`
+	VendorID      string   `json:"vendorId"`
+	StoreName     string   `json:"storeName"`
+	Subtotal      float64  `json:"subtotal"`
+	ShippingCost  float64  `json:"shippingCost"`
+	ZoneName      string   `json:"zoneName"`
+	EstimatedDays string   `json:"estimatedDays"`
+	ZoneMatched   bool     `json:"zoneMatched"`
+	ProductIDs    []string `json:"productIds"`
 }
 
 type ShippingEstimateResponse struct {
 	ShippingCost float64                   `json:"shippingCost"`
 	Breakdown    []VendorShippingBreakdown `json:"breakdown"`
 	DeliveryZoneID string                  `json:"deliveryZoneId"`
+}
+
+type ProductSizeChartResponse struct {
+	ProductID string                            `json:"productId"`
+	Gender    string                            `json:"gender"`
+	Chart     map[string]map[string]string      `json:"chart"`
 }
 
 type VendorShippingRateResponse struct {

@@ -13,6 +13,7 @@ import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
 import { toShippingEstimateItems } from '@/lib/utils/shipping'
+import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
 import { CUSTOMER_ROLES } from '@/lib/constants/roles'
 import type { Product, CartItem } from '@/lib/types'
@@ -73,10 +74,18 @@ export default function CheckoutPage() {
   }, [auth.user])
 
   useEffect(() => {
-    if (deliveryZones.length > 0 && !deliveryZoneId) {
+    if (deliveryZones.length === 0) return
+    const stored = readStoredDeliveryZoneId()
+    if (stored && deliveryZones.some((z) => z.id === stored)) {
+      setDeliveryZoneId(stored)
+      return
+    }
+    if (!deliveryZoneId) {
       setDeliveryZoneId(deliveryZones[0].id)
     }
   }, [deliveryZones, deliveryZoneId])
+
+  const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId)
 
   const subtotal = useMemo(() => cartItems.reduce((s, i) => {
     const discountAmount = i.product.discount > 100 ? i.product.discount : i.product.price * (i.product.discount / 100)
@@ -85,6 +94,33 @@ export default function CheckoutPage() {
 
   const shippingCost = shippingData?.shippingCost ?? 0
   const shippingBreakdown = shippingData?.breakdown ?? []
+
+  const vendorGroups = useMemo(() => {
+    const breakdownMap = new Map(shippingBreakdown.map((line) => [line.vendorId, line]))
+    const groups = new Map<string, {
+      vendorId: string
+      storeName: string
+      items: (CartItem & { product: Product })[]
+      shipping?: (typeof shippingBreakdown)[number]
+    }>()
+
+    for (const item of cartItems) {
+      const vendorId = item.product.vendorId
+      if (!groups.has(vendorId)) {
+        const shipping = breakdownMap.get(vendorId)
+        groups.set(vendorId, {
+          vendorId,
+          storeName: shipping?.storeName || 'Seller',
+          items: [],
+          shipping,
+        })
+      }
+      groups.get(vendorId)!.items.push(item)
+    }
+
+    return Array.from(groups.values())
+  }, [cartItems, shippingBreakdown])
+
   const discount = appliedCoupon?.discount ?? 0
   const tax = subtotal * TAX_RATE
   const total = Math.max(0, subtotal - discount + shippingCost + tax)
@@ -209,7 +245,14 @@ export default function CheckoutPage() {
               {deliveryZones.map((zone) => (
                 <label key={zone.id} className={`card p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
                   <div className="flex items-center gap-3">
-                    <input type="radio" checked={deliveryZoneId === zone.id} onChange={() => setDeliveryZoneId(zone.id)} />
+                    <input
+                      type="radio"
+                      checked={deliveryZoneId === zone.id}
+                      onChange={() => {
+                        setDeliveryZoneId(zone.id)
+                        storeDeliveryZoneId(zone.id)
+                      }}
+                    />
                     <div>
                       <p className="font-medium text-sm">{zone.name}</p>
                       <p className="text-xs text-gray-500">{zone.estimatedDays}</p>
@@ -218,6 +261,45 @@ export default function CheckoutPage() {
                 </label>
               ))}
             </div>
+
+            {vendorGroups.length > 0 && selectedZone && (
+              <div className="card p-4 mt-4 space-y-4">
+                <p className="font-medium text-sm">Items by seller — {selectedZone.name}</p>
+                {vendorGroups.map((group) => (
+                  <div key={group.vendorId} className="border-t border-gray-100 dark:border-gray-800 pt-3 first:border-0 first:pt-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-medium text-sm">{group.storeName}</p>
+                      <span className="text-xs text-gray-500 shrink-0">
+                        {group.shipping?.shippingCost === 0
+                          ? 'FREE'
+                          : group.shipping
+                            ? formatCurrency(group.shipping.shippingCost)
+                            : '—'}
+                      </span>
+                    </div>
+                    <ul className="space-y-2">
+                      {group.items.map((item) => (
+                        <li key={`${item.productId}-${item.size}-${item.color}`} className="flex justify-between gap-2 text-sm">
+                          <span className="text-gray-600 dark:text-gray-400 truncate">
+                            {item.product.name}
+                            <span className="text-xs text-gray-400 ml-1">×{item.quantity}</span>
+                          </span>
+                          <span className="text-xs text-gray-500 shrink-0">
+                            {item.size} / {item.color}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-xs mt-2 text-gray-500">
+                      {group.shipping?.zoneMatched
+                        ? `Delivers to ${group.shipping.zoneName || selectedZone.name} · ${group.shipping.estimatedDays || selectedZone.estimatedDays}`
+                        : `Standard shipping to ${selectedZone.name} · ${group.shipping?.estimatedDays || '3-7 business days'}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {shippingBreakdown.length > 0 && (
               <div className="card p-4 mt-4 text-sm space-y-2">
                 <p className="font-medium">Estimated shipping</p>

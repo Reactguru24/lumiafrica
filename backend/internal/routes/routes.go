@@ -49,6 +49,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/products/filters", handlers.GetProductFilters())
 	router.GET("/products/homepage", handlers.GetHomepageProducts())
 	router.GET("/products", handlers.ListProducts())
+	router.GET("/products/:productID/size-chart", handlers.GetProductSizeChart())
 	router.GET("/products/:productID", handlers.GetProduct())
 	router.GET("/vendors", handlers.ListVendors())
 	router.GET("/vendors/featured", handlers.GetFeaturedVendors())

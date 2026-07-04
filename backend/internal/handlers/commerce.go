@@ -179,10 +179,14 @@ func EstimateShipping() gin.HandlerFunc {
 		breakdown := make([]models.VendorShippingBreakdown, len(lines))
 		for i, line := range lines {
 			breakdown[i] = models.VendorShippingBreakdown{
-				VendorID:     line.VendorID,
-				StoreName:    line.StoreName,
-				Subtotal:     line.Subtotal,
-				ShippingCost: line.ShippingCost,
+				VendorID:      line.VendorID,
+				StoreName:     line.StoreName,
+				Subtotal:      line.Subtotal,
+				ShippingCost:  line.ShippingCost,
+				ZoneName:      line.ZoneName,
+				EstimatedDays: line.EstimatedDays,
+				ZoneMatched:   line.ZoneMatched,
+				ProductIDs:    line.ProductIDs,
 			}
 		}
 		utils.Success(c, models.ShippingEstimateResponse{

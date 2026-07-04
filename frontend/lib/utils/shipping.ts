@@ -16,6 +16,10 @@ export type ShippingBreakdown = {
   storeName: string
   subtotal: number
   shippingCost: number
+  zoneName?: string
+  estimatedDays?: string
+  zoneMatched?: boolean
+  productIds?: string[]
 }
 
 export type ShippingEstimate = {

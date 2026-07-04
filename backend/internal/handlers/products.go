@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"github.com/Reactguru24/lumiafrica/internal/catalog"
+	"github.com/Reactguru24/lumiafrica/internal/commerce"
 	"github.com/Reactguru24/lumiafrica/internal/config"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/models"
@@ -105,6 +106,37 @@ type ProductDetailResponse struct {
 	Product         models.Product   `json:"product"`
 	Vendor          models.Vendor    `json:"vendor"`
 	RelatedProducts []models.Product `json:"relatedProducts"`
+}
+
+// GetProductSizeChart godoc
+// @Summary Get product size chart for virtual fitting
+// @Description Returns measurement ranges per size for AI fitting recommendations.
+// @Tags Guest
+// @Produce json
+// @Param productID path string true "Product ID"
+// @Success 200 {object} models.ProductSizeChartResponse
+// @Router /products/{productID}/size-chart [get]
+func GetProductSizeChart() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		productID, ok := parsePathID(c, "productID")
+		if !ok {
+			return
+		}
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		row, err := q.GetProductByID(ctx, productID)
+		if handleNotFound(c, err, "Product not found", "Failed to fetch product") {
+			return
+		}
+
+		product := store.LoadProduct(ctx, q, row)
+		chart := commerce.BuildProductSizeChart(product.Gender, product.Sizes)
+		utils.Success(c, models.ProductSizeChartResponse{
+			ProductID: product.ID,
+			Gender:    string(product.Gender),
+			Chart:     chart,
+		})
+	}
 }
 
 // GetProduct godoc

@@ -18,6 +18,7 @@ import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid'
 import { ProductCard } from '@/components/product/ProductCard'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import { parseProductColors } from '@/lib/constants/productColors'
+import { VirtualFittingModal, VirtualFittingButton } from '@/components/fitting/VirtualFittingModal'
 import type { Product } from '@/lib/types'
 
 export default function ProductDetailPage() {
@@ -35,6 +36,7 @@ export default function ProductDetailPage() {
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [fittingOpen, setFittingOpen] = useState(false)
 
   const { data: product, loading, error } = useProduct(productId)
   const { data: reviewsData, refetch: refetchReviews } = useProductReviews(productId)
@@ -161,7 +163,12 @@ export default function ProductDetailPage() {
           </div>
           <p className="text-gray-600 dark:text-gray-400 mt-4 leading-relaxed text-sm sm:text-base text-left">{productAny.description || ''}</p>
           <div className="mt-6">
-            <h3 className="font-medium text-sm mb-3">Size</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-sm">Size</h3>
+              {(productAny.sizes || []).length > 0 && (
+                <VirtualFittingButton onClick={() => setFittingOpen(true)} />
+              )}
+            </div>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
               {(productAny.sizes || []).map((size: string) => (
                 <button key={size} type="button" className={`min-w-[2.5rem] px-4 py-2 text-sm border transition-colors ${selectedSize === size ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 border-gray-900' : 'border-gray-300 dark:border-gray-700 hover:border-gray-900'}`} onClick={() => setSelectedSize(size)}>{size}</button>
@@ -236,6 +243,14 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <VirtualFittingModal
+        open={fittingOpen}
+        onClose={() => setFittingOpen(false)}
+        productId={productAny.id}
+        productName={productAny.name}
+        onSelectSize={setSelectedSize}
+      />
 
       {relatedProducts.length > 0 && (
         <section className="mt-12 sm:mt-16">

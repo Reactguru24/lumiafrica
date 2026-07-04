@@ -1,5 +1,13 @@
-# Optional local infrastructure — prefer root `docker-compose.yml` for the full stack.
-# This file remains for backend-only workflows (`make docker-up` in backend/).
+# Unified local stack for Lumiafrica (infra + API + frontend + AI fitting).
+#
+# Infra only (MySQL + Redis):
+#   docker compose up -d mysql redis
+#
+# Full stack:
+#   docker compose --profile app up -d
+#
+# With phpMyAdmin:
+#   docker compose --profile tools up -d
 
 services:
   mysql:
@@ -13,7 +21,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
@@ -66,7 +74,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./uploads:/app/uploads
+      - ./backend/uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -78,6 +86,47 @@ services:
       timeout: 5s
       retries: 5
       start_period: 45s
+
+  web:
+    profiles: [app]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    container_name: lumi_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      ML_API_URL: http://ml:80
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  ml:
+    profiles: [app]
+    build:
+      context: ./ai-fitting-tool
+      dockerfile: Dockerfile
+    container_name: lumi_ml
+    restart: unless-stopped
+    environment:
+      ALLOWED_ORIGINS: http://localhost:3000
+      BACKEND_API_URL: http://api:8080
+    ports:
+      - "8000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:80/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   mysql_data:

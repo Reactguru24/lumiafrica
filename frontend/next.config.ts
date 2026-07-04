@@ -20,6 +20,7 @@ function apiImagePattern(): { protocol: 'https' | 'http'; hostname: string; port
 const apiPattern = apiImagePattern()
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   eslint: {
     ignoreDuringBuilds: true,
   },

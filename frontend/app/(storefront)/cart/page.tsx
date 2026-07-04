@@ -9,6 +9,7 @@ import { useProducts, useShippingEstimate, useDeliveryZones } from '@/lib/stores
 import { formatCurrency } from '@/lib/utils/storage'
 import { TAX_RATE } from '@/lib/constants/commerce'
 import { toShippingEstimateItems } from '@/lib/utils/shipping'
+import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import type { Product, CartItem } from '@/lib/types'
@@ -24,7 +25,13 @@ export default function CartPage() {
   const deliveryZones = (zonesData as { id: string; name: string }[] | null) ?? []
 
   useEffect(() => {
-    if (deliveryZones.length > 0 && !deliveryZoneId) {
+    if (deliveryZones.length === 0) return
+    const stored = readStoredDeliveryZoneId()
+    if (stored && deliveryZones.some((z) => z.id === stored)) {
+      setDeliveryZoneId(stored)
+      return
+    }
+    if (!deliveryZoneId) {
       setDeliveryZoneId(deliveryZones[0].id)
     }
   }, [deliveryZones, deliveryZoneId])
@@ -183,7 +190,10 @@ export default function CartPage() {
                   <label className="text-sm font-medium text-gray-500">Delivery zone</label>
                   <select
                     value={deliveryZoneId}
-                    onChange={(e) => setDeliveryZoneId(e.target.value)}
+                    onChange={(e) => {
+                      setDeliveryZoneId(e.target.value)
+                      storeDeliveryZoneId(e.target.value)
+                    }}
                     className="input-field mt-1 text-sm"
                   >
                     {deliveryZones.map((z) => (

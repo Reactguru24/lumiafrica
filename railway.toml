@@ -1,5 +1,5 @@
 # Host-specific URLs and Railway variable refs: deploy/railway.env.example
-# Redeploy trigger: 2026-06-27 (vendor delivery-zones API)
+# Redeploy trigger: 2026-07-04 (AI fitting, delivery zones, unified docker)
 
 [build]
 builder = "dockerfile"

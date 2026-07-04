@@ -15,10 +15,21 @@ import (
 )
 
 type VendorShippingLine struct {
-	VendorID     string  `json:"vendorId"`
-	StoreName    string  `json:"storeName"`
-	Subtotal     float64 `json:"subtotal"`
-	ShippingCost float64 `json:"shippingCost"`
+	VendorID      string   `json:"vendorId"`
+	StoreName     string   `json:"storeName"`
+	Subtotal      float64  `json:"subtotal"`
+	ShippingCost  float64  `json:"shippingCost"`
+	ZoneName      string   `json:"zoneName"`
+	EstimatedDays string   `json:"estimatedDays"`
+	ZoneMatched   bool     `json:"zoneMatched"`
+	ProductIDs    []string `json:"productIds"`
+}
+
+type zoneFeeResult struct {
+	fee           float64
+	zoneName      string
+	estimatedDays string
+	zoneMatched   bool
 }
 
 type variantLineKey struct {
@@ -39,6 +50,7 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 	productCache := make(map[types.BinaryUUID]sqlc.Product)
 	variantCache := make(map[variantLineKey]sqlc.ProductVariant)
 	vendorSubtotals := make(map[types.BinaryUUID]float64)
+	vendorProducts := make(map[types.BinaryUUID]map[string]struct{})
 
 	for _, item := range items {
 		if item.Color == "" {
@@ -77,6 +89,10 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 			price = price * (1 - discount/100)
 		}
 		vendorSubtotals[product.VendorID] += price * float64(item.Quantity)
+		if vendorProducts[product.VendorID] == nil {
+			vendorProducts[product.VendorID] = make(map[string]struct{})
+		}
+		vendorProducts[product.VendorID][item.ProductID] = struct{}{}
 	}
 
 	lines := make([]VendorShippingLine, 0, len(vendorSubtotals))
@@ -91,33 +107,51 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 			}
 		}
 
-		cost, err := vendorShippingFeeForZoneKey(ctx, q, vendor, zoneKey, subtotal)
+		result, err := vendorShippingFeeForZoneKey(ctx, q, vendor, zoneKey, subtotal)
 		if err != nil {
 			return 0, nil, err
 		}
-		totalShipping += cost
+		totalShipping += result.fee
+		productIDs := make([]string, 0, len(vendorProducts[vendorID]))
+		for pid := range vendorProducts[vendorID] {
+			productIDs = append(productIDs, pid)
+		}
 		lines = append(lines, VendorShippingLine{
-			VendorID:     vendorID.String(),
-			StoreName:    vendor.StoreName,
-			Subtotal:     subtotal,
-			ShippingCost: cost,
+			VendorID:      vendorID.String(),
+			StoreName:     vendor.StoreName,
+			Subtotal:      subtotal,
+			ShippingCost:  result.fee,
+			ZoneName:      result.zoneName,
+			EstimatedDays: result.estimatedDays,
+			ZoneMatched:   result.zoneMatched,
+			ProductIDs:    productIDs,
 		})
 	}
 
 	return totalShipping, lines, nil
 }
 
-func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zoneKey string, vendorSubtotal float64) (float64, error) {
+func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zoneKey string, vendorSubtotal float64) (zoneFeeResult, error) {
 	if vendor.FreeShippingThreshold.Valid {
 		threshold := store.ParseDecimalString(vendor.FreeShippingThreshold.String)
 		if threshold > 0 && vendorSubtotal >= threshold {
-			return 0, nil
+			return zoneFeeResult{
+				fee:           0,
+				zoneName:      zoneKey,
+				estimatedDays: "Free shipping",
+				zoneMatched:   true,
+			}, nil
 		}
 	}
 
 	zoneKey = strings.TrimSpace(zoneKey)
 	if zoneKey == "" {
-		return store.ParseDecimalString(vendor.ShippingCost), nil
+		return zoneFeeResult{
+			fee:           store.ParseDecimalString(vendor.ShippingCost),
+			zoneName:      "Standard shipping",
+			estimatedDays: "3-7 business days",
+			zoneMatched:   false,
+		}, nil
 	}
 
 	var zone sqlc.DeliveryZone
@@ -137,14 +171,24 @@ func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sq
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return store.ParseDecimalString(vendor.ShippingCost), nil
+			return zoneFeeResult{
+				fee:           store.ParseDecimalString(vendor.ShippingCost),
+				zoneName:      zoneKey,
+				estimatedDays: "3-7 business days",
+				zoneMatched:   false,
+			}, nil
 		}
-		return 0, err
+		return zoneFeeResult{}, err
 	}
 	return feeForVendorZone(ctx, q, vendor, zone)
 }
 
-func feeForVendorZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zone sqlc.DeliveryZone) (float64, error) {
+func feeForVendorZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zone sqlc.DeliveryZone) (zoneFeeResult, error) {
+	estimatedDays := strings.TrimSpace(zone.EstimatedDays)
+	if estimatedDays == "" {
+		estimatedDays = "3-7 business days"
+	}
+
 	rate, err := q.GetVendorShippingRate(ctx, sqlc.GetVendorShippingRateParams{
 		VendorID: vendor.ID,
 		ZoneID:   zone.ID,
@@ -152,11 +196,21 @@ func feeForVendorZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, 
 	if err == nil {
 		fee := store.ParseDecimalString(rate.Fee)
 		if fee > 0 {
-			return fee, nil
+			return zoneFeeResult{
+				fee:           fee,
+				zoneName:      zone.Name,
+				estimatedDays: estimatedDays,
+				zoneMatched:   true,
+			}, nil
 		}
 	}
 	if errors.Is(err, sql.ErrNoRows) || err == nil {
-		return store.ParseDecimalString(zone.BaseCost), nil
+		return zoneFeeResult{
+			fee:           store.ParseDecimalString(zone.BaseCost),
+			zoneName:      zone.Name,
+			estimatedDays: estimatedDays,
+			zoneMatched:   true,
+		}, nil
 	}
-	return 0, err
+	return zoneFeeResult{}, err
 }

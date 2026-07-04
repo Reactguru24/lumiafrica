@@ -47,11 +47,12 @@ func userCanBecomeVendor(ctx context.Context, q *sqlc.Queries, user sqlc.User) e
 	case sqlc.UsersRoleADMIN:
 		return ErrBusinessEmailNotVendor
 	case sqlc.UsersRoleVENDOR:
-		if _, err := q.GetVendorByUserID(ctx, user.ID); err == nil {
+		_, vendorErr := q.GetVendorByUserID(ctx, user.ID)
+		if vendorErr == nil {
 			return ErrVendorAccountExists
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return err
+		if !errors.Is(vendorErr, sql.ErrNoRows) {
+			return vendorErr
 		}
 	}
 	return nil
