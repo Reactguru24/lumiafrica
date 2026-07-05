@@ -125,13 +125,13 @@ function storeSession(token: string, userId: string) {
   localStorage.setItem(SESSION_KEY, JSON.stringify({ token, userId, expiresAt: new Date(Date.now() + 86400000).toISOString() }))
   if (typeof document !== 'undefined') {
     const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-    document.cookie = `lumi_authenticated=1; path=/; max-age=86400; SameSite=Lax${secure}`
+    document.cookie = `lumi_authenticated=1; path=/; max-age=86400; SameSite=Strict${secure}`
   }
 }
 
 function clearSessionCookie() {
   if (typeof document !== 'undefined') {
-    document.cookie = 'lumi_authenticated=; path=/; max-age=0; SameSite=Lax'
+    document.cookie = 'lumi_authenticated=; path=/; max-age=0; SameSite=Strict'
   }
 }
 
@@ -299,7 +299,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set(applyAuthState(safeUser, pendingVendorApplication))
       if (typeof document !== 'undefined') {
         const secure = window.location.protocol === 'https:' ? '; Secure' : ''
-        document.cookie = `lumi_authenticated=1; path=/; max-age=86400; SameSite=Lax${secure}`
+        document.cookie = `lumi_authenticated=1; path=/; max-age=86400; SameSite=Strict${secure}`
       }
       if (getGuestSessionId() && get().isCustomer) {
         await useCartStore.getState().mergeGuestCart()

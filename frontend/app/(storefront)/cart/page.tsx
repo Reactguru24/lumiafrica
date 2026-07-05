@@ -157,19 +157,19 @@ export default function CartPage() {
   }
 
   return (
-    <div className="page-container">
-      <h1 className="section-title mb-8">Shopping Cart</h1>
+    <div className="page-container max-md:px-3 max-md:py-4">
+      <h1 className="section-title mb-4 sm:mb-8 max-md:text-xl">Shopping Cart</h1>
       {loading ? (
         <div className="text-center py-16 text-gray-500">Loading cart...</div>
       ) : !cartItems.length && !savedItems.length ? (
         <EmptyState title="Your cart is empty" description="Browse our collection and add items to your cart." actionLabel="Continue Shopping" onAction={() => router.push('/products')} />
       ) : (
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-6">
             {cartItems.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 {ownProductItems.length > 0 && (
-                  <div className="p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 text-sm text-amber-900 dark:text-amber-200">
+                  <div className="p-3 sm:p-4 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
                     {VENDOR_SELF_PURCHASE_MSG} Remove your own listings to continue.
                   </div>
                 )}
@@ -179,23 +179,23 @@ export default function CartPage() {
               const totalForVariant = qtyByVariant[key] || 0
               const atStockLimit = totalForVariant >= stock
               return (
-              <div key={`${item.productId}-${item.size}-${item.color}`} className="card p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <MediaImage src={item.product.images?.[0]} alt={item.product.name} width={96} height={128} transform={{ width: 200, aspect: '3:4' }} className="w-full sm:w-24 h-40 sm:h-32 object-cover shrink-0" />
+              <div key={`${item.productId}-${item.size}-${item.color}`} className="card p-2.5 sm:p-4 flex flex-row gap-2.5 sm:gap-4">
+                <MediaImage src={item.product.images?.[0]} alt={item.product.name} width={80} height={100} transform={{ width: 200, aspect: '3:4' }} className="w-20 sm:w-24 h-24 sm:h-32 object-cover shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm sm:text-base line-clamp-2">{item.product.name}</h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">{item.product.brand} · {item.size} · {item.color}</p>
-                  <p className={`text-xs mt-1 ${stock > 10 ? 'text-green-600' : stock > 0 ? 'text-amber-600' : 'text-red-600'}`}>
-                    {stock > 0 ? `${stock} in stock for ${item.size} / ${item.color}` : 'Out of stock'}
+                  <h3 className="font-medium text-xs sm:text-base line-clamp-2">{item.product.name}</h3>
+                  <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5">{item.product.brand} · {item.size} · {item.color}</p>
+                  <p className={`text-[10px] sm:text-xs mt-0.5 ${stock > 10 ? 'text-green-600' : stock > 0 ? 'text-amber-600' : 'text-red-600'}`}>
+                    {stock > 0 ? `${stock} in stock` : 'Out of stock'}
                   </p>
-                  <p className="font-semibold mt-2">{formatPrice(item.product.price * (1 - item.product.discount / 100))}</p>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
-                    <div className="flex items-center border border-gray-300 dark:border-gray-700 text-sm">
-                      <button className="px-3 py-1" onClick={() => updateCartQuantity(item, item.quantity - 1)}>−</button>
-                      <span className="px-3 py-1 border-x border-gray-300 dark:border-gray-700">{item.quantity}</span>
-                      <button className="px-3 py-1 disabled:opacity-40" disabled={atStockLimit} onClick={() => updateCartQuantity(item, item.quantity + 1)}>+</button>
+                  <p className="font-semibold text-sm mt-1">{formatPrice(item.product.price * (1 - item.product.discount / 100))}</p>
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-4 mt-2">
+                    <div className="flex items-center border border-gray-300 dark:border-gray-700 text-xs">
+                      <button type="button" className="px-2 py-0.5 sm:px-3 sm:py-1" onClick={() => updateCartQuantity(item, item.quantity - 1)}>−</button>
+                      <span className="px-2 py-0.5 sm:px-3 sm:py-1 border-x border-gray-300 dark:border-gray-700 min-w-[1.5rem] text-center">{item.quantity}</span>
+                      <button type="button" className="px-2 py-0.5 sm:px-3 sm:py-1 disabled:opacity-40" disabled={atStockLimit} onClick={() => updateCartQuantity(item, item.quantity + 1)}>+</button>
                     </div>
-                    <button className="text-sm text-gray-500 hover:underline" onClick={() => void cart.toggleSaveForLater(item.productId, item.size, item.color)}>Save for Later</button>
-                    <button className="text-sm text-red-600 hover:underline" onClick={() => void cart.removeItem(item.productId, item.size, item.color)}>Remove</button>
+                    <button type="button" className="text-[10px] sm:text-sm text-gray-500 hover:underline" onClick={() => void cart.toggleSaveForLater(item.productId, item.size, item.color)}>Save</button>
+                    <button type="button" className="text-[10px] sm:text-sm text-red-600 hover:underline" onClick={() => void cart.removeItem(item.productId, item.size, item.color)}>Remove</button>
                   </div>
                 </div>
               </div>
@@ -205,17 +205,17 @@ export default function CartPage() {
 
             {savedItems.length > 0 && (
               <div>
-                <h2 className="font-semibold mb-4">Saved for later</h2>
-                <div className="space-y-4">
+                <h2 className="font-semibold text-sm sm:text-base mb-2 sm:mb-4">Saved for later</h2>
+                <div className="space-y-2 sm:space-y-4">
                   {savedItems.map((item) => (
-                    <div key={`saved-${item.productId}-${item.size}-${item.color}`} className="card p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 opacity-90">
-                      <MediaImage src={item.product.images?.[0]} alt={item.product.name} width={96} height={128} transform={{ width: 200, aspect: '3:4' }} className="w-full sm:w-24 h-40 sm:h-32 object-cover shrink-0" />
+                    <div key={`saved-${item.productId}-${item.size}-${item.color}`} className="card p-2.5 sm:p-4 flex flex-row gap-2.5 sm:gap-4 opacity-90">
+                      <MediaImage src={item.product.images?.[0]} alt={item.product.name} width={80} height={100} transform={{ width: 200, aspect: '3:4' }} className="w-20 sm:w-24 h-24 sm:h-32 object-cover shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-sm sm:text-base line-clamp-2">{item.product.name}</h3>
-                        <p className="text-xs sm:text-sm text-gray-500 mt-1">{item.product.brand} · {item.size} · {item.color}</p>
-                        <div className="flex flex-wrap items-center gap-3 mt-3">
-                          <button type="button" className="text-sm text-brand-teal hover:underline" onClick={() => void cart.moveToCart(item.productId, item.size, item.color)}>Move to cart</button>
-                          <button type="button" className="text-sm text-red-600 hover:underline" onClick={() => void cart.removeItem(item.productId, item.size, item.color)}>Remove</button>
+                        <h3 className="font-medium text-xs sm:text-base line-clamp-2">{item.product.name}</h3>
+                        <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5">{item.product.brand} · {item.size} · {item.color}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <button type="button" className="text-[10px] sm:text-sm text-brand-teal hover:underline" onClick={() => void cart.moveToCart(item.productId, item.size, item.color)}>Move to cart</button>
+                          <button type="button" className="text-[10px] sm:text-sm text-red-600 hover:underline" onClick={() => void cart.removeItem(item.productId, item.size, item.color)}>Remove</button>
                         </div>
                       </div>
                     </div>
@@ -225,8 +225,8 @@ export default function CartPage() {
             )}
           </div>
           {cartItems.length > 0 ? (
-            <div className="card p-4 sm:p-6 h-fit lg:sticky lg:top-24">
-              <h2 className="font-semibold mb-4">Order Summary</h2>
+            <div className="card p-3 sm:p-6 h-fit lg:sticky lg:top-24">
+              <h2 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h2>
               {deliveryZones.length > 0 && (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-gray-500">Delivery zone</label>
@@ -246,7 +246,7 @@ export default function CartPage() {
                       setDeliveryZoneId(e.target.value)
                       storeDeliveryZoneId(e.target.value)
                     }}
-                    className="input-field mt-1 text-sm"
+                    className="input-field input-compact mt-1 text-sm"
                   >
                     {deliveryZones.map((z) => (
                       <option key={z.id} value={z.id}>{z.name}</option>
@@ -254,14 +254,14 @@ export default function CartPage() {
                   </select>
                 </div>
               )}
-              <div className="space-y-3 text-sm">
+              <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatPrice(tax)}</span></div>
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between font-semibold text-base"><span>Total</span><span>{formatPrice(total)}</span></div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-2 sm:pt-3 flex justify-between font-semibold text-sm sm:text-base"><span>Total</span><span>{formatPrice(total)}</span></div>
               </div>
               <button
-                className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary btn-primary-compact w-full mt-4 sm:mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={!!checkoutBlocked}
                 onClick={handleCheckout}
               >

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import type { CartItem, Product } from '@/lib/types'
 import { cartAPI, setGuestSessionId, clearGuestSessionId, getGuestSessionId } from '@/lib/api/client'
 import { getStorage, setStorage } from '@/lib/utils/storage'
+import { isValidProductId, sanitizeWishlistIds } from '@/lib/utils/product'
 
 const CART_KEY = 'lumi_cart'
 const WISHLIST_KEY = 'lumi_wishlist'
@@ -103,7 +104,7 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   hydrate: async () => {
     const localItems = getStorage<CartItem[]>(CART_KEY, [])
-    const localWishlist = getStorage<string[]>(WISHLIST_KEY, [])
+    const localWishlist = sanitizeWishlistIds(getStorage<string[]>(WISHLIST_KEY, []))
     const savedKeys = loadSavedKeys()
     const items = localItems.map((item) => ({
       ...item,
@@ -214,6 +215,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   toggleWishlist: async (productId) => {
+    if (!isValidProductId(productId)) return
     const previous = get().wishlist
     const nextActive = !previous.includes(productId)
     const optimistic = nextActive

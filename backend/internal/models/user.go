@@ -56,7 +56,7 @@ type User struct {
 // LoginRequest represents login payload
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 // RegisterRequest represents registration payload
@@ -64,7 +64,7 @@ type RegisterRequest struct {
 	FullName string `json:"fullName" binding:"required,min=3"`
 	Email    string `json:"email" binding:"required,email"`
 	Phone    string `json:"phone" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=8"`
 }
 
 type CheckCredentialsRequest struct {
@@ -115,13 +115,13 @@ type ForgotPasswordRequest struct {
 // ResetPasswordRequest represents password reset payload
 type ResetPasswordRequest struct {
 	Token       string `json:"token" binding:"required"`
-	NewPassword string `json:"newPassword" binding:"required,min=6"`
+	NewPassword string `json:"newPassword" binding:"required,min=8"`
 }
 
 // ChangePasswordRequest represents authenticated password change payload
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"currentPassword" binding:"required"`
-	NewPassword     string `json:"newPassword" binding:"required,min=6"`
+	NewPassword     string `json:"newPassword" binding:"required,min=8"`
 }
 
 // MeResponse is returned by GET /auth/me.

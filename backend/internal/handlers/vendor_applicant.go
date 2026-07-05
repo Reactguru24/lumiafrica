@@ -237,7 +237,7 @@ func vendorAccountActivated(ctx context.Context, q *sqlc.Queries, user sqlc.User
 
 func vendorActivationResponse(cfg *config.Config, result *vendorActivationResult, sentMessage, skippedMessage string) gin.H {
 	response := gin.H{"message": sentMessage}
-	if result != nil && result.ResetURL != "" && (result.Mailer == nil || !result.Mailer.Enabled() || result.SendErr != nil) {
+	if cfg.ServerEnv == "development" && result != nil && result.ResetURL != "" && (result.Mailer == nil || !result.Mailer.Enabled() || result.SendErr != nil) {
 		response["message"] = skippedMessage
 		response["activationUrl"] = result.ResetURL
 	}

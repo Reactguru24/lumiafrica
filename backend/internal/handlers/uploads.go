@@ -15,7 +15,6 @@ import (
 // @Accept multipart/form-data
 // @Param file formData file true "Image file"
 // @Success 200 {object} map[string]string
-// @Router /uploads/images [post]
 // @Router /auth/upload [post]
 // @Security Bearer
 func UploadImage(cfg *config.Config) gin.HandlerFunc {

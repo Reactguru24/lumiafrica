@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { create } from 'zustand'
-import { getStorage, setStorage } from '@/lib/utils/storage'
+import { setStorage } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES } from '@/lib/constants/commerce'
 
 export type CurrencyCode = 'KES' | 'USD' | 'UGX' | 'TZS' | 'RWF' | 'ETB'
@@ -23,11 +23,6 @@ export const CURRENCIES: CurrencyOption[] = [
 ]
 
 const CURRENCY_KEY = 'lumi_currency'
-const VALID_CODES = new Set(CURRENCIES.map((c) => c.code))
-
-function normalizeCurrency(code: string | null | undefined): CurrencyCode {
-  return VALID_CODES.has(code as CurrencyCode) ? (code as CurrencyCode) : 'KES'
-}
 
 interface CurrencyState {
   currency: CurrencyCode
@@ -47,23 +42,26 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
   freeShippingThreshold: FREE_SHIPPING_KES,
 
   hydrate: () => {
-    const currency = normalizeCurrency(getStorage<string>(CURRENCY_KEY, 'KES'))
-    const current = CURRENCIES.find((c) => c.code === currency) ?? CURRENCIES[0]
-    set({
-      currency,
-      current,
-      freeShippingThreshold: FREE_SHIPPING_KES * current.rateFromKes,
-    })
-  },
-
-  setCurrency: (code) => {
-    const currency = normalizeCurrency(code)
-    const current = CURRENCIES.find((c) => c.code === currency) ?? CURRENCIES[0]
+    // Platform prices are stored in KES; keep display currency fixed to KES.
+    const currency: CurrencyCode = 'KES'
+    const current = CURRENCIES[0]
     setStorage(CURRENCY_KEY, currency)
     set({
       currency,
       current,
-      freeShippingThreshold: FREE_SHIPPING_KES * current.rateFromKes,
+      freeShippingThreshold: FREE_SHIPPING_KES,
+    })
+  },
+
+  setCurrency: (_code) => {
+    // Ignore user changes — storefront uses KES only.
+    const currency: CurrencyCode = 'KES'
+    const current = CURRENCIES[0]
+    setStorage(CURRENCY_KEY, currency)
+    set({
+      currency,
+      current,
+      freeShippingThreshold: FREE_SHIPPING_KES,
     })
   },
 

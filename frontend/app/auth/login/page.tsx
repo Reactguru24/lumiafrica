@@ -10,7 +10,6 @@ import { useCartStore } from '@/lib/stores/cart'
 import { loginSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { safeRedirect } from '@/lib/utils/safeRedirect'
-import { Modal } from '@/components/common/Modal'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,14 +19,12 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
-  const [showVendorChoice, setShowVendorChoice] = useState(false)
-  const [pauseAutoRedirect, setPauseAutoRedirect] = useState(false)
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated && !pauseAutoRedirect) {
+    if (hasHydrated && isAuthenticated) {
       router.replace(auth.getDashboardRoute())
     }
-  }, [hasHydrated, isAuthenticated, pauseAutoRedirect, router, auth])
+  }, [hasHydrated, isAuthenticated, router, auth])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,21 +38,12 @@ export default function LoginPage() {
     }
     try {
       await useCartStore.getState().pushLocalToGuestCart()
-      const user = await auth.login(form.email, form.password)
+      await auth.login(form.email, form.password)
       toast.success('Welcome back!')
       const redirect = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('redirect')
         : null
-      if (redirect) {
-        router.push(safeRedirect(redirect))
-        return
-      }
-      if (user.role === 'VENDOR') {
-        setPauseAutoRedirect(true)
-        setShowVendorChoice(true)
-        return
-      }
-      router.push(auth.getDashboardRoute())
+      router.push(safeRedirect(redirect, auth.getDashboardRoute()))
     } catch (e: unknown) {
       toast.error(getFriendlyErrorMessage(e, 'Unable to sign in. Please check your credentials.'))
     }
@@ -98,44 +86,6 @@ export default function LoginPage() {
             Apply to Be a Vendor
           </Link>
         </div>
-        <Modal
-          open={showVendorChoice}
-          title="Where would you like to go?"
-          onClose={() => {
-            setShowVendorChoice(false)
-            setPauseAutoRedirect(false)
-            router.push('/vendor')
-          }}
-          size="md"
-        >
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-            You signed in with a vendor account. Choose where to continue.
-          </p>
-          <div className="grid gap-3">
-            <button
-              type="button"
-              className="btn-primary w-full"
-              onClick={() => {
-                setShowVendorChoice(false)
-                setPauseAutoRedirect(false)
-                router.push('/vendor')
-              }}
-            >
-              Vendor Dashboard
-            </button>
-            <button
-              type="button"
-              className="btn-secondary w-full"
-              onClick={() => {
-                setShowVendorChoice(false)
-                setPauseAutoRedirect(false)
-                router.push('/')
-              }}
-            >
-              Customer Homepage
-            </button>
-          </div>
-        </Modal>
       </div>
   )
 }

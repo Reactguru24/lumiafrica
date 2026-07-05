@@ -240,35 +240,35 @@ export default function CheckoutPage() {
 
   return (
     <RouteGuard requiresAuth roles={SHOPPER_ROLES}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full min-w-0">
-        <h1 className="section-title mb-6 sm:mb-8">Checkout</h1>
-        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 sm:mb-10 overflow-x-auto pb-1">
+      <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full min-w-0">
+        <h1 className="section-title mb-4 sm:mb-8 max-md:text-xl">Checkout</h1>
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-5 sm:mb-10 overflow-x-auto pb-1">
           {[1, 2, 3, 4].map((s) => (
             <div key={s} className="flex items-center shrink-0">
-              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${step >= s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-800 text-gray-500'}`}>{s}</div>
-              {s < 4 && <div className={`w-6 sm:w-12 h-0.5 ${step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'}`} />}
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-sm font-medium ${step >= s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-800 text-gray-500'}`}>{s}</div>
+              {s < 4 && <div className={`w-4 sm:w-12 h-0.5 ${step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'}`} />}
             </div>
           ))}
         </div>
         {step === 1 && (
-          <div className="space-y-4 animate-slide-up">
-            <h2 className="font-semibold text-lg mb-4">Shipping Information</h2>
-            <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-3 sm:space-y-4 animate-slide-up">
+            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Shipping Information</h2>
+            <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
               {(['fullName', 'email', 'phone', 'street', 'city', 'state', 'country', 'zipCode'] as const).map((field) => (
                 <div key={field} className={field === 'street' ? 'md:col-span-2' : ''}>
-                  <label className="text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
-                  <input value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} type={field === 'email' ? 'email' : 'text'} className="input-field mt-1" />
+                  <label className="text-xs sm:text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                  <input value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} type={field === 'email' ? 'email' : 'text'} className="input-field input-compact mt-1" />
                   {errors[field] && <p className="text-red-500 text-xs">{errors[field]}</p>}
                 </div>
               ))}
             </div>
-            <button className="btn-primary w-full mt-6" onClick={nextStep}>Continue to Delivery Zone</button>
+            <button className="btn-primary btn-primary-compact w-full mt-4 sm:mt-6" onClick={nextStep}>Continue to Delivery Zone</button>
           </div>
         )}
         {step === 2 && (
           <div className="animate-slide-up">
-            <h2 className="font-semibold text-lg mb-4">Delivery Zone</h2>
-            <p className="text-sm text-gray-500 mb-4">
+            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Delivery Zone</h2>
+            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
               Shipping is set by each seller for your area. Fees below are combined per store in your cart.
             </p>
             {usingFallbackZones && (
@@ -281,12 +281,13 @@ export default function CheckoutPage() {
                 Only showing areas that all sellers in your cart can deliver to.
               </p>
             )}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {deliveryZones.map((zone) => (
-                <label key={zone.id} className={`card p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
-                  <div className="flex items-center gap-3">
+                <label key={zone.id} className={`card p-3 sm:p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <input
                       type="radio"
+                      className="shrink-0"
                       checked={deliveryZoneId === zone.id}
                       onChange={() => {
                         setDeliveryZoneId(zone.id)
@@ -294,8 +295,8 @@ export default function CheckoutPage() {
                       }}
                     />
                     <div>
-                      <p className="font-medium text-sm">{zone.name}</p>
-                      <p className="text-xs text-gray-500">{zone.estimatedDays}</p>
+                      <p className="font-medium text-xs sm:text-sm">{zone.name}</p>
+                      <p className="text-[10px] sm:text-xs text-gray-500">{zone.estimatedDays}</p>
                     </div>
                   </div>
                 </label>
@@ -303,8 +304,8 @@ export default function CheckoutPage() {
             </div>
 
             {vendorGroups.length > 0 && selectedZone && (
-              <div className="card p-4 mt-4 space-y-4">
-                <p className="font-medium text-sm">Items by seller — {selectedZone.name}</p>
+              <div className="card p-3 sm:p-4 mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+                <p className="font-medium text-xs sm:text-sm">Items by seller — {selectedZone.name}</p>
                 {vendorGroups.map((group) => (
                   <div key={group.vendorId} className="border-t border-gray-100 dark:border-gray-800 pt-3 first:border-0 first:pt-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -341,7 +342,7 @@ export default function CheckoutPage() {
             )}
 
             {shippingBreakdown.length > 0 && (
-              <div className="card p-4 mt-4 text-sm space-y-2">
+              <div className="card p-3 sm:p-4 mt-3 sm:mt-4 text-xs sm:text-sm space-y-2">
                 <p className="font-medium">Estimated shipping</p>
                 {shippingBreakdown.map((line) => (
                   <div key={line.vendorId} className="flex justify-between text-gray-600 dark:text-gray-400">
@@ -355,45 +356,45 @@ export default function CheckoutPage() {
                 </div>
               </div>
             )}
-            <div className="flex gap-4 mt-6">
-              <button className="btn-secondary flex-1" onClick={() => setStep(1)}>Back</button>
-              <button className="btn-primary flex-1" onClick={nextStep}>Continue to Payment</button>
+            <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-6">
+              <button className="btn-secondary btn-secondary-compact flex-1" onClick={() => setStep(1)}>Back</button>
+              <button className="btn-primary btn-primary-compact flex-1" onClick={nextStep}>Continue to Payment</button>
             </div>
           </div>
         )}
         {step === 3 && (
           <div className="animate-slide-up">
-            <h2 className="font-semibold text-lg mb-4">Payment &amp; Promo</h2>
-            <div className="card p-4 mb-4">
-              <label className="text-sm font-medium">Coupon code</label>
+            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Payment &amp; Promo</h2>
+            <div className="card p-3 sm:p-4 mb-3 sm:mb-4">
+              <label className="text-xs sm:text-sm font-medium">Coupon code</label>
               <div className="flex gap-2 mt-2">
                 <input
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                   placeholder="e.g. WELCOME10"
-                  className="input-field flex-1"
+                  className="input-field input-compact flex-1"
                 />
-                <button type="button" className="btn-secondary shrink-0" onClick={applyCoupon}>Apply</button>
+                <button type="button" className="btn-secondary btn-secondary-compact shrink-0" onClick={applyCoupon}>Apply</button>
               </div>
               {appliedCoupon && (
-                <p className="text-sm text-green-600 mt-2">Applied {appliedCoupon.code} (−{formatPrice(appliedCoupon.discount)})</p>
+                <p className="text-xs sm:text-sm text-green-600 mt-2">Applied {appliedCoupon.code} (−{formatPrice(appliedCoupon.discount)})</p>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
               {PAYMENT_METHODS.map((pm) => (
-                <button key={pm} className={`card p-4 text-center text-sm font-medium transition-all ${form.paymentMethod === pm ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`} onClick={() => setForm({ ...form, paymentMethod: pm })}>{pm}</button>
+                <button key={pm} className={`card p-2.5 sm:p-4 text-center text-xs sm:text-sm font-medium transition-all ${form.paymentMethod === pm ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`} onClick={() => setForm({ ...form, paymentMethod: pm })}>{pm}</button>
               ))}
             </div>
-            <div className="card p-4 mb-6 text-sm space-y-2">
+            <div className="card p-3 sm:p-4 mb-4 sm:mb-6 text-xs sm:text-sm space-y-2">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
               {discount > 0 && <div className="flex justify-between text-green-600"><span>Coupon</span><span>−{formatPrice(discount)}</span></div>}
               <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span></div>
               {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatPrice(tax)}</span></div>}
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
-            <div className="flex gap-4">
-              <button className="btn-secondary flex-1" onClick={() => setStep(2)}>Back</button>
-              <button className="btn-primary flex-1" onClick={placeOrder}>Pay with Paystack</button>
+            <div className="flex gap-2 sm:gap-4">
+              <button className="btn-secondary btn-secondary-compact flex-1" onClick={() => setStep(2)}>Back</button>
+              <button className="btn-primary btn-primary-compact flex-1" onClick={placeOrder}>Pay with Paystack</button>
             </div>
           </div>
         )}

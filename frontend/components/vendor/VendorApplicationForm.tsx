@@ -260,7 +260,7 @@ function PublicImageFieldUpload({
     try {
       const prepared = await prepareImageFile(file, presetId)
       if (!prepared) return
-      const result = await publicAPI.uploadImage(prepared as unknown as File) as { url?: string }
+      const result = await publicAPI.uploadDocument(prepared as unknown as File) as { url?: string }
       if (!result.url) {
         toast.error('Upload succeeded but no URL was returned.')
         return

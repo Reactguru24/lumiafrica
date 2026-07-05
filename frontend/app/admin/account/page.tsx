@@ -9,7 +9,7 @@ import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { z } from 'zod'
 
 const passwordSchema = z.object({
-  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
   confirm: z.string(),
 }).refine((data) => data.newPassword === data.confirm, {
   message: 'Passwords do not match',

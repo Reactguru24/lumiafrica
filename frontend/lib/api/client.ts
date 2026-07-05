@@ -263,10 +263,6 @@ export const publicAPI = {
     return get(`/vendors/applications/status${buildQuery({ email })}`, { skipAuth: true })
   },
 
-  uploadImage(file: File) {
-    return uploadPublicFile('/uploads/images', file)
-  },
-
   uploadDocument(file: File) {
     return uploadPublicFile('/uploads/documents', file)
   },

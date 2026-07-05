@@ -11,7 +11,7 @@ import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 import { z } from 'zod'
 
 const resetSchema = z.object({
-  newPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: 'Passwords do not match',

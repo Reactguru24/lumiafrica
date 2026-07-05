@@ -71,7 +71,6 @@ export function MainLayout({ children }: { children: ReactNode }) {
     home: pathname === '/',
     shop: pathname === '/products' || pathname.startsWith('/products/'),
     wishlist: pathname === '/account/wishlist',
-    cart: pathname === '/cart' || pathname === '/checkout',
     account: pathname.startsWith('/account') || pathname.startsWith('/vendor/account') || pathname.startsWith('/vendor') || pathname.startsWith('/auth'),
   }), [pathname])
 
@@ -257,10 +256,6 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </Link>
         <Link href="/account/wishlist" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.wishlist)}`}>
           <HeartIcon className={`w-5 h-5 ${activeNav.wishlist ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Wishlist
-        </Link>
-        <Link href="/cart" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] relative ${navClass(activeNav.cart)}`}>
-          <ShoppingBagIcon className={`w-5 h-5 ${activeNav.cart ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Cart
-          {itemCount > 0 && <span className="absolute top-0.5 right-2 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">{itemCount}</span>}
         </Link>
         <Link href={accountHref(isAuthenticated, isCustomer, isVendor, isAdmin)} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.account)}`}>
           <UserIcon className={`w-5 h-5 ${activeNav.account ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Account

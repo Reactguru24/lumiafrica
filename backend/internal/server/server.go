@@ -22,6 +22,7 @@ func New(cfg *config.Config, st *store.Store) *Server {
 
 	engine := gin.Default()
 	engine.Use(corsMiddleware(cfg))
+	engine.Use(securityHeadersMiddleware(cfg))
 
 	return &Server{
 		Engine: engine,
@@ -77,4 +78,17 @@ func isOriginAllowed(origin string, cfg *config.Config) bool {
 			strings.HasPrefix(origin, "http://127.0.0.1:")
 	}
 	return false
+}
+
+func securityHeadersMiddleware(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		if cfg.ServerEnv == "production" {
+			c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		c.Next()
+	}
 }
