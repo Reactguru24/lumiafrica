@@ -158,17 +158,17 @@ func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sq
 	var err error
 
 	if zoneID, parseErr := utils.ParseID(zoneKey); parseErr == nil {
-		z, zErr := q.GetDeliveryZoneByID(ctx, zoneID)
+		z, zErr := q.GetPlatformDeliveryZoneByID(ctx, zoneID)
 		if zErr == nil {
-			zone = z
-			return feeForVendorZone(ctx, q, vendor, zone)
+			return feeForPlatformZone(z)
+		}
+		z, zErr = q.GetDeliveryZoneByID(ctx, zoneID)
+		if zErr == nil && z.Active != 0 {
+			return feeForPlatformZone(z)
 		}
 	}
 
-	zone, err = q.GetDeliveryZoneByVendorAndName(ctx, sqlc.GetDeliveryZoneByVendorAndNameParams{
-		VendorID: &vendor.ID,
-		LOWER:    zoneKey,
-	})
+	zone, err = q.GetPlatformDeliveryZoneByName(ctx, zoneKey)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return zoneFeeResult{
@@ -180,37 +180,18 @@ func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sq
 		}
 		return zoneFeeResult{}, err
 	}
-	return feeForVendorZone(ctx, q, vendor, zone)
+	return feeForPlatformZone(zone)
 }
 
-func feeForVendorZone(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zone sqlc.DeliveryZone) (zoneFeeResult, error) {
+func feeForPlatformZone(zone sqlc.DeliveryZone) (zoneFeeResult, error) {
 	estimatedDays := strings.TrimSpace(zone.EstimatedDays)
 	if estimatedDays == "" {
 		estimatedDays = "3-7 business days"
 	}
-
-	rate, err := q.GetVendorShippingRate(ctx, sqlc.GetVendorShippingRateParams{
-		VendorID: vendor.ID,
-		ZoneID:   zone.ID,
-	})
-	if err == nil {
-		fee := store.ParseDecimalString(rate.Fee)
-		if fee > 0 {
-			return zoneFeeResult{
-				fee:           fee,
-				zoneName:      zone.Name,
-				estimatedDays: estimatedDays,
-				zoneMatched:   true,
-			}, nil
-		}
-	}
-	if errors.Is(err, sql.ErrNoRows) || err == nil {
-		return zoneFeeResult{
-			fee:           store.ParseDecimalString(zone.BaseCost),
-			zoneName:      zone.Name,
-			estimatedDays: estimatedDays,
-			zoneMatched:   true,
-		}, nil
-	}
-	return zoneFeeResult{}, err
+	return zoneFeeResult{
+		fee:           store.ParseDecimalString(zone.BaseCost),
+		zoneName:      zone.Name,
+		estimatedDays: estimatedDays,
+		zoneMatched:   true,
+	}, nil
 }

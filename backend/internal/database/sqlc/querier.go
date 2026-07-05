@@ -180,6 +180,11 @@ type Querier interface {
 	ListCartItemsByCartID(ctx context.Context, cartID types.BinaryUUID) ([]ListCartItemsByCartIDRow, error)
 	ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckoutDeliveryZonesRow, error)
 	ListIntersectingCheckoutDeliveryZones(ctx context.Context, arg ListIntersectingCheckoutDeliveryZonesParams) ([]ListIntersectingCheckoutDeliveryZonesRow, error)
+	ListPlatformDeliveryZones(ctx context.Context) ([]DeliveryZone, error)
+	GetPlatformDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) (DeliveryZone, error)
+	GetPlatformDeliveryZoneByName(ctx context.Context, lower string) (DeliveryZone, error)
+	SetPlatformDeliveryZoneActive(ctx context.Context, arg SetPlatformDeliveryZoneActiveParams) error
+	UpdatePlatformDeliveryZone(ctx context.Context, arg UpdatePlatformDeliveryZoneParams) error
 	ListChildCategories(ctx context.Context, parentID *types.BinaryUUID) ([]Category, error)
 	ListCollectionProductIDs(ctx context.Context, collectionID types.BinaryUUID) ([]types.BinaryUUID, error)
 	ListDeliveryZonesByVendor(ctx context.Context, vendorID *types.BinaryUUID) ([]DeliveryZone, error)

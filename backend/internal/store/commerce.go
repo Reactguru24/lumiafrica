@@ -17,16 +17,7 @@ func ToDeliveryZone(z sqlc.DeliveryZone) models.DeliveryZoneResponse {
 
 func ToCheckoutDeliveryZone(row sqlc.ListCheckoutDeliveryZonesRow) models.DeliveryZoneResponse {
 	return models.DeliveryZoneResponse{
-		ID:            row.Name,
-		Name:          row.Name,
-		BaseCost:      ParseDecimalString(row.BaseCost),
-		EstimatedDays: row.EstimatedDays,
-	}
-}
-
-func ToCheckoutDeliveryZoneFromIntersect(row sqlc.ListIntersectingCheckoutDeliveryZonesRow) models.DeliveryZoneResponse {
-	return models.DeliveryZoneResponse{
-		ID:            row.Name,
+		ID:            row.ID.String(),
 		Name:          row.Name,
 		BaseCost:      ParseDecimalString(row.BaseCost),
 		EstimatedDays: row.EstimatedDays,

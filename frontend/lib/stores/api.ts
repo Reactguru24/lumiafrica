@@ -124,11 +124,8 @@ export function useFeaturedVendors() {
   return useQuery('featured-vendors', () => publicAPI.getFeaturedVendors())
 }
 
-export function useDeliveryZones(vendorIds?: string[]) {
-  const key = vendorIds?.length
-    ? `delivery-zones-${[...vendorIds].sort().join(',')}`
-    : 'delivery-zones'
-  return useQuery(key, () => publicAPI.getDeliveryZones(vendorIds))
+export function useDeliveryZones() {
+  return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
 }
 
 export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
@@ -278,25 +275,25 @@ export function useUpdateAdminPlatformSettings() {
   )
 }
 
-export function useVendorDeliveryZones() {
-  return useQuery('vendor-delivery-zones', () => vendorAPI.listDeliveryZones())
+export function useAdminDeliveryZones() {
+  return useQuery('admin-delivery-zones', () => adminAPI.listDeliveryZones())
 }
 
-export function useCreateVendorDeliveryZone() {
-  return useMutation('create-vendor-delivery-zone', (data: Record<string, unknown>) =>
-    vendorAPI.createDeliveryZone(data),
+export function useCreateAdminDeliveryZone() {
+  return useMutation('create-admin-delivery-zone', (data: Record<string, unknown>) =>
+    adminAPI.createDeliveryZone(data),
   )
 }
 
-export function useUpdateVendorDeliveryZone() {
-  return useMutation('update-vendor-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
-    vendorAPI.updateDeliveryZone(data.id, data.payload),
+export function useUpdateAdminDeliveryZone() {
+  return useMutation('update-admin-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
+    adminAPI.updateDeliveryZone(data.id, data.payload),
   )
 }
 
-export function useDeleteVendorDeliveryZone() {
-  return useMutation('delete-vendor-delivery-zone', (data: { id: string }) =>
-    vendorAPI.deleteDeliveryZone(data.id),
+export function useDeleteAdminDeliveryZone() {
+  return useMutation('delete-admin-delivery-zone', (data: { id: string }) =>
+    adminAPI.deleteDeliveryZone(data.id),
   )
 }
 

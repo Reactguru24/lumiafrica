@@ -1,23 +1,27 @@
 -- name: ListCheckoutDeliveryZones :many
-SELECT dz.name, dz.estimated_days, dz.base_cost
-FROM delivery_zones dz
-INNER JOIN (
-  SELECT name, MIN(id) AS id
-  FROM delivery_zones
-  WHERE active = true AND vendor_id IS NOT NULL
-  GROUP BY name
-) pick ON pick.id = dz.id
-ORDER BY dz.name;
+SELECT id, name, estimated_days, base_cost
+FROM delivery_zones
+WHERE active = true AND vendor_id IS NULL
+ORDER BY name;
 
--- name: ListIntersectingCheckoutDeliveryZones :many
-SELECT dz.name, MIN(dz.estimated_days) AS estimated_days, MIN(dz.base_cost) AS base_cost
-FROM delivery_zones dz
-WHERE dz.active = true
-  AND dz.vendor_id IS NOT NULL
-  AND dz.vendor_id IN (sqlc.slice('vendor_ids'))
-GROUP BY dz.name
-HAVING COUNT(DISTINCT dz.vendor_id) = ?
-ORDER BY dz.name;
+-- name: ListPlatformDeliveryZones :many
+SELECT * FROM delivery_zones WHERE vendor_id IS NULL ORDER BY name;
+
+-- name: GetPlatformDeliveryZoneByID :one
+SELECT * FROM delivery_zones WHERE id = ? AND vendor_id IS NULL LIMIT 1;
+
+-- name: GetPlatformDeliveryZoneByName :one
+SELECT * FROM delivery_zones
+WHERE vendor_id IS NULL AND active = true AND LOWER(name) = LOWER(?)
+LIMIT 1;
+
+-- name: SetPlatformDeliveryZoneActive :exec
+UPDATE delivery_zones SET active = ?, updated_at = NOW() WHERE id = ? AND vendor_id IS NULL;
+
+-- name: UpdatePlatformDeliveryZone :exec
+UPDATE delivery_zones
+SET name = ?, base_cost = ?, estimated_days = ?, updated_at = NOW()
+WHERE id = ? AND vendor_id IS NULL;
 
 -- name: ListDeliveryZonesByVendor :many
 SELECT * FROM delivery_zones WHERE vendor_id = ? AND active = true ORDER BY name;
@@ -45,7 +49,7 @@ SELECT * FROM delivery_zones WHERE id = ? LIMIT 1;
 SELECT dz.id, dz.vendor_id, dz.name, dz.base_cost, dz.estimated_days, dz.active, dz.created_at, dz.updated_at
 FROM delivery_zones dz
 INNER JOIN delivery_zone_areas dza ON dza.zone_id = dz.id
-WHERE dz.active = true AND dz.vendor_id IS NOT NULL
+WHERE dz.active = true AND dz.vendor_id IS NULL
   AND dza.area_type = 'city' AND LOWER(dza.area_name) = LOWER(?)
 LIMIT 1;
 

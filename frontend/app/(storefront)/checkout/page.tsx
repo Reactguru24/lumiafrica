@@ -65,15 +65,9 @@ export default function CheckoutPage() {
     [cartItems],
   )
 
-  const { data: filteredZonesData } = useDeliveryZones(
-    cartVendorIds.length > 0 ? cartVendorIds : undefined,
-  )
-  const { data: allZonesData } = useDeliveryZones()
-  const filteredZones = (filteredZonesData as DeliveryZone[] | null) ?? []
-  const allZones = (allZonesData as DeliveryZone[] | null) ?? []
+  const { data: zonesData } = useDeliveryZones()
+  const deliveryZones = (zonesData as DeliveryZone[] | null) ?? []
   const multiVendor = cartVendorIds.length > 1
-  const usingFallbackZones = multiVendor && filteredZones.length === 0 && allZones.length > 0
-  const deliveryZones = filteredZones.length > 0 ? filteredZones : allZones
 
   const ownProductItems = useMemo(
     () => cartItems.filter((item) => isOwnVendorProduct(item.product.vendorId, myVendorId)),
@@ -269,16 +263,11 @@ export default function CheckoutPage() {
           <div className="animate-slide-up">
             <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Delivery Zone</h2>
             <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-              Shipping is set by each seller for your area. Fees below are combined per store in your cart.
+              Choose where the order should be delivered. Shipping is calculated per seller in your cart.
             </p>
-            {usingFallbackZones && (
-              <p className="text-sm text-amber-600 mb-4 p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
-                Sellers in your cart use different delivery areas. Some may use standard rates for the zone you select.
-              </p>
-            )}
-            {!usingFallbackZones && multiVendor && (
+            {multiVendor && (
               <p className="text-sm text-gray-500 mb-4">
-                Only showing areas that all sellers in your cart can deliver to.
+                Your cart includes items from multiple sellers — each store is charged once for the zone you select.
               </p>
             )}
             <div className="space-y-2 sm:space-y-3">

@@ -121,7 +121,7 @@ export default function AdminSettingsPage() {
         <div className="card p-6">
           <h2 className="font-semibold mb-4">Checkout — Shipping</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Each vendor defines delivery zones and shipping fees in Store Profile. Multi-vendor carts combine one fee per seller.
+            Delivery zones and fees are managed under Delivery Zones in the admin sidebar. Multi-vendor carts combine one fee per seller.
           </p>
         </div>
 

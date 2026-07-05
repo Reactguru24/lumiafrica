@@ -412,22 +412,6 @@ export const vendorAPI = {
     return put('/vendor/profile', data)
   },
 
-  listDeliveryZones() {
-    return get('/vendor/delivery-zones')
-  },
-
-  createDeliveryZone(data: Record<string, unknown>) {
-    return post('/vendor/delivery-zones', data)
-  },
-
-  updateDeliveryZone(zoneId: string, data: Record<string, unknown>) {
-    return put(`/vendor/delivery-zones/${zoneId}`, data)
-  },
-
-  deleteDeliveryZone(zoneId: string) {
-    return del(`/vendor/delivery-zones/${zoneId}`)
-  },
-
   updateFreeShipping(data: { freeShippingThreshold?: number | null }) {
     return put('/vendor/shipping-rates', data)
   },
@@ -610,6 +594,22 @@ export const adminAPI = {
 
   updatePlatformSettings(data: { commissionRate: number; commissionEnabled: boolean }) {
     return put('/admin/platform-settings', data)
+  },
+
+  listDeliveryZones() {
+    return get('/admin/delivery-zones')
+  },
+
+  createDeliveryZone(data: Record<string, unknown>) {
+    return post('/admin/delivery-zones', data)
+  },
+
+  updateDeliveryZone(zoneId: string, data: Record<string, unknown>) {
+    return put(`/admin/delivery-zones/${zoneId}`, data)
+  },
+
+  deleteDeliveryZone(zoneId: string) {
+    return del(`/admin/delivery-zones/${zoneId}`)
   },
 
   listCoupons(params?: { page?: number; limit?: number }) {

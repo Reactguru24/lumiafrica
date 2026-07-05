@@ -1,13 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"database/sql"
 	"net/http"
 	"strings"
 
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
-	"github.com/Reactguru24/lumiafrica/internal/database/types"
 	"github.com/Reactguru24/lumiafrica/internal/models"
 	"github.com/Reactguru24/lumiafrica/internal/store"
 	"github.com/Reactguru24/lumiafrica/internal/utils"
@@ -15,101 +13,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func vendorDeliveryZoneResponse(zone sqlc.DeliveryZone, fee float64) models.VendorDeliveryZoneResponse {
-	return models.VendorDeliveryZoneResponse{
-		ID:            zone.ID.String(),
-		Name:          zone.Name,
-		EstimatedDays: zone.EstimatedDays,
-		Fee:           fee,
-	}
+func platformDeliveryZoneResponse(zone sqlc.DeliveryZone) models.DeliveryZoneResponse {
+	return store.ToDeliveryZone(zone)
 }
 
-func vendorIDPtr(id types.BinaryUUID) *types.BinaryUUID {
-	return &id
-}
-
-func listVendorDeliveryZoneResponses(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor) ([]models.VendorDeliveryZoneResponse, error) {
-	zones, err := q.ListDeliveryZonesByVendor(ctx, vendorIDPtr(vendor.ID))
-	if err != nil {
-		return nil, err
-	}
-	rates, err := q.ListVendorShippingRatesByVendor(ctx, vendor.ID)
-	if err != nil {
-		return nil, err
-	}
-	feeByZone := make(map[string]float64, len(rates))
-	for _, row := range rates {
-		feeByZone[row.ZoneID.String()] = store.ParseDecimalString(row.Fee)
-	}
-	out := make([]models.VendorDeliveryZoneResponse, len(zones))
-	for i, zone := range zones {
-		fee := feeByZone[zone.ID.String()]
-		if fee <= 0 {
-			fee = store.ParseDecimalString(zone.BaseCost)
-		}
-		out[i] = vendorDeliveryZoneResponse(zone, fee)
-	}
-	return out, nil
-}
-
-// ListVendorDeliveryZones godoc
-// @Summary List vendor delivery zones
-// @Description Returns this vendor's delivery regions and shipping fees.
-// @Tags Vendor
+// ListAdminDeliveryZones godoc
+// @Summary List platform delivery zones (admin)
+// @Tags Admin
 // @Produce json
 // @Security Bearer
-// @Success 200 {object} map[string]interface{}
-// @Router /vendor/delivery-zones [get]
-func ListVendorDeliveryZones() gin.HandlerFunc {
+// @Success 200 {array} models.DeliveryZoneResponse
+// @Router /admin/delivery-zones [get]
+func ListAdminDeliveryZones() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, ok := currentUserID(c)
-		if !ok {
-			return
-		}
 		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		vendor, err := q.GetVendorByUserID(ctx, userID)
-		if handleNotFound(c, err, "Vendor profile not found", "Failed to fetch vendor") {
-			return
-		}
-
-		zones, err := listVendorDeliveryZoneResponses(ctx, q, vendor)
+		rows, err := getStore(c).Queries().ListPlatformDeliveryZones(ctx)
 		if err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to load delivery zones")
 			return
 		}
-
-		var freeThreshold *float64
-		if vendor.FreeShippingThreshold.Valid {
-			v := store.ParseDecimalString(vendor.FreeShippingThreshold.String)
-			if v > 0 {
-				freeThreshold = &v
-			}
+		out := make([]models.DeliveryZoneResponse, len(rows))
+		for i, row := range rows {
+			out[i] = platformDeliveryZoneResponse(row)
 		}
-
-		utils.Success(c, gin.H{
-			"zones":                 zones,
-			"freeShippingThreshold": freeThreshold,
-		})
+		utils.Success(c, out)
 	}
 }
 
-// CreateVendorDeliveryZone godoc
-// @Summary Create a delivery zone
-// @Description Adds a delivery region with a shipping fee for this vendor's orders.
-// @Tags Vendor
+// CreateAdminDeliveryZone godoc
+// @Summary Create a platform delivery zone (admin)
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Security Bearer
 // @Param zone body models.CreateDeliveryZoneRequest true "Zone details"
-// @Success 201 {object} models.VendorDeliveryZoneResponse
-// @Router /vendor/delivery-zones [post]
-func CreateVendorDeliveryZone() gin.HandlerFunc {
+// @Success 201 {object} models.DeliveryZoneResponse
+// @Router /admin/delivery-zones [post]
+func CreateAdminDeliveryZone() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, ok := currentUserID(c)
-		if !ok {
-			return
-		}
 		var req models.CreateDeliveryZoneRequest
 		if !bindJSON(c, &req) {
 			return
@@ -131,16 +72,10 @@ func CreateVendorDeliveryZone() gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
-		vendor, err := q.GetVendorByUserID(ctx, userID)
-		if handleNotFound(c, err, "Vendor profile not found", "Failed to fetch vendor") {
-			return
-		}
-
 		zoneID := utils.GenerateBinaryID()
-		vendorID := vendor.ID
 		if err := q.CreateDeliveryZone(ctx, sqlc.CreateDeliveryZoneParams{
 			ID:            zoneID,
-			VendorID:      &vendorID,
+			VendorID:      nil,
 			Name:          name,
 			BaseCost:      store.FloatToDecimalString(req.BaseCost),
 			EstimatedDays: estimated,
@@ -163,44 +98,33 @@ func CreateVendorDeliveryZone() gin.HandlerFunc {
 			})
 		}
 
-		if req.BaseCost > 0 {
-			_ = q.UpsertVendorShippingRate(ctx, sqlc.UpsertVendorShippingRateParams{
-				ID:       utils.GenerateBinaryID(),
-				VendorID: vendor.ID,
-				ZoneID:   zoneID,
-				Fee:      store.FloatToDecimalString(req.BaseCost),
-			})
-		}
-
-		row, err := q.GetVendorDeliveryZoneByID(ctx, sqlc.GetVendorDeliveryZoneByIDParams{
-			ID: zoneID, VendorID: vendorIDPtr(vendor.ID),
-		})
+		row, err := q.GetPlatformDeliveryZoneByID(ctx, zoneID)
 		if err != nil {
-			utils.SuccessCreated(c, vendorDeliveryZoneResponse(sqlc.DeliveryZone{
-				ID: zoneID, Name: name, EstimatedDays: estimated, BaseCost: store.FloatToDecimalString(req.BaseCost),
-			}, req.BaseCost))
+			utils.SuccessCreated(c, models.DeliveryZoneResponse{
+				ID:            zoneID.String(),
+				Name:          name,
+				BaseCost:      req.BaseCost,
+				EstimatedDays: estimated,
+				Active:        true,
+			})
 			return
 		}
-		utils.SuccessCreated(c, vendorDeliveryZoneResponse(row, req.BaseCost))
+		utils.SuccessCreated(c, platformDeliveryZoneResponse(row))
 	}
 }
 
-// UpdateVendorDeliveryZone godoc
-// @Summary Update a delivery zone
-// @Tags Vendor
+// UpdateAdminDeliveryZone godoc
+// @Summary Update a platform delivery zone (admin)
+// @Tags Admin
 // @Accept json
 // @Produce json
 // @Security Bearer
 // @Param zoneID path string true "Zone ID"
 // @Param zone body models.UpdateVendorDeliveryZoneRequest true "Zone details"
-// @Success 200 {object} models.VendorDeliveryZoneResponse
-// @Router /vendor/delivery-zones/{zoneID} [put]
-func UpdateVendorDeliveryZone() gin.HandlerFunc {
+// @Success 200 {object} models.DeliveryZoneResponse
+// @Router /admin/delivery-zones/{zoneID} [put]
+func UpdateAdminDeliveryZone() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, ok := currentUserID(c)
-		if !ok {
-			return
-		}
 		zoneID, ok := parsePathID(c, "zoneID")
 		if !ok {
 			return
@@ -226,81 +150,48 @@ func UpdateVendorDeliveryZone() gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
-		vendor, err := q.GetVendorByUserID(ctx, userID)
-		if handleNotFound(c, err, "Vendor profile not found", "Failed to fetch vendor") {
-			return
-		}
-		if _, err := q.GetVendorDeliveryZoneByID(ctx, sqlc.GetVendorDeliveryZoneByIDParams{
-			ID: zoneID, VendorID: vendorIDPtr(vendor.ID),
-		}); err != nil {
+		if _, err := q.GetPlatformDeliveryZoneByID(ctx, zoneID); err != nil {
 			utils.Error(c, http.StatusNotFound, "Delivery zone not found")
 			return
 		}
 
-		if err := q.UpdateDeliveryZone(ctx, sqlc.UpdateDeliveryZoneParams{
+		if err := q.UpdatePlatformDeliveryZone(ctx, sqlc.UpdatePlatformDeliveryZoneParams{
 			Name:          name,
 			BaseCost:      store.FloatToDecimalString(req.Fee),
 			EstimatedDays: estimated,
 			ID:            zoneID,
-			VendorID:      vendorIDPtr(vendor.ID),
 		}); err != nil {
 			utils.Error(c, http.StatusBadRequest, "Unable to update delivery zone")
 			return
 		}
 
-		if req.Fee <= 0 {
-			_ = q.SoftDeleteVendorShippingRate(ctx, sqlc.SoftDeleteVendorShippingRateParams{
-				VendorID: vendor.ID, ZoneID: zoneID,
-			})
-		} else {
-			_ = q.UpsertVendorShippingRate(ctx, sqlc.UpsertVendorShippingRateParams{
-				ID:       utils.GenerateBinaryID(),
-				VendorID: vendor.ID,
-				ZoneID:   zoneID,
-				Fee:      store.FloatToDecimalString(req.Fee),
-			})
-		}
-
-		row, _ := q.GetVendorDeliveryZoneByID(ctx, sqlc.GetVendorDeliveryZoneByIDParams{
-			ID: zoneID, VendorID: vendorIDPtr(vendor.ID),
-		})
-		utils.Success(c, vendorDeliveryZoneResponse(row, req.Fee))
+		row, _ := q.GetPlatformDeliveryZoneByID(ctx, zoneID)
+		utils.Success(c, platformDeliveryZoneResponse(row))
 	}
 }
 
-// DeleteVendorDeliveryZone godoc
-// @Summary Remove a delivery zone
-// @Tags Vendor
+// DeleteAdminDeliveryZone godoc
+// @Summary Deactivate a platform delivery zone (admin)
+// @Tags Admin
 // @Produce json
 // @Security Bearer
 // @Param zoneID path string true "Zone ID"
 // @Success 200 {object} map[string]interface{}
-// @Router /vendor/delivery-zones/{zoneID} [delete]
-func DeleteVendorDeliveryZone() gin.HandlerFunc {
+// @Router /admin/delivery-zones/{zoneID} [delete]
+func DeleteAdminDeliveryZone() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, ok := currentUserID(c)
-		if !ok {
-			return
-		}
 		zoneID, ok := parsePathID(c, "zoneID")
 		if !ok {
 			return
 		}
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
-		vendor, err := q.GetVendorByUserID(ctx, userID)
-		if handleNotFound(c, err, "Vendor profile not found", "Failed to fetch vendor") {
-			return
-		}
-		if err := q.SetDeliveryZoneActive(ctx, sqlc.SetDeliveryZoneActiveParams{
-			Active: 0, ID: zoneID, VendorID: vendorIDPtr(vendor.ID),
+		if err := q.SetPlatformDeliveryZoneActive(ctx, sqlc.SetPlatformDeliveryZoneActiveParams{
+			Active: 0, ID: zoneID,
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to remove delivery zone")
 			return
 		}
-		_ = q.SoftDeleteVendorShippingRate(ctx, sqlc.SoftDeleteVendorShippingRateParams{
-			VendorID: vendor.ID, ZoneID: zoneID,
-		})
 		utils.Success(c, gin.H{"removed": true})
 	}
 }

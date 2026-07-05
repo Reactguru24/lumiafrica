@@ -229,7 +229,7 @@ export function DeliveryZoneForm({ saving, onSubmit }: Props) {
           onChange={(e) => setBaseCost(e.target.value)}
           placeholder="500"
         />
-        <p className="text-xs text-gray-500 mt-1">Charged once per order from your store for this zone.</p>
+        <p className="text-xs text-gray-500 mt-1">Charged once per seller in the customer&apos;s cart for this zone.</p>
       </div>
 
       <button type="submit" className="btn-primary" disabled={saving || !resolvedName || !resolvedDays}>

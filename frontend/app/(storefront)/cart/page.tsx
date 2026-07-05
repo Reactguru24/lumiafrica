@@ -49,15 +49,9 @@ export default function CartPage() {
     [cartItems],
   )
 
-  const { data: filteredZonesData } = useDeliveryZones(
-    cartVendorIds.length > 0 ? cartVendorIds : undefined,
-  )
-  const { data: allZonesData } = useDeliveryZones()
-  const filteredZones = (filteredZonesData as { id: string; name: string }[] | null) ?? []
-  const allZones = (allZonesData as { id: string; name: string }[] | null) ?? []
+  const { data: zonesData } = useDeliveryZones()
+  const deliveryZones = (zonesData as { id: string; name: string }[] | null) ?? []
   const multiVendor = cartVendorIds.length > 1
-  const usingFallbackZones = multiVendor && filteredZones.length === 0 && allZones.length > 0
-  const deliveryZones = filteredZones.length > 0 ? filteredZones : allZones
 
   useEffect(() => {
     if (deliveryZones.length === 0) return
@@ -230,14 +224,9 @@ export default function CartPage() {
               {deliveryZones.length > 0 && (
                 <div className="mb-4">
                   <label className="text-sm font-medium text-gray-500">Delivery zone</label>
-                  {usingFallbackZones && (
-                    <p className="text-xs text-amber-600 mt-1 mb-1">
-                      Sellers in your cart use different delivery areas. Rates shown may include standard shipping for some stores.
-                    </p>
-                  )}
-                  {!usingFallbackZones && multiVendor && (
+                  {multiVendor && (
                     <p className="text-xs text-gray-500 mt-1 mb-1">
-                      Showing areas all sellers in your cart deliver to. Shipping is combined per store.
+                      Shipping is combined per seller in your cart.
                     </p>
                   )}
                   <select
