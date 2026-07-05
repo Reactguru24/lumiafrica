@@ -31,21 +31,31 @@ type PaymentVerifyResponse struct {
 	Message        string        `json:"message,omitempty"`
 }
 
+type VendorShipmentMeta struct {
+	VendorID        string  `json:"vendorId"`
+	StoreName       string  `json:"storeName"`
+	ShippingFee     float64 `json:"shippingFee"`
+	OriginCity      string  `json:"originCity"`
+	DestinationCity string  `json:"destinationCity"`
+	EstimatedDays   string  `json:"estimatedDays"`
+}
+
 type OrderPaymentMetadata struct {
-	Items            []OrderItem `json:"items"`
-	PaymentMethod    string      `json:"paymentMethod"`
-	DeliveryAddress  string      `json:"deliveryAddress"`
-	DeliveryCity     string      `json:"deliveryCity"`
-	DeliveryZoneID   *string     `json:"deliveryZoneId,omitempty"`
-	DeliveryZoneName *string     `json:"deliveryZoneName,omitempty"`
-	CouponCode       *string     `json:"couponCode,omitempty"`
-	CouponID         *string     `json:"couponId,omitempty"`
-	Notes            *string     `json:"notes"`
-	Subtotal         float64     `json:"subtotal"`
-	DiscountAmount   float64     `json:"discountAmount"`
-	ShippingCost     float64     `json:"shippingCost"`
-	TaxAmount        float64     `json:"taxAmount"`
-	Total            float64     `json:"total"`
+	Items            []OrderItem          `json:"items"`
+	VendorShipments  []VendorShipmentMeta `json:"vendorShipments,omitempty"`
+	PaymentMethod    string               `json:"paymentMethod"`
+	DeliveryAddress  string               `json:"deliveryAddress"`
+	DeliveryCity     string               `json:"deliveryCity"`
+	DeliveryZoneID   *string              `json:"deliveryZoneId,omitempty"`
+	DeliveryZoneName *string              `json:"deliveryZoneName,omitempty"`
+	CouponCode       *string              `json:"couponCode,omitempty"`
+	CouponID         *string              `json:"couponId,omitempty"`
+	Notes            *string              `json:"notes"`
+	Subtotal         float64              `json:"subtotal"`
+	DiscountAmount   float64              `json:"discountAmount"`
+	ShippingCost     float64              `json:"shippingCost"`
+	TaxAmount        float64              `json:"taxAmount"`
+	Total            float64              `json:"total"`
 }
 
 type SubscriptionPaymentMetadata struct {

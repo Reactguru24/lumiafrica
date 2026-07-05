@@ -10,6 +10,7 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
 	"github.com/Reactguru24/lumiafrica/internal/models"
+	"github.com/Reactguru24/lumiafrica/internal/store"
 	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
@@ -20,12 +21,27 @@ func prepareOrderPaymentMetadata(
 	req models.CreateOrderRequest,
 	subtotal float64,
 ) (models.OrderPaymentMetadata, error) {
-	// Delivery zones / per-vendor shipping disabled — checkout excludes shipping fees.
-	shippingCost := 0.0
-	// shippingCost, _, err := commerce.ResolveVendorShipping(ctx, q, req.Items, zoneIDFromRequest(req))
-	// if err != nil {
-	// 	return models.OrderPaymentMetadata{}, err
-	// }
+	deliveryCity := strings.TrimSpace(req.DeliveryCity)
+	if deliveryCity == "" {
+		return models.OrderPaymentMetadata{}, fmt.Errorf("delivery city is required")
+	}
+
+	shippingCost, lines, err := commerce.ResolveVendorShipping(ctx, q, req.Items, deliveryCity)
+	if err != nil {
+		return models.OrderPaymentMetadata{}, err
+	}
+
+	vendorShipments := make([]models.VendorShipmentMeta, len(lines))
+	for i, line := range lines {
+		vendorShipments[i] = models.VendorShipmentMeta{
+			VendorID:        line.VendorID,
+			StoreName:       line.StoreName,
+			ShippingFee:     line.ShippingCost,
+			OriginCity:      line.OriginCity,
+			DestinationCity: line.DestinationCity,
+			EstimatedDays:   line.EstimatedDays,
+		}
+	}
 
 	discount := 0.0
 	var couponID, couponCode *string
@@ -47,25 +63,16 @@ func prepareOrderPaymentMetadata(
 		total = 0
 	}
 
-	var zoneID, zoneName *string
-	// if req.DeliveryZoneID != nil && strings.TrimSpace(*req.DeliveryZoneID) != "" {
-	// 	key := strings.TrimSpace(*req.DeliveryZoneID)
-	// 	if id, err := utils.ParseID(key); err == nil {
-	// 		s := id.String()
-	// 		zoneID = &s
-	// 	} else {
-	// 		zoneName = &key
-	// 	}
-	// }
+	destName := commerce.DisplayCity(deliveryCity)
 
 	return models.OrderPaymentMetadata{
-		Items:            req.Items,
-		PaymentMethod:    req.PaymentMethod,
-		DeliveryAddress:  req.DeliveryAddress,
-		DeliveryCity:     req.DeliveryCity,
-		DeliveryZoneID:   zoneID,
-		DeliveryZoneName: zoneName,
-		CouponCode:       couponCode,
+		Items:           req.Items,
+		VendorShipments: vendorShipments,
+		PaymentMethod:   req.PaymentMethod,
+		DeliveryAddress: req.DeliveryAddress,
+		DeliveryCity:    deliveryCity,
+		DeliveryZoneName: &destName,
+		CouponCode:      couponCode,
 		CouponID:         couponID,
 		Notes:            req.Notes,
 		Subtotal:         subtotal,
@@ -94,9 +101,25 @@ func optionalZoneName(s *string) sql.NullString {
 	return sql.NullString{String: strings.TrimSpace(*s), Valid: true}
 }
 
-func zoneIDFromRequest(req models.CreateOrderRequest) string {
-	if req.DeliveryZoneID != nil {
-		return strings.TrimSpace(*req.DeliveryZoneID)
+func createVendorShipments(ctx context.Context, q *sqlc.Queries, orderID types.BinaryUUID, shipments []models.VendorShipmentMeta) error {
+	for _, line := range shipments {
+		vendorID, err := utils.ParseID(line.VendorID)
+		if err != nil {
+			continue
+		}
+		vid := vendorID
+		if err := q.CreateShipment(ctx, sqlc.CreateShipmentParams{
+			ID:              utils.GenerateBinaryID(),
+			OrderID:         orderID,
+			VendorID:        &vid,
+			ShippingFee:     store.FloatToDecimalString(line.ShippingFee),
+			OriginCity:      sql.NullString{String: line.OriginCity, Valid: line.OriginCity != ""},
+			DestinationCity: sql.NullString{String: line.DestinationCity, Valid: line.DestinationCity != ""},
+			Carrier:         sql.NullString{},
+			TrackingNumber:  sql.NullString{},
+		}); err != nil {
+			return err
+		}
 	}
-	return ""
+	return nil
 }

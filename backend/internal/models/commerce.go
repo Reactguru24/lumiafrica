@@ -45,25 +45,49 @@ type ValidateCouponResponse struct {
 }
 
 type ShippingEstimateRequest struct {
-	Items          []OrderItem `json:"items" binding:"required"`
-	DeliveryZoneID string      `json:"deliveryZoneId" binding:"required"`
+	Items        []OrderItem `json:"items" binding:"required"`
+	DeliveryCity string      `json:"deliveryCity" binding:"required"`
 }
 
 type VendorShippingBreakdown struct {
-	VendorID      string   `json:"vendorId"`
-	StoreName     string   `json:"storeName"`
-	Subtotal      float64  `json:"subtotal"`
-	ShippingCost  float64  `json:"shippingCost"`
-	ZoneName      string   `json:"zoneName"`
-	EstimatedDays string   `json:"estimatedDays"`
-	ZoneMatched   bool     `json:"zoneMatched"`
-	ProductIDs    []string `json:"productIds"`
+	VendorID        string   `json:"vendorId"`
+	StoreName       string   `json:"storeName"`
+	OriginCity      string   `json:"originCity"`
+	DestinationCity string   `json:"destinationCity"`
+	Subtotal        float64  `json:"subtotal"`
+	ShippingCost    float64  `json:"shippingCost"`
+	EstimatedDays   string   `json:"estimatedDays"`
+	LaneMatched     bool     `json:"laneMatched"`
+	ProductIDs      []string `json:"productIds"`
 }
 
 type ShippingEstimateResponse struct {
-	ShippingCost float64                   `json:"shippingCost"`
-	Breakdown    []VendorShippingBreakdown `json:"breakdown"`
-	DeliveryZoneID string                  `json:"deliveryZoneId"`
+	ShippingCost   float64                   `json:"shippingCost"`
+	Breakdown      []VendorShippingBreakdown `json:"breakdown"`
+	DeliveryCity   string                    `json:"deliveryCity"`
+}
+
+type ShippingLaneRateResponse struct {
+	ID              string  `json:"id"`
+	OriginCity      string  `json:"originCity"`
+	DestinationCity string  `json:"destinationCity"`
+	Fee             float64 `json:"fee"`
+	EstimatedDays   string  `json:"estimatedDays"`
+	Active          bool    `json:"active"`
+}
+
+type CreateShippingLaneRateRequest struct {
+	OriginCity      string  `json:"originCity" binding:"required"`
+	DestinationCity string  `json:"destinationCity" binding:"required"`
+	Fee             float64 `json:"fee" binding:"min=0"`
+	EstimatedDays   string  `json:"estimatedDays" binding:"required"`
+}
+
+type UpdateShippingLaneRateRequest struct {
+	OriginCity      string  `json:"originCity" binding:"required"`
+	DestinationCity string  `json:"destinationCity" binding:"required"`
+	Fee             float64 `json:"fee" binding:"min=0"`
+	EstimatedDays   string  `json:"estimatedDays" binding:"required"`
 }
 
 type ProductSizeChartResponse struct {

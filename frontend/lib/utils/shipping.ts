@@ -14,18 +14,19 @@ export type ShippingEstimateItem = {
 export type ShippingBreakdown = {
   vendorId: string
   storeName: string
+  originCity?: string
+  destinationCity?: string
   subtotal: number
   shippingCost: number
-  zoneName?: string
   estimatedDays?: string
-  zoneMatched?: boolean
+  laneMatched?: boolean
   productIds?: string[]
 }
 
 export type ShippingEstimate = {
   shippingCost: number
   breakdown: ShippingBreakdown[]
-  deliveryZoneId?: string
+  deliveryCity?: string
 }
 
 export function toShippingEstimateItems(items: (CartItem & { product: Product })[]): ShippingEstimateItem[] {

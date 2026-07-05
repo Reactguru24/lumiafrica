@@ -7,7 +7,7 @@ import {
   HomeIcon, UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
   Cog6ToothIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon, SparklesIcon,
   TicketIcon, PhotoIcon,
-  // TruckIcon,
+  TruckIcon,
 } from '@heroicons/react/24/outline'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
 import { UserAvatar } from '@/components/account/UserAvatar'
@@ -21,7 +21,7 @@ const navItems = [
   { name: 'Subscriptions', to: '/admin/subscriptions', icon: SparklesIcon },
   { name: 'Products', to: '/admin/products', icon: CubeIcon },
   { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon },
-  // { name: 'Delivery Zones', to: '/admin/delivery-zones', icon: TruckIcon },
+  { name: 'Shipping Lanes', to: '/admin/delivery-zones', icon: TruckIcon },
   { name: 'Commerce', to: '/admin/commerce', icon: TicketIcon },
   { name: 'Homepage', to: '/admin/homepage', icon: PhotoIcon },
   { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon },

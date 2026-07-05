@@ -173,7 +173,7 @@ func EstimateShipping() gin.HandlerFunc {
 			return
 		}
 		ctx := c.Request.Context()
-		total, lines, err := commerce.ResolveVendorShipping(ctx, getStore(c).Queries(), req.Items, req.DeliveryZoneID)
+		total, lines, err := commerce.ResolveVendorShipping(ctx, getStore(c).Queries(), req.Items, req.DeliveryCity)
 		if err != nil {
 			utils.Error(c, http.StatusBadRequest, err.Error())
 			return
@@ -181,20 +181,21 @@ func EstimateShipping() gin.HandlerFunc {
 		breakdown := make([]models.VendorShippingBreakdown, len(lines))
 		for i, line := range lines {
 			breakdown[i] = models.VendorShippingBreakdown{
-				VendorID:      line.VendorID,
-				StoreName:     line.StoreName,
-				Subtotal:      line.Subtotal,
-				ShippingCost:  line.ShippingCost,
-				ZoneName:      line.ZoneName,
-				EstimatedDays: line.EstimatedDays,
-				ZoneMatched:   line.ZoneMatched,
-				ProductIDs:    line.ProductIDs,
+				VendorID:        line.VendorID,
+				StoreName:       line.StoreName,
+				OriginCity:      line.OriginCity,
+				DestinationCity: line.DestinationCity,
+				Subtotal:        line.Subtotal,
+				ShippingCost:    line.ShippingCost,
+				EstimatedDays:   line.EstimatedDays,
+				LaneMatched:     line.LaneMatched,
+				ProductIDs:      line.ProductIDs,
 			}
 		}
 		utils.Success(c, models.ShippingEstimateResponse{
-			ShippingCost:   total,
-			Breakdown:      breakdown,
-			DeliveryZoneID: req.DeliveryZoneID,
+			ShippingCost: total,
+			Breakdown:    breakdown,
+			DeliveryCity: commerce.DisplayCity(req.DeliveryCity),
 		})
 	}
 }

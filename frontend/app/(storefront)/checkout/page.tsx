@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
-import { useProducts, useCreateOrder, useValidateCoupon, useVendorProfile } from '@/lib/stores/api'
+import { useProducts, useCreateOrder, useValidateCoupon, useVendorProfile, useShippingEstimate } from '@/lib/stores/api'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
+import { toShippingEstimateItems } from '@/lib/utils/shipping'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
@@ -84,8 +85,16 @@ export default function CheckoutPage() {
   }, 0), [cartItems])
 
   const discount = appliedCoupon?.discount ?? 0
+  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
+  const deliveryCity = form.city.trim()
+  const { data: shippingEstimate, loading: shippingLoading } = useShippingEstimate(
+    estimateItems as unknown as Record<string, unknown>[],
+    step >= 2 ? deliveryCity : '',
+  )
+  const shippingCost = shippingEstimate?.shippingCost ?? 0
+  const shippingBreakdown = shippingEstimate?.breakdown ?? []
   const tax = subtotal * TAX_RATE
-  const total = Math.max(0, subtotal - discount + tax)
+  const total = Math.max(0, subtotal - discount + shippingCost + tax)
 
   async function applyCoupon() {
     const code = couponInput.trim()
@@ -216,6 +225,33 @@ export default function CheckoutPage() {
             <div className="card p-3 sm:p-4 mb-4 sm:mb-6 text-xs sm:text-sm space-y-2">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
               {discount > 0 && <div className="flex justify-between text-green-600"><span>Coupon</span><span>−{formatPrice(discount)}</span></div>}
+              {deliveryCity && (
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-2 space-y-1.5">
+                  <p className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-wide">Shipping to {deliveryCity}</p>
+                  {shippingLoading ? (
+                    <p className="text-gray-400 text-xs">Calculating shipping…</p>
+                  ) : shippingBreakdown.length > 0 ? (
+                    shippingBreakdown.map((line) => (
+                      <div key={line.vendorId} className="flex justify-between gap-2">
+                        <span className="text-gray-500 truncate">
+                          {line.storeName}
+                          {line.originCity ? ` (${line.originCity} → ${line.destinationCity || deliveryCity})` : ''}
+                        </span>
+                        <span className="shrink-0">{formatPrice(line.shippingCost)}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-xs">Enter a valid city on the previous step.</p>
+                  )}
+                  <div className="flex justify-between font-medium">
+                    <span>Shipping total</span>
+                    <span>{formatPrice(shippingCost)}</span>
+                  </div>
+                  {shippingBreakdown.length > 1 && (
+                    <p className="text-[10px] text-gray-400">You may receive {shippingBreakdown.length} separate deliveries.</p>
+                  )}
+                </div>
+              )}
               {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatPrice(tax)}</span></div>}
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>

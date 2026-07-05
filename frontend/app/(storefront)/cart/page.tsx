@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { MediaImage } from '@/components/common/MediaImage'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
-import { useProducts, useVendorProfile } from '@/lib/stores/api'
+import { useProducts, useVendorProfile, useShippingEstimate } from '@/lib/stores/api'
 import { useAuthStore } from '@/lib/stores/auth'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE } from '@/lib/constants/commerce'
+import { toShippingEstimateItems } from '@/lib/utils/shipping'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import type { Product, CartItem } from '@/lib/types'
@@ -20,6 +21,7 @@ export default function CartPage() {
   const router = useRouter()
   const cart = useCartStore()
   const auth = useAuthStore()
+  const [deliveryCity, setDeliveryCity] = useState('Nairobi')
   const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
   const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
 
@@ -93,8 +95,16 @@ export default function CartPage() {
     return s + Math.max(0, i.product.price - discountAmount) * i.quantity
   }, 0), [cartItems])
 
+  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
+  const { data: shippingEstimate, loading: shippingLoading } = useShippingEstimate(
+    estimateItems as unknown as Record<string, unknown>[],
+    deliveryCity.trim(),
+  )
+  const shippingCost = shippingEstimate?.shippingCost ?? 0
+  const shippingBreakdown = shippingEstimate?.breakdown ?? []
+
   const tax = subtotal * TAX_RATE
-  const total = subtotal + tax
+  const total = subtotal + shippingCost + tax
 
   const checkoutBlocked = useMemo(() => {
     if (ownProductItems.length > 0) return VENDOR_SELF_PURCHASE_MSG
@@ -194,8 +204,37 @@ export default function CartPage() {
           {cartItems.length > 0 ? (
             <div className="card p-3 sm:p-6 h-fit lg:sticky lg:top-24">
               <h2 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h2>
+              <div className="mb-3">
+                <label className="text-xs text-gray-500">Estimate shipping to</label>
+                <input
+                  value={deliveryCity}
+                  onChange={(e) => setDeliveryCity(e.target.value)}
+                  placeholder="City"
+                  className="input-field input-compact mt-1"
+                />
+              </div>
               <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+                {shippingLoading ? (
+                  <div className="text-gray-400 text-xs">Calculating shipping…</div>
+                ) : shippingBreakdown.length > 0 ? (
+                  <div className="space-y-1 border-t border-gray-200 dark:border-gray-800 pt-2">
+                    {shippingBreakdown.map((line) => (
+                      <div key={line.vendorId} className="flex justify-between gap-2">
+                        <span className="text-gray-500 truncate text-[10px] sm:text-xs">
+                          {line.storeName}
+                        </span>
+                        <span className="shrink-0">{formatPrice(line.shippingCost)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between font-medium">
+                      <span className="text-gray-500">Shipping</span>
+                      <span>{formatPrice(shippingCost)}</span>
+                    </div>
+                  </div>
+                ) : deliveryCity.trim() ? (
+                  <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{formatPrice(shippingCost)}</span></div>
+                ) : null}
                 <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatPrice(tax)}</span></div>
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-2 sm:pt-3 flex justify-between font-semibold text-sm sm:text-base"><span>Total</span><span>{formatPrice(total)}</span></div>
               </div>

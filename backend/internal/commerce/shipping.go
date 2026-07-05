@@ -14,22 +14,18 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/utils"
 )
 
-type VendorShippingLine struct {
-	VendorID      string   `json:"vendorId"`
-	StoreName     string   `json:"storeName"`
-	Subtotal      float64  `json:"subtotal"`
-	ShippingCost  float64  `json:"shippingCost"`
-	ZoneName      string   `json:"zoneName"`
-	EstimatedDays string   `json:"estimatedDays"`
-	ZoneMatched   bool     `json:"zoneMatched"`
-	ProductIDs    []string `json:"productIds"`
-}
+const defaultLaneFee = 400.0
 
-type zoneFeeResult struct {
-	fee           float64
-	zoneName      string
-	estimatedDays string
-	zoneMatched   bool
+type VendorShippingLine struct {
+	VendorID        string   `json:"vendorId"`
+	StoreName       string   `json:"storeName"`
+	OriginCity      string   `json:"originCity"`
+	DestinationCity string   `json:"destinationCity"`
+	Subtotal        float64  `json:"subtotal"`
+	ShippingCost    float64  `json:"shippingCost"`
+	EstimatedDays   string   `json:"estimatedDays"`
+	LaneMatched     bool     `json:"laneMatched"`
+	ProductIDs      []string `json:"productIds"`
 }
 
 type variantLineKey struct {
@@ -38,13 +34,41 @@ type variantLineKey struct {
 	color     string
 }
 
-func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.OrderItem, deliveryZoneKey string) (float64, []VendorShippingLine, error) {
+// NormalizeCity trims suffixes and standardizes city names for lane lookup.
+func NormalizeCity(name string) string {
+	s := strings.TrimSpace(name)
+	s = strings.TrimSuffix(s, " Metro")
+	s = strings.TrimSuffix(s, " County")
+	if s == "" {
+		return ""
+	}
+	return strings.ToLower(s)
+}
+
+// DisplayCity formats a city name for display and lane lookup.
+func DisplayCity(name string) string {
+	return displayCity(name)
+}
+
+func displayCity(name string) string {
+	s := strings.TrimSpace(name)
+	s = strings.TrimSuffix(s, " Metro")
+	s = strings.TrimSuffix(s, " County")
+	if s == "" {
+		return "Unknown"
+	}
+	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])
+}
+
+// ResolveVendorShipping groups cart items by vendor and calculates one shipping fee
+// per vendor based on shop city → customer delivery city lane rates.
+func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.OrderItem, destinationCity string) (float64, []VendorShippingLine, error) {
 	if len(items) == 0 {
 		return 0, nil, fmt.Errorf("cart is empty")
 	}
-	zoneKey := strings.TrimSpace(deliveryZoneKey)
-	if zoneKey == "" {
-		return 0, nil, fmt.Errorf("delivery zone is required")
+	dest := displayCity(destinationCity)
+	if NormalizeCity(dest) == "" {
+		return 0, nil, fmt.Errorf("delivery city is required")
 	}
 
 	productCache := make(map[types.BinaryUUID]sqlc.Product)
@@ -107,91 +131,55 @@ func ResolveVendorShipping(ctx context.Context, q *sqlc.Queries, items []models.
 			}
 		}
 
-		result, err := vendorShippingFeeForZoneKey(ctx, q, vendor, zoneKey, subtotal)
-		if err != nil {
-			return 0, nil, err
+		fee, days, matched, origin := laneFeeForVendor(ctx, q, vendor, dest)
+		if vendor.FreeShippingThreshold.Valid {
+			threshold := store.ParseDecimalString(vendor.FreeShippingThreshold.String)
+			if threshold > 0 && subtotal >= threshold {
+				fee = 0
+				days = "Free shipping"
+				matched = true
+			}
 		}
-		totalShipping += result.fee
+
+		totalShipping += fee
 		productIDs := make([]string, 0, len(vendorProducts[vendorID]))
 		for pid := range vendorProducts[vendorID] {
 			productIDs = append(productIDs, pid)
 		}
 		lines = append(lines, VendorShippingLine{
-			VendorID:      vendorID.String(),
-			StoreName:     vendor.StoreName,
-			Subtotal:      subtotal,
-			ShippingCost:  result.fee,
-			ZoneName:      result.zoneName,
-			EstimatedDays: result.estimatedDays,
-			ZoneMatched:   result.zoneMatched,
-			ProductIDs:    productIDs,
+			VendorID:        vendorID.String(),
+			StoreName:       vendor.StoreName,
+			OriginCity:      origin,
+			DestinationCity: dest,
+			Subtotal:        subtotal,
+			ShippingCost:    fee,
+			EstimatedDays:   days,
+			LaneMatched:     matched,
+			ProductIDs:      productIDs,
 		})
 	}
 
 	return totalShipping, lines, nil
 }
 
-func vendorShippingFeeForZoneKey(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, zoneKey string, vendorSubtotal float64) (zoneFeeResult, error) {
-	if vendor.FreeShippingThreshold.Valid {
-		threshold := store.ParseDecimalString(vendor.FreeShippingThreshold.String)
-		if threshold > 0 && vendorSubtotal >= threshold {
-			return zoneFeeResult{
-				fee:           0,
-				zoneName:      zoneKey,
-				estimatedDays: "Free shipping",
-				zoneMatched:   true,
-			}, nil
-		}
+func laneFeeForVendor(ctx context.Context, q *sqlc.Queries, vendor sqlc.Vendor, destinationCity string) (fee float64, estimatedDays string, matched bool, originDisplay string) {
+	origin := displayCity(vendor.City)
+	if origin == "Unknown" {
+		origin = displayCity(vendor.Country)
+	}
+	originDisplay = origin
+
+	lane, err := q.GetShippingLaneRate(ctx, origin, destinationCity)
+	if err == nil {
+		return store.ParseDecimalString(lane.Fee), lane.EstimatedDays, true, originDisplay
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return defaultLaneFee, "3-7 business days", false, originDisplay
 	}
 
-	zoneKey = strings.TrimSpace(zoneKey)
-	if zoneKey == "" {
-		return zoneFeeResult{
-			fee:           store.ParseDecimalString(vendor.ShippingCost),
-			zoneName:      "Standard shipping",
-			estimatedDays: "3-7 business days",
-			zoneMatched:   false,
-		}, nil
+	fallback := store.ParseDecimalString(vendor.ShippingCost)
+	if fallback <= 0 {
+		fallback = defaultLaneFee
 	}
-
-	var zone sqlc.DeliveryZone
-	var err error
-
-	if zoneID, parseErr := utils.ParseID(zoneKey); parseErr == nil {
-		z, zErr := q.GetPlatformDeliveryZoneByID(ctx, zoneID)
-		if zErr == nil {
-			return feeForPlatformZone(z)
-		}
-		z, zErr = q.GetDeliveryZoneByID(ctx, zoneID)
-		if zErr == nil && z.Active != 0 {
-			return feeForPlatformZone(z)
-		}
-	}
-
-	zone, err = q.GetPlatformDeliveryZoneByName(ctx, zoneKey)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return zoneFeeResult{
-				fee:           store.ParseDecimalString(vendor.ShippingCost),
-				zoneName:      zoneKey,
-				estimatedDays: "3-7 business days",
-				zoneMatched:   false,
-			}, nil
-		}
-		return zoneFeeResult{}, err
-	}
-	return feeForPlatformZone(zone)
-}
-
-func feeForPlatformZone(zone sqlc.DeliveryZone) (zoneFeeResult, error) {
-	estimatedDays := strings.TrimSpace(zone.EstimatedDays)
-	if estimatedDays == "" {
-		estimatedDays = "3-7 business days"
-	}
-	return zoneFeeResult{
-		fee:           store.ParseDecimalString(zone.BaseCost),
-		zoneName:      zone.Name,
-		estimatedDays: estimatedDays,
-		zoneMatched:   true,
-	}, nil
+	return fallback, "3-7 business days", false, originDisplay
 }

@@ -6,6 +6,7 @@
 
 import { useEffect, useCallback, useRef, useId } from 'react'
 import { publicAPI, vendorAPI, adminAPI, authAPI, customerAPI } from '@/lib/api/client'
+import type { ShippingEstimate } from '@/lib/utils/shipping'
 import {
   useQueryStore,
   emptyQueryEntry,
@@ -123,18 +124,14 @@ export function useFeaturedVendors() {
   return useQuery('featured-vendors', () => publicAPI.getFeaturedVendors())
 }
 
-// export function useDeliveryZones() {
-//   return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
-// }
-
-// export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
-//   const key = items.length && deliveryZoneId ? `shipping-${deliveryZoneId}-${JSON.stringify(items)}` : 'shipping-empty'
-//   return useQuery(
-//     key,
-//     () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<ShippingEstimate>,
-//     { enabled: items.length > 0 && !!deliveryZoneId },
-//   )
-// }
+export function useShippingEstimate(items: Record<string, unknown>[], deliveryCity: string) {
+  const key = items.length && deliveryCity ? `shipping-${deliveryCity}-${JSON.stringify(items)}` : 'shipping-empty'
+  return useQuery(
+    key,
+    () => publicAPI.estimateShipping(items, deliveryCity) as Promise<ShippingEstimate>,
+    { enabled: items.length > 0 && !!deliveryCity.trim() },
+  )
+}
 
 export function usePromotions() {
   return useQuery('promotions', () => publicAPI.getPromotions())
@@ -274,27 +271,27 @@ export function useUpdateAdminPlatformSettings() {
   )
 }
 
-// export function useAdminDeliveryZones() {
-//   return useQuery('admin-delivery-zones', () => adminAPI.listDeliveryZones())
-// }
+export function useAdminShippingLanes() {
+  return useQuery('admin-shipping-lanes', () => adminAPI.listShippingLanes())
+}
 
-// export function useCreateAdminDeliveryZone() {
-//   return useMutation('create-admin-delivery-zone', (data: Record<string, unknown>) =>
-//     adminAPI.createDeliveryZone(data),
-//   )
-// }
+export function useCreateAdminShippingLane() {
+  return useMutation('create-admin-shipping-lane', (data: Record<string, unknown>) =>
+    adminAPI.createShippingLane(data),
+  )
+}
 
-// export function useUpdateAdminDeliveryZone() {
-//   return useMutation('update-admin-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
-//     adminAPI.updateDeliveryZone(data.id, data.payload),
-//   )
-// }
+export function useUpdateAdminShippingLane() {
+  return useMutation('update-admin-shipping-lane', (data: { id: string; payload: Record<string, unknown> }) =>
+    adminAPI.updateShippingLane(data.id, data.payload),
+  )
+}
 
-// export function useDeleteAdminDeliveryZone() {
-//   return useMutation('delete-admin-delivery-zone', (data: { id: string }) =>
-//     adminAPI.deleteDeliveryZone(data.id),
-//   )
-// }
+export function useDeleteAdminShippingLane() {
+  return useMutation('delete-admin-shipping-lane', (data: { id: string }) =>
+    adminAPI.deleteShippingLane(data.id),
+  )
+}
 
 // export function useUpdateVendorFreeShipping() {
 //   return useMutation('update-vendor-free-shipping', (data: { freeShippingThreshold?: number | null }) =>

@@ -229,16 +229,9 @@ export const publicAPI = {
     return get('/subscriptions/plans', { skipAuth: true })
   },
 
-  // Delivery zones / shipping estimate disabled
-  // getDeliveryZones(vendorIds?: string[]) {
-  //   const ids = vendorIds?.filter(Boolean)
-  //   const query = ids?.length ? buildQuery({ vendorIds: ids.join(',') }) : ''
-  //   return get(`/delivery-zones${query}`, { skipAuth: true })
-  // },
-
-  // estimateShipping(items: Record<string, unknown>[], deliveryZoneId: string) {
-  //   return post('/commerce/shipping-estimate', { items, deliveryZoneId }, { skipAuth: true })
-  // },
+  estimateShipping(items: Record<string, unknown>[], deliveryCity: string) {
+    return post('/commerce/shipping-estimate', { items, deliveryCity }, { skipAuth: true })
+  },
 
   getPromotions() {
     return get('/promotions', { skipAuth: true })
@@ -597,21 +590,21 @@ export const adminAPI = {
     return put('/admin/platform-settings', data)
   },
 
-  // listDeliveryZones() {
-  //   return get('/admin/delivery-zones')
-  // },
+  listShippingLanes() {
+    return get('/admin/shipping-lanes')
+  },
 
-  // createDeliveryZone(data: Record<string, unknown>) {
-  //   return post('/admin/delivery-zones', data)
-  // },
+  createShippingLane(data: Record<string, unknown>) {
+    return post('/admin/shipping-lanes', data)
+  },
 
-  // updateDeliveryZone(zoneId: string, data: Record<string, unknown>) {
-  //   return put(`/admin/delivery-zones/${zoneId}`, data)
-  // },
+  updateShippingLane(laneId: string, data: Record<string, unknown>) {
+    return put(`/admin/shipping-lanes/${laneId}`, data)
+  },
 
-  // deleteDeliveryZone(zoneId: string) {
-  //   return del(`/admin/delivery-zones/${zoneId}`)
-  // },
+  deleteShippingLane(laneId: string) {
+    return del(`/admin/shipping-lanes/${laneId}`)
+  },
 
   listCoupons(params?: { page?: number; limit?: number }) {
     return get(`/admin/coupons${buildQuery(params)}`)
