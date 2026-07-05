@@ -6,21 +6,17 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
-import { useProducts, useCreateOrder, useValidateCoupon, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
+import { useProducts, useCreateOrder, useValidateCoupon, useVendorProfile } from '@/lib/stores/api'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
-import { toShippingEstimateItems, type ShippingBreakdown } from '@/lib/utils/shipping'
-import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
 import { SHOPPER_ROLES } from '@/lib/constants/roles'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import type { Product, CartItem } from '@/lib/types'
 import type { ProductListResponse } from '@/lib/types/filters'
-
-type DeliveryZone = { id: string; name: string; estimatedDays: string }
 
 export default function CheckoutPage() {
   const formatPrice = useFormatCurrency()
@@ -30,7 +26,6 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [orderId, setOrderId] = useState('')
-  const [deliveryZoneId, setDeliveryZoneId] = useState('')
   const [couponInput, setCouponInput] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null)
   const [form, setForm] = useState({
@@ -60,22 +55,10 @@ export default function CheckoutPage() {
     }).filter(Boolean) as (CartItem & { product: Product })[]
   }, [cart.items, productMap])
 
-  const cartVendorIds = useMemo(
-    () => [...new Set(cartItems.map((item) => item.product.vendorId).filter(Boolean))],
-    [cartItems],
-  )
-
-  const { data: zonesData } = useDeliveryZones()
-  const deliveryZones = (zonesData as DeliveryZone[] | null) ?? []
-  const multiVendor = cartVendorIds.length > 1
-
   const ownProductItems = useMemo(
     () => cartItems.filter((item) => isOwnVendorProduct(item.product.vendorId, myVendorId)),
     [cartItems, myVendorId],
   )
-
-  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
-  const { data: shippingData } = useShippingEstimate(estimateItems, deliveryZoneId)
 
   useEffect(() => {
     if (ownProductItems.length > 0) {
@@ -95,57 +78,14 @@ export default function CheckoutPage() {
     }
   }, [auth.user])
 
-  useEffect(() => {
-    if (deliveryZones.length === 0) return
-    const stored = readStoredDeliveryZoneId()
-    if (stored && deliveryZones.some((z) => z.id === stored)) {
-      setDeliveryZoneId(stored)
-      return
-    }
-    if (!deliveryZoneId) {
-      setDeliveryZoneId(deliveryZones[0].id)
-    }
-  }, [deliveryZones, deliveryZoneId])
-
-  const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId)
-
   const subtotal = useMemo(() => cartItems.reduce((s, i) => {
     const discountAmount = i.product.discount > 100 ? i.product.discount : i.product.price * (i.product.discount / 100)
     return s + Math.max(0, i.product.price - discountAmount) * i.quantity
   }, 0), [cartItems])
 
-  const shippingCost = shippingData?.shippingCost ?? 0
-  const shippingBreakdown: ShippingBreakdown[] = shippingData?.breakdown ?? []
-
-  const vendorGroups = useMemo(() => {
-    const breakdownMap = new Map(shippingBreakdown.map((line) => [line.vendorId, line]))
-    const groups = new Map<string, {
-      vendorId: string
-      storeName: string
-      items: (CartItem & { product: Product })[]
-      shipping?: ShippingBreakdown
-    }>()
-
-    for (const item of cartItems) {
-      const vendorId = item.product.vendorId
-      if (!groups.has(vendorId)) {
-        const shipping = breakdownMap.get(vendorId)
-        groups.set(vendorId, {
-          vendorId,
-          storeName: shipping?.storeName || 'Seller',
-          items: [],
-          shipping,
-        })
-      }
-      groups.get(vendorId)!.items.push(item)
-    }
-
-    return Array.from(groups.values())
-  }, [cartItems, shippingBreakdown])
-
   const discount = appliedCoupon?.discount ?? 0
   const tax = subtotal * TAX_RATE
-  const total = Math.max(0, subtotal - discount + shippingCost + tax)
+  const total = Math.max(0, subtotal - discount + tax)
 
   async function applyCoupon() {
     const code = couponInput.trim()
@@ -175,10 +115,6 @@ export default function CheckoutPage() {
         return
       }
     }
-    if (step === 2 && !deliveryZoneId) {
-      toast.error('Select a delivery zone')
-      return
-    }
     setStep(step + 1)
   }
 
@@ -187,10 +123,6 @@ export default function CheckoutPage() {
       if (!cartItems.length) {
         toast.error('Your cart is empty')
         router.push('/cart')
-        return
-      }
-      if (!deliveryZoneId) {
-        toast.error('Select a delivery zone')
         return
       }
       const payload: Record<string, unknown> = {
@@ -207,7 +139,6 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
         deliveryAddress: [form.street, form.city, form.state, form.country, form.zipCode].filter(Boolean).join(', '),
         deliveryCity: form.city,
-        deliveryZoneId,
         notes: `${form.fullName} · ${form.phone} · ${form.email}`,
       }
       if (appliedCoupon?.code) payload.couponCode = appliedCoupon.code
@@ -227,7 +158,7 @@ export default function CheckoutPage() {
       sessionStorage.setItem('lumi_checkout_pending', '1')
       window.location.href = payUrl
     } catch (e: unknown) {
-      setStep(3)
+      setStep(2)
       toast.error(getFriendlyErrorMessage(e, 'Unable to start payment. Please try again.'))
     }
   }
@@ -237,16 +168,16 @@ export default function CheckoutPage() {
       <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 w-full min-w-0">
         <h1 className="section-title mb-4 sm:mb-8 max-md:text-xl">Checkout</h1>
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-5 sm:mb-10 overflow-x-auto pb-1">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center shrink-0">
               <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-sm font-medium ${step >= s ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-200 dark:bg-gray-800 text-gray-500'}`}>{s}</div>
-              {s < 4 && <div className={`w-4 sm:w-12 h-0.5 ${step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'}`} />}
+              {s < 3 && <div className={`w-4 sm:w-12 h-0.5 ${step > s ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'}`} />}
             </div>
           ))}
         </div>
         {step === 1 && (
           <div className="space-y-3 sm:space-y-4 animate-slide-up">
-            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Shipping Information</h2>
+            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Delivery Information</h2>
             <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
               {(['fullName', 'email', 'phone', 'street', 'city', 'state', 'country', 'zipCode'] as const).map((field) => (
                 <div key={field} className={field === 'street' ? 'md:col-span-2' : ''}>
@@ -256,102 +187,10 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
-            <button className="btn-primary btn-primary-compact w-full mt-4 sm:mt-6" onClick={nextStep}>Continue to Delivery Zone</button>
+            <button className="btn-primary btn-primary-compact w-full mt-4 sm:mt-6" onClick={nextStep}>Continue to Payment</button>
           </div>
         )}
         {step === 2 && (
-          <div className="animate-slide-up">
-            <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Delivery Zone</h2>
-            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-              Choose where the order should be delivered. Shipping is calculated per seller in your cart.
-            </p>
-            {multiVendor && (
-              <p className="text-sm text-gray-500 mb-4">
-                Your cart includes items from multiple sellers — each store is charged once for the zone you select.
-              </p>
-            )}
-            <div className="space-y-2 sm:space-y-3">
-              {deliveryZones.map((zone) => (
-                <label key={zone.id} className={`card p-3 sm:p-4 flex items-center justify-between cursor-pointer ${deliveryZoneId === zone.id ? 'ring-2 ring-gray-900 dark:ring-white' : ''}`}>
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <input
-                      type="radio"
-                      className="shrink-0"
-                      checked={deliveryZoneId === zone.id}
-                      onChange={() => {
-                        setDeliveryZoneId(zone.id)
-                        storeDeliveryZoneId(zone.id)
-                      }}
-                    />
-                    <div>
-                      <p className="font-medium text-xs sm:text-sm">{zone.name}</p>
-                      <p className="text-[10px] sm:text-xs text-gray-500">{zone.estimatedDays}</p>
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            {vendorGroups.length > 0 && selectedZone && (
-              <div className="card p-3 sm:p-4 mt-3 sm:mt-4 space-y-3 sm:space-y-4">
-                <p className="font-medium text-xs sm:text-sm">Items by seller — {selectedZone.name}</p>
-                {vendorGroups.map((group) => (
-                  <div key={group.vendorId} className="border-t border-gray-100 dark:border-gray-800 pt-3 first:border-0 first:pt-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="font-medium text-sm">{group.storeName}</p>
-                      <span className="text-xs text-gray-500 shrink-0">
-                        {group.shipping?.shippingCost === 0
-                          ? 'FREE'
-                          : group.shipping
-                            ? formatPrice(group.shipping.shippingCost)
-                            : '—'}
-                      </span>
-                    </div>
-                    <ul className="space-y-2">
-                      {group.items.map((item) => (
-                        <li key={`${item.productId}-${item.size}-${item.color}`} className="flex justify-between gap-2 text-sm">
-                          <span className="text-gray-600 dark:text-gray-400 truncate">
-                            {item.product.name}
-                            <span className="text-xs text-gray-400 ml-1">×{item.quantity}</span>
-                          </span>
-                          <span className="text-xs text-gray-500 shrink-0">
-                            {item.size} / {item.color}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="text-xs mt-2 text-gray-500">
-                      {group.shipping?.zoneMatched
-                        ? `Delivers to ${group.shipping.zoneName || selectedZone.name} · ${group.shipping.estimatedDays || selectedZone.estimatedDays}`
-                        : `Standard shipping to ${selectedZone.name} · ${group.shipping?.estimatedDays || '3-7 business days'}`}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {shippingBreakdown.length > 0 && (
-              <div className="card p-3 sm:p-4 mt-3 sm:mt-4 text-xs sm:text-sm space-y-2">
-                <p className="font-medium">Estimated shipping</p>
-                {shippingBreakdown.map((line) => (
-                  <div key={line.vendorId} className="flex justify-between text-gray-600 dark:text-gray-400">
-                    <span>{line.storeName}</span>
-                    <span>{line.shippingCost === 0 ? 'FREE' : formatPrice(line.shippingCost)}</span>
-                  </div>
-                ))}
-                <div className="flex justify-between font-medium border-t pt-2">
-                  <span>Total shipping</span>
-                  <span>{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span>
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2 sm:gap-4 mt-4 sm:mt-6">
-              <button className="btn-secondary btn-secondary-compact flex-1" onClick={() => setStep(1)}>Back</button>
-              <button className="btn-primary btn-primary-compact flex-1" onClick={nextStep}>Continue to Payment</button>
-            </div>
-          </div>
-        )}
-        {step === 3 && (
           <div className="animate-slide-up">
             <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Payment &amp; Promo</h2>
             <div className="card p-3 sm:p-4 mb-3 sm:mb-4">
@@ -377,17 +216,16 @@ export default function CheckoutPage() {
             <div className="card p-3 sm:p-4 mb-4 sm:mb-6 text-xs sm:text-sm space-y-2">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
               {discount > 0 && <div className="flex justify-between text-green-600"><span>Coupon</span><span>−{formatPrice(discount)}</span></div>}
-              <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span></div>
               {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatPrice(tax)}</span></div>}
               <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
             <div className="flex gap-2 sm:gap-4">
-              <button className="btn-secondary btn-secondary-compact flex-1" onClick={() => setStep(2)}>Back</button>
+              <button className="btn-secondary btn-secondary-compact flex-1" onClick={() => setStep(1)}>Back</button>
               <button className="btn-primary btn-primary-compact flex-1" onClick={placeOrder}>Pay with Paystack</button>
             </div>
           </div>
         )}
-        {step === 4 && (
+        {step === 3 && (
           <div className="text-center animate-slide-up py-12">
             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-2xl">✓</span></div>
             <h2 className="font-display text-2xl font-semibold mb-2">Order Confirmed!</h2>

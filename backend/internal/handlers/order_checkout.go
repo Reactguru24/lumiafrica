@@ -20,10 +20,12 @@ func prepareOrderPaymentMetadata(
 	req models.CreateOrderRequest,
 	subtotal float64,
 ) (models.OrderPaymentMetadata, error) {
-	shippingCost, _, err := commerce.ResolveVendorShipping(ctx, q, req.Items, zoneIDFromRequest(req))
-	if err != nil {
-		return models.OrderPaymentMetadata{}, err
-	}
+	// Delivery zones / per-vendor shipping disabled — checkout excludes shipping fees.
+	shippingCost := 0.0
+	// shippingCost, _, err := commerce.ResolveVendorShipping(ctx, q, req.Items, zoneIDFromRequest(req))
+	// if err != nil {
+	// 	return models.OrderPaymentMetadata{}, err
+	// }
 
 	discount := 0.0
 	var couponID, couponCode *string
@@ -46,15 +48,15 @@ func prepareOrderPaymentMetadata(
 	}
 
 	var zoneID, zoneName *string
-	if req.DeliveryZoneID != nil && strings.TrimSpace(*req.DeliveryZoneID) != "" {
-		key := strings.TrimSpace(*req.DeliveryZoneID)
-		if id, err := utils.ParseID(key); err == nil {
-			s := id.String()
-			zoneID = &s
-		} else {
-			zoneName = &key
-		}
-	}
+	// if req.DeliveryZoneID != nil && strings.TrimSpace(*req.DeliveryZoneID) != "" {
+	// 	key := strings.TrimSpace(*req.DeliveryZoneID)
+	// 	if id, err := utils.ParseID(key); err == nil {
+	// 		s := id.String()
+	// 		zoneID = &s
+	// 	} else {
+	// 		zoneName = &key
+	// 	}
+	// }
 
 	return models.OrderPaymentMetadata{
 		Items:            req.Items,

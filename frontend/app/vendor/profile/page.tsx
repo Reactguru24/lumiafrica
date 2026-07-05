@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { useVendorProfile, useUpdateVendorProfile, useUpdateVendorFreeShipping } from '@/lib/stores/api'
+import { useVendorProfile, useUpdateVendorProfile } from '@/lib/stores/api'
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import type { Vendor } from '@/lib/types'
@@ -10,7 +10,6 @@ import type { Vendor } from '@/lib/types'
 export default function VendorProfilePage() {
   const { data: vendor, refetch } = useVendorProfile()
   const updateProfile = useUpdateVendorProfile().mutate
-  const updateFreeShipping = useUpdateVendorFreeShipping().mutate
   const { loading: updateLoading } = useUpdateVendorProfile()
 
   const [form, setForm] = useState({
@@ -24,8 +23,6 @@ export default function VendorProfilePage() {
     logo: '',
     banner: '',
   })
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState('')
-  const [savingThreshold, setSavingThreshold] = useState(false)
 
   useEffect(() => {
     const v = vendor as Vendor | null
@@ -44,11 +41,6 @@ export default function VendorProfilePage() {
       logo: v.logo || '',
       banner: v.banner || '',
     })
-    if (v.freeShippingThreshold != null && v.freeShippingThreshold > 0) {
-      setFreeShippingThreshold(String(v.freeShippingThreshold))
-    } else {
-      setFreeShippingThreshold('')
-    }
   }, [vendor])
 
   async function saveProfile(e: React.FormEvent) {
@@ -72,32 +64,13 @@ export default function VendorProfilePage() {
     }
   }
 
-  async function saveFreeShipping(e: React.FormEvent) {
-    e.preventDefault()
-    const threshold = freeShippingThreshold.trim() === '' ? 0 : Number(freeShippingThreshold)
-    if (Number.isNaN(threshold) || threshold < 0) {
-      toast.error('Enter a valid free-shipping minimum, or leave it blank.')
-      return
-    }
-    setSavingThreshold(true)
-    try {
-      await updateFreeShipping({ freeShippingThreshold: threshold })
-      await refetch()
-      toast.success('Free shipping threshold updated')
-    } catch (err: unknown) {
-      toast.error(getFriendlyErrorMessage(err, 'Unable to update free shipping threshold.'))
-    } finally {
-      setSavingThreshold(false)
-    }
-  }
-
   if (!vendor) {
     return <div className="text-center py-8">Loading profile...</div>
   }
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-500">Update how customers see your store. Delivery zones are managed by the platform admin.</p>
+      <p className="text-sm text-gray-500">Update how customers see your store.</p>
       <form className="card p-6 space-y-6 max-w-2xl" onSubmit={saveProfile}>
         <div className="space-y-2">
           <label className="text-sm font-medium">Logo</label>
@@ -118,26 +91,6 @@ export default function VendorProfilePage() {
           <div><label className="text-sm font-medium">Twitter / X</label><input value={form.socialLinks.twitter} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, twitter: e.target.value } })} className="input-field mt-1" placeholder="https://x.com/..." /></div>
         </div>
         <button type="submit" className="btn-primary" disabled={updateLoading}>Save Profile</button>
-      </form>
-
-      <form className="card p-6 max-w-2xl space-y-3" onSubmit={saveFreeShipping}>
-        <h3 className="font-medium">Free shipping</h3>
-        <p className="text-sm text-gray-500">Offer free delivery when a customer&apos;s subtotal from your store meets this amount (uses platform delivery zones).</p>
-        <div className="max-w-xs">
-          <label className="text-sm font-medium">Free shipping above (KES)</label>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            value={freeShippingThreshold}
-            onChange={(e) => setFreeShippingThreshold(e.target.value)}
-            className="input-field mt-1"
-            placeholder="Optional"
-          />
-        </div>
-        <button type="submit" className="btn-secondary" disabled={savingThreshold}>
-          {savingThreshold ? 'Saving...' : 'Save free shipping rule'}
-        </button>
       </form>
     </div>
   )

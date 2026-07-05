@@ -13,7 +13,6 @@ import {
   type QueryEntry,
   type MutationEntry,
 } from '@/lib/stores/query'
-import type { ShippingEstimate } from '@/lib/utils/shipping'
 
 interface UseQueryResult<T> {
   data: T | null
@@ -124,18 +123,18 @@ export function useFeaturedVendors() {
   return useQuery('featured-vendors', () => publicAPI.getFeaturedVendors())
 }
 
-export function useDeliveryZones() {
-  return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
-}
+// export function useDeliveryZones() {
+//   return useQuery('delivery-zones', () => publicAPI.getDeliveryZones())
+// }
 
-export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
-  const key = items.length && deliveryZoneId ? `shipping-${deliveryZoneId}-${JSON.stringify(items)}` : 'shipping-empty'
-  return useQuery(
-    key,
-    () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<ShippingEstimate>,
-    { enabled: items.length > 0 && !!deliveryZoneId },
-  )
-}
+// export function useShippingEstimate(items: Record<string, unknown>[], deliveryZoneId: string) {
+//   const key = items.length && deliveryZoneId ? `shipping-${deliveryZoneId}-${JSON.stringify(items)}` : 'shipping-empty'
+//   return useQuery(
+//     key,
+//     () => publicAPI.estimateShipping(items, deliveryZoneId) as Promise<ShippingEstimate>,
+//     { enabled: items.length > 0 && !!deliveryZoneId },
+//   )
+// }
 
 export function usePromotions() {
   return useQuery('promotions', () => publicAPI.getPromotions())
@@ -275,33 +274,33 @@ export function useUpdateAdminPlatformSettings() {
   )
 }
 
-export function useAdminDeliveryZones() {
-  return useQuery('admin-delivery-zones', () => adminAPI.listDeliveryZones())
-}
+// export function useAdminDeliveryZones() {
+//   return useQuery('admin-delivery-zones', () => adminAPI.listDeliveryZones())
+// }
 
-export function useCreateAdminDeliveryZone() {
-  return useMutation('create-admin-delivery-zone', (data: Record<string, unknown>) =>
-    adminAPI.createDeliveryZone(data),
-  )
-}
+// export function useCreateAdminDeliveryZone() {
+//   return useMutation('create-admin-delivery-zone', (data: Record<string, unknown>) =>
+//     adminAPI.createDeliveryZone(data),
+//   )
+// }
 
-export function useUpdateAdminDeliveryZone() {
-  return useMutation('update-admin-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
-    adminAPI.updateDeliveryZone(data.id, data.payload),
-  )
-}
+// export function useUpdateAdminDeliveryZone() {
+//   return useMutation('update-admin-delivery-zone', (data: { id: string; payload: Record<string, unknown> }) =>
+//     adminAPI.updateDeliveryZone(data.id, data.payload),
+//   )
+// }
 
-export function useDeleteAdminDeliveryZone() {
-  return useMutation('delete-admin-delivery-zone', (data: { id: string }) =>
-    adminAPI.deleteDeliveryZone(data.id),
-  )
-}
+// export function useDeleteAdminDeliveryZone() {
+//   return useMutation('delete-admin-delivery-zone', (data: { id: string }) =>
+//     adminAPI.deleteDeliveryZone(data.id),
+//   )
+// }
 
-export function useUpdateVendorFreeShipping() {
-  return useMutation('update-vendor-free-shipping', (data: { freeShippingThreshold?: number | null }) =>
-    vendorAPI.updateFreeShipping(data),
-  )
-}
+// export function useUpdateVendorFreeShipping() {
+//   return useMutation('update-vendor-free-shipping', (data: { freeShippingThreshold?: number | null }) =>
+//     vendorAPI.updateFreeShipping(data),
+//   )
+// }
 
 export function useModerateProduct() {
   return useMutation(

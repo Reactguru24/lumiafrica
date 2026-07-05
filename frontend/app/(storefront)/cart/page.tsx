@@ -1,17 +1,15 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { MediaImage } from '@/components/common/MediaImage'
 import { toast } from 'sonner'
 import { useCartStore } from '@/lib/stores/cart'
-import { useProducts, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
+import { useProducts, useVendorProfile } from '@/lib/stores/api'
 import { useAuthStore } from '@/lib/stores/auth'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE } from '@/lib/constants/commerce'
-import { toShippingEstimateItems } from '@/lib/utils/shipping'
-import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import type { Product, CartItem } from '@/lib/types'
@@ -24,7 +22,6 @@ export default function CartPage() {
   const auth = useAuthStore()
   const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
   const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
-  const [deliveryZoneId, setDeliveryZoneId] = useState('')
 
   const { data: allProducts, loading } = useProducts({ limit: 200 })
 
@@ -43,27 +40,6 @@ export default function CartPage() {
       return { ...item, product }
     }).filter(Boolean) as (CartItem & { product: Product })[]
   }, [cart.activeItems, productMap])
-
-  const cartVendorIds = useMemo(
-    () => [...new Set(cartItems.map((item) => item.product.vendorId).filter(Boolean))],
-    [cartItems],
-  )
-
-  const { data: zonesData } = useDeliveryZones()
-  const deliveryZones = (zonesData as { id: string; name: string }[] | null) ?? []
-  const multiVendor = cartVendorIds.length > 1
-
-  useEffect(() => {
-    if (deliveryZones.length === 0) return
-    const stored = readStoredDeliveryZoneId()
-    if (stored && deliveryZones.some((z) => z.id === stored)) {
-      setDeliveryZoneId(stored)
-      return
-    }
-    if (!deliveryZoneId) {
-      setDeliveryZoneId(deliveryZones[0].id)
-    }
-  }, [deliveryZones, deliveryZoneId])
 
   const ownProductItems = useMemo(
     () => cartItems.filter((item) => isOwnVendorProduct(item.product.vendorId, myVendorId)),
@@ -117,11 +93,8 @@ export default function CartPage() {
     return s + Math.max(0, i.product.price - discountAmount) * i.quantity
   }, 0), [cartItems])
 
-  const estimateItems = useMemo(() => toShippingEstimateItems(cartItems), [cartItems])
-  const { data: shippingData } = useShippingEstimate(estimateItems, deliveryZoneId)
-  const shipping = shippingData?.shippingCost ?? 0
   const tax = subtotal * TAX_RATE
-  const total = subtotal + shipping + tax
+  const total = subtotal + tax
 
   const checkoutBlocked = useMemo(() => {
     if (ownProductItems.length > 0) return VENDOR_SELF_PURCHASE_MSG
@@ -221,31 +194,8 @@ export default function CartPage() {
           {cartItems.length > 0 ? (
             <div className="card p-3 sm:p-6 h-fit lg:sticky lg:top-24">
               <h2 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h2>
-              {deliveryZones.length > 0 && (
-                <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-500">Delivery zone</label>
-                  {multiVendor && (
-                    <p className="text-xs text-gray-500 mt-1 mb-1">
-                      Shipping is combined per seller in your cart.
-                    </p>
-                  )}
-                  <select
-                    value={deliveryZoneId}
-                    onChange={(e) => {
-                      setDeliveryZoneId(e.target.value)
-                      storeDeliveryZoneId(e.target.value)
-                    }}
-                    className="input-field input-compact mt-1 text-sm"
-                  >
-                    {deliveryZones.map((z) => (
-                      <option key={z.id} value={z.id}>{z.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
               <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatPrice(tax)}</span></div>
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-2 sm:pt-3 flex justify-between font-semibold text-sm sm:text-base"><span>Total</span><span>{formatPrice(total)}</span></div>
               </div>
