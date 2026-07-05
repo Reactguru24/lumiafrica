@@ -229,6 +229,10 @@ export const publicAPI = {
     return get('/subscriptions/plans', { skipAuth: true })
   },
 
+  getDeliveryCities() {
+    return get('/commerce/delivery-cities', { skipAuth: true })
+  },
+
   estimateShipping(items: Record<string, unknown>[], deliveryCity: string) {
     return post('/commerce/shipping-estimate', { items, deliveryCity }, { skipAuth: true })
   },

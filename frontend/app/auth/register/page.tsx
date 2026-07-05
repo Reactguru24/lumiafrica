@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -10,7 +10,7 @@ import { useCartStore } from '@/lib/stores/cart'
 import { registerSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { credentialErrorsFromApiError, validateCredentialsBeforeSubmit } from '@/lib/utils/credentials'
-import { safeRedirect } from '@/lib/utils/safeRedirect'
+import { getAuthRedirectTarget } from '@/lib/utils/safeRedirect'
 import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 
 export default function RegisterPage() {
@@ -21,6 +21,15 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+  const [loginHref, setLoginHref] = useState('/auth/login')
+
+  useEffect(() => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect')
+    setLoginHref(
+      redirect ? `/auth/login?redirect=${encodeURIComponent(redirect)}` : '/auth/login',
+    )
+  }, [])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -46,10 +55,7 @@ export default function RegisterPage() {
       await useCartStore.getState().pushLocalToGuestCart()
       await auth.register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password })
       toast.success('Account created successfully!')
-      const redirect = typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search).get('redirect')
-        : null
-      router.push(safeRedirect(redirect, '/account'))
+      router.push(getAuthRedirectTarget('/account'))
     } catch (e: unknown) {
       const fieldErrors = credentialErrorsFromApiError(e)
       if (Object.keys(fieldErrors).length > 0) {
@@ -63,19 +69,42 @@ export default function RegisterPage() {
       <div>
         <h1 className="font-display text-3xl font-semibold mb-2">Create Account</h1>
         <p className="text-gray-500 mb-8">Join LumiAfrica and start shopping across East Africa</p>
-        <form className="space-y-4" onSubmit={submit}>
-          {(['fullName', 'email', 'phone'] as const).map((field) => (
-            <div key={field}>
-              <label className="block text-sm font-medium mb-1.5">{field === 'fullName' ? 'Full Name' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
+        <form className="space-y-5" onSubmit={submit}>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium mb-1.5">Full Name</label>
               <input
-                value={form[field]}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-                type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                type="text"
                 className="input-field"
+                autoComplete="name"
               />
-              {errors[field] && <p className="text-red-500 text-xs mt-1">{errors[field]}</p>}
+              {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
             </div>
-          ))}
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Email</label>
+              <input
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                type="email"
+                className="input-field"
+                autoComplete="email"
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1.5">Phone</label>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                type="tel"
+                className="input-field"
+                autoComplete="tel"
+              />
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+            </div>
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Password</label>
             <div className="relative">
@@ -114,7 +143,7 @@ export default function RegisterPage() {
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{' '}
-          <Link href="/auth/login" className="text-gray-900 dark:text-white font-medium hover:underline">Sign In</Link>
+          <Link href={loginHref} className="text-gray-900 dark:text-white font-medium hover:underline">Sign In</Link>
         </p>
       </div>
   )

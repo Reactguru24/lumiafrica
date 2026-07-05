@@ -65,6 +65,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 
 	// ── Commerce (public) ─────────────────────────────────────────────────
 	router.POST("/commerce/shipping-estimate", handlers.EstimateShipping())
+	router.GET("/commerce/delivery-cities", handlers.ListDeliveryCities())
 	router.GET("/promotions", handlers.ListActivePromotions())
 	router.GET("/collections", handlers.ListCollections())
 	router.GET("/collections/:slug", handlers.GetCollection())

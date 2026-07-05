@@ -65,13 +65,6 @@ export function buildVendorApplicationChecklist(app: {
       critical: true,
     },
     {
-      id: 'registration',
-      label: 'Registration number',
-      description: 'Business registration reference submitted',
-      passed: Boolean(app.registrationNumber?.trim()),
-      critical: true,
-    },
-    {
       id: 'logo',
       label: 'Store logo',
       description: 'Logo uploaded for storefront display',

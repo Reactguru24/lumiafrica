@@ -9,7 +9,7 @@ import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 import { loginSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
-import { safeRedirect } from '@/lib/utils/safeRedirect'
+import { getAuthRedirectTarget } from '@/lib/utils/safeRedirect'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,9 +20,18 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showPassword, setShowPassword] = useState(false)
 
+  const [registerHref, setRegisterHref] = useState('/auth/register')
+
+  useEffect(() => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect')
+    setRegisterHref(
+      redirect ? `/auth/register?redirect=${encodeURIComponent(redirect)}` : '/auth/register',
+    )
+  }, [])
+
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
-      router.replace(auth.getDashboardRoute())
+      router.replace(getAuthRedirectTarget(auth.getDashboardRoute()))
     }
   }, [hasHydrated, isAuthenticated, router, auth])
 
@@ -40,10 +49,7 @@ export default function LoginPage() {
       await useCartStore.getState().pushLocalToGuestCart()
       await auth.login(form.email, form.password)
       toast.success('Welcome back!')
-      const redirect = typeof window !== 'undefined'
-        ? new URLSearchParams(window.location.search).get('redirect')
-        : null
-      router.push(safeRedirect(redirect, auth.getDashboardRoute()))
+      router.push(getAuthRedirectTarget(auth.getDashboardRoute()))
     } catch (e: unknown) {
       toast.error(getFriendlyErrorMessage(e, 'Unable to sign in. Please check your credentials.'))
     }
@@ -78,7 +84,7 @@ export default function LoginPage() {
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/register" className="text-gray-900 dark:text-white font-medium hover:underline">Register</Link>
+          <Link href={registerHref} className="text-gray-900 dark:text-white font-medium hover:underline">Register</Link>
         </p>
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center">
           <p className="text-sm text-gray-500 mb-3">Want to sell on Lumi?</p>

@@ -10,6 +10,7 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/utils"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -118,7 +119,7 @@ func ApplyVendor() gin.HandlerFunc {
 			ContactPhone:        contactPhone,
 			Country:             req.Country,
 			City:                req.City,
-			RegistrationNumber:  req.RegistrationNumber,
+			RegistrationNumber:  strings.TrimSpace(req.RegistrationNumber),
 			Categories:          store.StringArrayToJSON(req.Categories),
 		}); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to create application")

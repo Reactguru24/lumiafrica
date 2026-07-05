@@ -14,6 +14,8 @@ import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
 import { RouteGuard } from '@/components/layouts/RouteGuard'
+import { DeliveryCitySelect } from '@/components/checkout/DeliveryCitySelect'
+import { readStoredDeliveryCity } from '@/lib/constants/delivery'
 import { SHOPPER_ROLES } from '@/lib/constants/roles'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
 import type { Product, CartItem } from '@/lib/types'
@@ -31,7 +33,7 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null)
   const [form, setForm] = useState({
     fullName: '', email: '', phone: '',
-    street: '', city: '', state: '', country: 'Kenya', zipCode: '',
+    street: '', city: readStoredDeliveryCity(), state: '', country: 'Kenya', zipCode: '',
     paymentMethod: PAYMENT_METHODS[0] as (typeof PAYMENT_METHODS)[number],
   })
   const { data: allProducts } = useProducts({ limit: 200 })
@@ -188,10 +190,24 @@ export default function CheckoutPage() {
           <div className="space-y-3 sm:space-y-4 animate-slide-up">
             <h2 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Delivery Information</h2>
             <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
-              {(['fullName', 'email', 'phone', 'street', 'city', 'state', 'country', 'zipCode'] as const).map((field) => (
+              {(['fullName', 'email', 'phone', 'street'] as const).map((field) => (
                 <div key={field} className={field === 'street' ? 'md:col-span-2' : ''}>
                   <label className="text-xs sm:text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
                   <input value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} type={field === 'email' ? 'email' : 'text'} className="input-field input-compact mt-1" />
+                  {errors[field] && <p className="text-red-500 text-xs">{errors[field]}</p>}
+                </div>
+              ))}
+              <DeliveryCitySelect
+                value={form.city}
+                onChange={(city) => setForm({ ...form, city })}
+                label="Delivery zone"
+                compact
+                error={errors.city}
+              />
+              {(['state', 'country', 'zipCode'] as const).map((field) => (
+                <div key={field}>
+                  <label className="text-xs sm:text-sm font-medium capitalize">{field.replace(/([A-Z])/g, ' $1')}</label>
+                  <input value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value })} type="text" className="input-field input-compact mt-1" />
                   {errors[field] && <p className="text-red-500 text-xs">{errors[field]}</p>}
                 </div>
               ))}

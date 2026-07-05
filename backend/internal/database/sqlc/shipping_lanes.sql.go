@@ -37,6 +37,30 @@ type VendorShipment struct {
 	UpdatedAt         time.Time         `json:"updated_at"`
 }
 
+const listActiveDeliveryCities = `-- name: ListActiveDeliveryCities :many
+SELECT DISTINCT destination_city
+FROM shipping_lane_rates
+WHERE active = true
+ORDER BY destination_city
+`
+
+func (q *Queries) ListActiveDeliveryCities(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listActiveDeliveryCities)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var city string
+		if err := rows.Scan(&city); err != nil {
+			return nil, err
+		}
+		items = append(items, city)
+	}
+	return items, rows.Err()
+}
+
 const getShippingLaneRate = `-- name: GetShippingLaneRate :one
 SELECT id, origin_city, destination_city, fee, estimated_days, active, created_at, updated_at
 FROM shipping_lane_rates

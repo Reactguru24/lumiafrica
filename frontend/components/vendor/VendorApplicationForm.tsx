@@ -38,7 +38,6 @@ export function VendorApplicationForm() {
     businessEmail: '',
     country: '',
     city: '',
-    registrationNumber: '',
     categories: [] as string[],
   })
 
@@ -88,7 +87,6 @@ export function VendorApplicationForm() {
         contactPhone: form.contactPhone,
         country: form.country,
         city: form.city,
-        registrationNumber: form.registrationNumber,
         categories: form.categories,
       })
       toast.success('Application submitted!')
@@ -110,8 +108,10 @@ export function VendorApplicationForm() {
 
   return (
     <form className="space-y-6" onSubmit={submit}>
-        <h2 className="font-semibold">Vendor Application</h2>
-        <div className="space-y-4">
+        <h2 className="font-semibold text-lg">Vendor Application</h2>
+
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Store details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Your Name</label>
@@ -125,40 +125,40 @@ export function VendorApplicationForm() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium">Business Email</label>
-            <input value={form.businessEmail} onChange={(e) => setForm({ ...form, businessEmail: e.target.value })} type="email" placeholder="store@yourbusiness.com" className="input-field mt-1" />
-            {errors.businessEmail && <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>}
-          </div>
-          <div>
             <label className="text-sm font-medium">Business Description</label>
-            <textarea value={form.businessDescription} onChange={(e) => setForm({ ...form, businessDescription: e.target.value })} rows={3} className="input-field mt-1" />
+            <textarea value={form.businessDescription} onChange={(e) => setForm({ ...form, businessDescription: e.target.value })} rows={3} className="input-field mt-1" placeholder="Tell us what you sell and what makes your store unique." />
             {errors.businessDescription && <p className="text-red-500 text-xs mt-1">{errors.businessDescription}</p>}
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Contact & location</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
+              <label className="text-sm font-medium">Business Email</label>
+              <input value={form.businessEmail} onChange={(e) => setForm({ ...form, businessEmail: e.target.value })} type="email" placeholder="store@yourbusiness.com" className="input-field mt-1" />
+              {errors.businessEmail && <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>}
+            </div>
+            <div>
               <label className="text-sm font-medium">Contact Phone</label>
-              <input value={form.contactPhone} onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} className="input-field mt-1" />
+              <input value={form.contactPhone} onChange={(e) => setForm({ ...form, contactPhone: e.target.value })} type="tel" className="input-field mt-1" />
               {errors.contactPhone && <p className="text-red-500 text-xs mt-1">{errors.contactPhone}</p>}
             </div>
             <div>
-              <label className="text-sm font-medium">Registration Number</label>
-              <input value={form.registrationNumber} onChange={(e) => setForm({ ...form, registrationNumber: e.target.value })} className="input-field mt-1" />
-              {errors.registrationNumber && <p className="text-red-500 text-xs mt-1">{errors.registrationNumber}</p>}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
               <label className="text-sm font-medium">Country</label>
-              <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="input-field mt-1" />
+              <input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className="input-field mt-1" placeholder="Kenya" />
               {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country}</p>}
             </div>
             <div>
               <label className="text-sm font-medium">City</label>
-              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="input-field mt-1" />
+              <input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="input-field mt-1" placeholder="Nairobi" />
               {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
             </div>
           </div>
-        </div>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Documents & photos</h3>
           <div>
             <label className="text-sm font-medium mb-2 block">Vendor photo (profile)</label>
             <PublicImageFieldUpload
@@ -187,8 +187,10 @@ export function VendorApplicationForm() {
             />
             {errors.businessCertificate && <p className="text-red-500 text-xs mt-1">{errors.businessCertificate}</p>}
           </div>
-          <div>
-            <label className="text-sm font-medium mb-2 block">Clothing Categories</label>
+        </section>
+
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Categories</h3>
             {categories.length === 0 ? (
               <p className="text-sm text-gray-500">Loading available categories...</p>
             ) : (
@@ -233,8 +235,8 @@ export function VendorApplicationForm() {
               </div>
             )}
             {errors.categories && <p className="text-red-500 text-xs mt-1">{errors.categories}</p>}
-          </div>
-          <button type="submit" className="btn-primary w-full sm:w-auto">Submit Application</button>
+        </section>
+        <button type="submit" className="btn-primary w-full sm:w-auto">Submit Application</button>
     </form>
   )
 }

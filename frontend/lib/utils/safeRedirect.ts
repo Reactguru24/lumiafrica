@@ -7,6 +7,13 @@ export function safeRedirect(path: string | null | undefined, fallback = '/'): s
   return trimmed
 }
 
+/** Read ?redirect= from the current URL and fall back safely. */
+export function getAuthRedirectTarget(fallback: string): string {
+  if (typeof window === 'undefined') return fallback
+  const redirect = new URLSearchParams(window.location.search).get('redirect')
+  return safeRedirect(redirect, fallback)
+}
+
 export function isAllowedPaystackUrl(url: string): boolean {
   try {
     const parsed = new URL(url)

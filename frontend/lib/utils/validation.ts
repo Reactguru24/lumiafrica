@@ -27,7 +27,6 @@ export function vendorApplicationSchema() {
     businessEmail: z.string().email('Invalid email'),
     country: z.string().min(2, 'Country required'),
     city: z.string().min(2, 'City required'),
-    registrationNumber: z.string().min(5, 'Registration number required'),
     categories: z.array(z.string()).min(1, 'Select at least one category'),
     businessCertificate: z.string().min(1, 'Business certificate is required'),
     vendorPhoto: z.string().min(1, 'Vendor photo is required'),

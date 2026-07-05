@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/stores/auth'
+import { getAuthRedirectTarget } from '@/lib/utils/safeRedirect'
 
 /** Redirect authenticated users away from guest-only pages (login, register). */
 export function useGuestRedirect() {
@@ -13,7 +14,7 @@ export function useGuestRedirect() {
 
   useEffect(() => {
     if (hasHydrated && isAuthenticated) {
-      router.replace(getDashboardRoute())
+      router.replace(getAuthRedirectTarget(getDashboardRoute()))
     }
   }, [hasHydrated, isAuthenticated, router, getDashboardRoute])
 }

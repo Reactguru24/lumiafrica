@@ -157,6 +157,25 @@ func GetCollection() gin.HandlerFunc {
 	}
 }
 
+// ListDeliveryCities godoc
+// @Summary List delivery cities for checkout
+// @Description Returns distinct destination cities from active shipping lanes.
+// @Tags Guest
+// @Produce json
+// @Success 200 {array} string
+// @Router /commerce/delivery-cities [get]
+func ListDeliveryCities() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		cities, err := getStore(c).Queries().ListActiveDeliveryCities(ctx)
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to load delivery cities")
+			return
+		}
+		utils.Success(c, cities)
+	}
+}
+
 // EstimateShipping godoc
 // @Summary Estimate order shipping
 // @Description Calculates shipping from each vendor's configured rates for the given cart items.

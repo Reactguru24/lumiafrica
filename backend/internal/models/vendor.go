@@ -108,7 +108,7 @@ type CreateVendorApplicationRequest struct {
 	ContactPhone        string      `json:"contactPhone" binding:"required"`
 	Country             string      `json:"country" binding:"required"`
 	City                string      `json:"city" binding:"required"`
-	RegistrationNumber  string      `json:"registrationNumber" binding:"required"`
+	RegistrationNumber  string      `json:"registrationNumber"`
 	Categories          StringArray `json:"categories" binding:"required"`
 }
 

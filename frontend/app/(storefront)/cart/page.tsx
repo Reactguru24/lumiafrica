@@ -11,6 +11,8 @@ import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendor
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE } from '@/lib/constants/commerce'
 import { toShippingEstimateItems } from '@/lib/utils/shipping'
+import { readStoredDeliveryCity } from '@/lib/constants/delivery'
+import { DeliveryCitySelect } from '@/components/checkout/DeliveryCitySelect'
 import { EmptyState } from '@/components/common/EmptyState'
 import { getVariantStock } from '@/lib/utils/productVariants'
 import type { Product, CartItem } from '@/lib/types'
@@ -21,7 +23,9 @@ export default function CartPage() {
   const router = useRouter()
   const cart = useCartStore()
   const auth = useAuthStore()
-  const [deliveryCity, setDeliveryCity] = useState('Nairobi')
+  const hasHydrated = useAuthStore((s) => s.hasHydrated)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const [deliveryCity, setDeliveryCity] = useState(() => readStoredDeliveryCity())
   const { data: vendorProfile } = useVendorProfile({ enabled: auth.isVendor })
   const myVendorId = auth.isVendor ? (vendorProfile as { id?: string } | null)?.id : null
 
@@ -130,6 +134,10 @@ export default function CartPage() {
       toast.error(checkoutBlocked)
       return
     }
+    if (hasHydrated && !isAuthenticated) {
+      router.push(`/auth/login?redirect=${encodeURIComponent('/checkout')}`)
+      return
+    }
     router.push('/checkout')
   }
 
@@ -205,12 +213,11 @@ export default function CartPage() {
             <div className="card p-3 sm:p-6 h-fit lg:sticky lg:top-24">
               <h2 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">Order Summary</h2>
               <div className="mb-3">
-                <label className="text-xs text-gray-500">Estimate shipping to</label>
-                <input
+                <DeliveryCitySelect
                   value={deliveryCity}
-                  onChange={(e) => setDeliveryCity(e.target.value)}
-                  placeholder="City"
-                  className="input-field input-compact mt-1"
+                  onChange={setDeliveryCity}
+                  label="Delivery zone"
+                  compact
                 />
               </div>
               <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm">

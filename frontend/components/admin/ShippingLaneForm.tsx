@@ -3,15 +3,9 @@
 import { useMemo, useState } from 'react'
 import { MapPinIcon, ClockIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 
-const SUGGESTED_CITIES = [
-  'Nairobi',
-  'Mombasa',
-  'Kisumu',
-  'Nakuru',
-  'Eldoret',
-  'Thika',
-  'Malindi',
-]
+import { DEFAULT_DELIVERY_CITIES } from '@/lib/constants/delivery'
+
+const SUGGESTED_CITIES = [...DEFAULT_DELIVERY_CITIES, 'Thika', 'Malindi']
 
 const DELIVERY_PRESETS = [
   { id: 'same', label: 'Same day', value: 'Same day' },

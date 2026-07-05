@@ -124,6 +124,10 @@ export function useFeaturedVendors() {
   return useQuery('featured-vendors', () => publicAPI.getFeaturedVendors())
 }
 
+export function useDeliveryCities() {
+  return useQuery('delivery-cities', () => publicAPI.getDeliveryCities() as Promise<string[]>)
+}
+
 export function useShippingEstimate(items: Record<string, unknown>[], deliveryCity: string) {
   const key = items.length && deliveryCity ? `shipping-${deliveryCity}-${JSON.stringify(items)}` : 'shipping-empty'
   return useQuery(

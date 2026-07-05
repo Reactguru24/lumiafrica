@@ -1,3 +1,9 @@
+-- name: ListActiveDeliveryCities :many
+SELECT DISTINCT destination_city
+FROM shipping_lane_rates
+WHERE active = true
+ORDER BY destination_city;
+
 -- name: GetShippingLaneRate :one
 SELECT id, origin_city, destination_city, fee, estimated_days, active, created_at, updated_at
 FROM shipping_lane_rates
