@@ -138,6 +138,7 @@ export default function VendorWithdrawalsPage() {
             placeholder="0712345678"
             required
           />
+          <p className="text-xs text-gray-500 mt-1">Safaricom or Airtel number registered on M-Pesa (07… or 01…).</p>
         </div>
         {methods.length > 0 && (
           <div className="text-sm text-gray-500 space-y-1">

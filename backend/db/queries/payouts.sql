@@ -16,6 +16,9 @@ LIMIT 1;
 -- name: ClearVendorDefaultPayoutMethods :exec
 UPDATE vendor_payout_methods SET is_default = 0 WHERE vendor_id = ?;
 
+-- name: ClearVendorMpesaRecipientCodes :exec
+UPDATE vendor_payout_methods SET bank_name = NULL WHERE vendor_id = ? AND type = 'mpesa';
+
 -- name: CreateVendorPayoutMethod :exec
 INSERT INTO vendor_payout_methods (
   id, vendor_id, type, account_name, account_ref, is_default

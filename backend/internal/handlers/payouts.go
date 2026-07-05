@@ -28,20 +28,7 @@ import (
 const minWithdrawalKES = 100.0
 
 func normalizeKenyaPhone(phone string) (string, error) {
-	phone = strings.TrimSpace(phone)
-	phone = strings.TrimPrefix(phone, "+")
-	if strings.HasPrefix(phone, "0") && len(phone) >= 10 {
-		phone = "254" + phone[1:]
-	}
-	if !strings.HasPrefix(phone, "254") || len(phone) != 12 {
-		return "", fmt.Errorf("enter a valid M-Pesa number (e.g. 0712345678)")
-	}
-	for _, ch := range phone {
-		if ch < '0' || ch > '9' {
-			return "", fmt.Errorf("enter a valid M-Pesa number")
-		}
-	}
-	return phone, nil
+	return paystack.NormalizeKenyaPhone(phone)
 }
 
 func maskPhone(phone string) string {
@@ -211,6 +198,8 @@ func CreateVendorMpesaMethod() gin.HandlerFunc {
 			utils.Error(c, http.StatusInternalServerError, "Failed to save payout method")
 			return
 		}
+		// New phone — drop any cached Paystack recipient codes from prior methods.
+		_ = q.ClearVendorMpesaRecipientCodes(ctx, vendorID)
 		row, err := q.GetVendorPayoutMethodByID(ctx, sqlc.GetVendorPayoutMethodByIDParams{
 			ID: methodID, VendorID: vendorID,
 		})
@@ -265,10 +254,14 @@ func resolvePaystackRecipient(cfg *config.Config, method sqlc.VendorPayoutMethod
 	if method.BankName.Valid && strings.HasPrefix(method.BankName.String, "RCP_") {
 		return method.BankName.String, nil
 	}
+	accountNumber, err := paystack.MpesaAccountNumberForTransfer(method.AccountRef)
+	if err != nil {
+		return "", err
+	}
 	data, err := paystackClient(cfg).CreateTransferRecipient(paystack.TransferRecipientRequest{
 		Type:          "mobile_money",
 		Name:          method.AccountName,
-		AccountNumber: method.AccountRef,
+		AccountNumber: accountNumber,
 		BankCode:      "MPESA",
 		Currency:      "KES",
 	})

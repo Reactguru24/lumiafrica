@@ -104,6 +104,7 @@ export async function apiRequest<T>(
   let body = options.body
 
   const response = await fetch(url, {
+    cache: 'no-store',
     ...options,
     body,
     headers: headersObj,

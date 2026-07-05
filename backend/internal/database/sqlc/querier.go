@@ -24,6 +24,7 @@ type Querier interface {
 	ClearCartItems(ctx context.Context, cartID types.BinaryUUID) error
 	ClearVendorFeaturedProducts(ctx context.Context, vendorID types.BinaryUUID) error
 	ClearVendorDefaultPayoutMethods(ctx context.Context, vendorID types.BinaryUUID) error
+	ClearVendorMpesaRecipientCodes(ctx context.Context, vendorID types.BinaryUUID) error
 	CompleteIdempotencyKey(ctx context.Context, arg CompleteIdempotencyKeyParams) error
 	CountAdminProducts(ctx context.Context) (int64, error)
 	CountAdminProductsSearch(ctx context.Context, arg CountAdminProductsSearchParams) (int64, error)

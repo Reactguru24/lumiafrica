@@ -139,6 +139,7 @@ func GetHomepageContent() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
+		c.Header("Cache-Control", "no-store")
 		utils.Success(c, loadPublicHomepageContent(ctx, q))
 	}
 }

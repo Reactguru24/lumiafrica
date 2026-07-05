@@ -20,6 +20,15 @@ func (q *Queries) ClearVendorDefaultPayoutMethods(ctx context.Context, vendorID 
 	return err
 }
 
+const clearVendorMpesaRecipientCodes = `-- name: ClearVendorMpesaRecipientCodes :exec
+UPDATE vendor_payout_methods SET bank_name = NULL WHERE vendor_id = ? AND type = 'mpesa'
+`
+
+func (q *Queries) ClearVendorMpesaRecipientCodes(ctx context.Context, vendorID types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, clearVendorMpesaRecipientCodes, vendorID)
+	return err
+}
+
 const countVendorPayouts = `-- name: CountVendorPayouts :one
 SELECT COUNT(*) FROM vendor_payouts WHERE vendor_id = ?
 `

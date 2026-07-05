@@ -33,6 +33,7 @@ interface QueryStoreState {
   mutations: Record<string, MutationEntry>
   fetchQuery: <T>(key: string, queryFn: () => Promise<T>) => Promise<void>
   runMutation: <T>(key: string, mutationFn: (data?: unknown) => Promise<T>, data?: unknown) => Promise<T>
+  invalidateQuery: (key: string) => void
 }
 
 export const useQueryStore = create<QueryStoreState>((set, get) => ({
@@ -110,5 +111,14 @@ export const useQueryStore = create<QueryStoreState>((set, get) => ({
       }))
       throw error
     }
+  },
+
+  invalidateQuery: (key) => {
+    set((state) => ({
+      queries: {
+        ...state.queries,
+        [key]: { ...emptyQueryEntry },
+      },
+    }))
   },
 }))

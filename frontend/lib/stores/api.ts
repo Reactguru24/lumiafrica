@@ -148,8 +148,14 @@ export function useCollections() {
   return useQuery('collections', () => publicAPI.getCollections())
 }
 
+const HOMEPAGE_CONTENT_QUERY_KEY = 'homepage-content'
+
+export function invalidateHomepageContentCache() {
+  useQueryStore.getState().invalidateQuery(HOMEPAGE_CONTENT_QUERY_KEY)
+}
+
 export function useHomepageContent() {
-  return useQuery('homepage-content', () => publicAPI.getHomepageContent())
+  return useQuery(HOMEPAGE_CONTENT_QUERY_KEY, () => publicAPI.getHomepageContent())
 }
 
 export function useCollection(slug: string) {

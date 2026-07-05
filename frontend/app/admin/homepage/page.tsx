@@ -15,6 +15,7 @@ import {
   useUpdateAdminHomepageHeroSlide,
   useSetAdminHomepageHeroSlideActive,
   useDeleteAdminHomepageHeroSlide,
+  invalidateHomepageContentCache,
 } from '@/lib/stores/api'
 import { unwrapItems } from '@/lib/utils/api'
 
@@ -112,6 +113,7 @@ export default function AdminHomepagePage() {
       setSlideForm(emptySlideForm())
       setEditingSlideId(null)
       refetchSlides()
+      invalidateHomepageContentCache()
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to save hero slide'))
     } finally {
@@ -134,6 +136,7 @@ export default function AdminHomepagePage() {
         active: showcaseForm.active,
       })
       await refetchShowcase()
+      invalidateHomepageContentCache()
       toast.success('Feature showcase saved')
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, 'Failed to save showcase'))
@@ -201,8 +204,8 @@ export default function AdminHomepagePage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={slide.active ? 'active' : 'hidden'} />
                 <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => { setEditingSlideId(slide.id); setSlideForm({ label: slide.label || '', title: slide.title, subtitle: slide.subtitle || '', image: slide.image, link: slide.link || '/products', sortOrder: slide.sortOrder || 0 }) }}>Edit</button>
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => void runAdminAction(async () => { await setSlideActive({ id: slide.id, active: !slide.active }); await refetchSlides() }, slide.active ? 'Slide hidden' : 'Slide visible', 'Failed to update slide')}>{slide.active ? 'Hide' : 'Show'}</button>
-                <button type="button" className="text-xs text-red-600" onClick={() => { if (!confirm('Delete this slide?')) return; void runAdminAction(async () => { await deleteSlide({ id: slide.id }); await refetchSlides() }, 'Slide deleted', 'Failed to delete slide') }}>Delete</button>
+                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => void runAdminAction(async () => { await setSlideActive({ id: slide.id, active: !slide.active }); await refetchSlides(); invalidateHomepageContentCache() }, slide.active ? 'Slide hidden' : 'Slide visible', 'Failed to update slide')}>{slide.active ? 'Hide' : 'Show'}</button>
+                <button type="button" className="text-xs text-red-600" onClick={() => { if (!confirm('Delete this slide?')) return; void runAdminAction(async () => { await deleteSlide({ id: slide.id }); await refetchSlides(); invalidateHomepageContentCache() }, 'Slide deleted', 'Failed to delete slide') }}>Delete</button>
               </div>
             </div>
           ))}

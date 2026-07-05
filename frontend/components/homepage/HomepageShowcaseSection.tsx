@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { isExternalImageUrl } from '@/lib/utils/images'
 
 export type HomepageShowcaseData = {
+  id?: string
   overline?: string
   headline?: string
   description?: string

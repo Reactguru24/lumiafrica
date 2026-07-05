@@ -47,7 +47,7 @@ export default function HomePage() {
   const { data: promotions } = usePromotions()
   const { data: collections } = useCollections()
   const { data: saleProductsData } = useProducts({ onSale: true, limit: 1 })
-  const { data: homepageContent } = useHomepageContent()
+  const { data: homepageContent, loading: homepageContentLoading } = useHomepageContent()
 
   const content = (homepageContent as {
     heroSlides?: Array<{ label: string; title: string; subtitle?: string; image: string; link: string }>
@@ -64,9 +64,13 @@ export default function HomePage() {
 
   const promos = fallbackPromos
 
-  const showcase: HomepageShowcaseData = content.showcase?.headline
-    ? content.showcase
-    : fallbackShowcase
+  const apiShowcase = content.showcase
+  const showcase: HomepageShowcaseData =
+    apiShowcase && (apiShowcase.headline || apiShowcase.id)
+      ? { ...fallbackShowcase, ...apiShowcase }
+      : homepageContentLoading
+        ? { ...fallbackShowcase, active: false }
+        : fallbackShowcase
 
   const featuredVendorsList = unwrapItems(featuredVendors) as FeaturedVendorSlide[]
   const collectionsData = (homepageProducts as any) || {}
