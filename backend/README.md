@@ -14,8 +14,7 @@ Go REST API for the Lumi fashion marketplace: Gin, MySQL, sqlc, JWT auth, Paysta
 ```
 backend/
 ├── cmd/
-│   ├── main.go           # API server entry
-│   └── seeder/main.go    # Database seeder
+│   └── main.go           # API server entry
 ├── db/queries/           # sqlc SQL sources
 ├── internal/
 │   ├── config/
@@ -26,7 +25,6 @@ backend/
 │   ├── models/
 │   ├── routes/
 │   ├── store/            # sqlc → domain converters
-│   ├── seeder/
 │   └── cron/             # Product flag refresh (trending, etc.)
 ├── docs/                 # Generated swagger.json
 ├── Makefile
@@ -132,22 +130,6 @@ SMTP_FROM_NAME=Lumi Africa
 ```
 
 If SMTP is not configured, email content is logged to the server console.
-
-## Seeding
-
-```bash
-go run ./cmd/seeder/main.go
-```
-
-Idempotent: skips users, vendors, products, orders, and reviews that already exist. Safe to re-run after partial failures.
-
-**Demo logins** (after seed):
-
-| Email | Password | Role |
-|-------|----------|------|
-| admin@lumiafrica.com | admin123 | ADMIN |
-| vendor@lumiafrica.com | vendor123 | VENDOR |
-| customer@lumiafrica.com | customer123 | CUSTOMER |
 
 ## API overview
 

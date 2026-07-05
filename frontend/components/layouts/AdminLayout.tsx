@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   HomeIcon, UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
   Cog6ToothIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon, SparklesIcon,
-  TicketIcon,
+  TicketIcon, PhotoIcon,
 } from '@heroicons/react/24/outline'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
 import { UserAvatar } from '@/components/account/UserAvatar'
@@ -21,7 +21,7 @@ const navItems = [
   { name: 'Products', to: '/admin/products', icon: CubeIcon },
   { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon },
   { name: 'Commerce', to: '/admin/commerce', icon: TicketIcon },
-  { name: 'Homepage', to: '/admin/homepage', icon: SparklesIcon },
+  { name: 'Homepage', to: '/admin/homepage', icon: PhotoIcon },
   { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon },
 ]
 
@@ -46,12 +46,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             <span className="font-display text-lg font-bold tracking-tight">Lumi Admin</span>
             <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)} aria-label="Close menu"><XMarkIcon className="w-5 h-5" /></button>
           </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-hidden">
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => (
               <Link
                 key={item.to}
                 href={item.to}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === item.to ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === item.to || (item.to !== '/admin' && pathname.startsWith(item.to + '/')) ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
                 onClick={() => setSidebarOpen(false)}
               >
                 <item.icon className="w-5 h-5 shrink-0" />{item.name}

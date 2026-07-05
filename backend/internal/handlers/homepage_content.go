@@ -65,15 +65,41 @@ func toPromoItemResponse(row sqlc.HomepagePromoItem) models.HomepagePromoItemRes
 	}
 }
 
-func toBannerResponse(row sqlc.HomepageBanner) models.HomepageBannerResponse {
-	return models.HomepageBannerResponse{
-		ID:        row.ID.String(),
-		Title:     nullStringPtr(row.Title),
-		Subtitle:  nullStringPtr(row.Subtitle),
-		Image:     row.Image,
-		Link:      nullStringPtr(row.Link),
-		Active:    int16ToBool(row.Active),
-		SortOrder: int(row.SortOrder),
+func toShowcaseResponse(row sqlc.HomepageShowcase) models.HomepageShowcaseResponse {
+	images := []string{}
+	for _, img := range []string{row.Image1, row.Image2, row.Image3, row.Image4} {
+		if strings.TrimSpace(img) != "" {
+			images = append(images, img)
+		}
+	}
+	return models.HomepageShowcaseResponse{
+		ID:              row.ID.String(),
+		Overline:        row.Overline,
+		Headline:        row.Headline,
+		Description:     row.Description,
+		ButtonText:      row.ButtonText,
+		ButtonLink:      row.ButtonLink,
+		BackgroundColor: row.BackgroundColor,
+		Images:          images,
+		Active:          int16ToBool(row.Active),
+	}
+}
+
+func defaultShowcaseResponse() models.HomepageShowcaseResponse {
+	return models.HomepageShowcaseResponse{
+		Overline:        "Made for East Africa",
+		Headline:        "Fashion From Nairobi to Kampala",
+		Description:     "Shop local brands and international labels from verified vendors across Kenya, Uganda, Tanzania, Rwanda, and Ethiopia.",
+		ButtonText:      "Explore Trends",
+		ButtonLink:      "/products?trending=true",
+		BackgroundColor: "#084c54",
+		Images: []string{
+			"https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&h=1000&fit=crop&q=80",
+			"https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop&q=80",
+			"https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop&q=80",
+			"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=1000&fit=crop&q=80",
+		},
+		Active: true,
 	}
 }
 
@@ -118,16 +144,19 @@ func loadPublicHomepageContent(ctx context.Context, q *sqlc.Queries) models.Home
 		}
 	}
 
-	banners, err := q.ListActiveHomepageBanners(ctx)
-	if err == nil && len(banners) > 0 {
-		b := toBannerResponse(banners[0])
-		out.Banner = &b
+	showcase, err := q.GetActiveHomepageShowcase(ctx)
+	if err == nil {
+		s := toShowcaseResponse(showcase)
+		out.Showcase = &s
+	} else if isMissingHomepageTable(err) || errors.Is(err, sql.ErrNoRows) {
+		def := defaultShowcaseResponse()
+		out.Showcase = &def
 	}
 	return out
 }
 
 // GetHomepageContent godoc
-// @Summary Get homepage carousel, promo strip, and banner
+// @Summary Get homepage carousel, promo strip, and showcase
 // @Description Returns active homepage marketing content managed by admins.
 // @Tags Guest
 // @Produce json
@@ -441,175 +470,129 @@ func DeleteAdminHomepagePromoItem() gin.HandlerFunc {
 	}
 }
 
-// ListAdminHomepageBanners godoc
-// @Summary List homepage banners (admin)
+// GetAdminHomepageShowcase godoc
+// @Summary Get homepage feature showcase (admin)
 // @Tags Admin
 // @Produce json
 // @Security Bearer
-// @Success 200 {array} models.HomepageBannerResponse
-// @Router /admin/homepage/banners [get]
-func ListAdminHomepageBanners() gin.HandlerFunc {
+// @Success 200 {object} models.HomepageShowcaseResponse
+// @Router /admin/homepage/showcase [get]
+func GetAdminHomepageShowcase() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := getStore(c).Queries().ListAllHomepageBanners(ctx)
+		row, err := getStore(c).Queries().GetHomepageShowcase(ctx)
 		if err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to load banners")
-			return
-		}
-		out := make([]models.HomepageBannerResponse, len(rows))
-		for i, row := range rows {
-			out[i] = toBannerResponse(row)
-		}
-		utils.Success(c, out)
-	}
-}
-
-// CreateAdminHomepageBanner godoc
-// @Summary Create homepage banner (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param banner body models.CreateHomepageBannerRequest true "Banner details"
-// @Success 201 {object} models.HomepageBannerResponse
-// @Router /admin/homepage/banners [post]
-func CreateAdminHomepageBanner() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req models.CreateHomepageBannerRequest
-		if !bindJSON(c, &req) {
-			return
-		}
-		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		id := utils.GenerateBinaryID()
-		if err := q.CreateHomepageBanner(ctx, sqlc.CreateHomepageBannerParams{
-			ID:        id,
-			Title:     nullString(req.Title),
-			Subtitle:  nullString(req.Subtitle),
-			Image:     strings.TrimSpace(req.Image),
-			Link:      nullString(req.Link),
-			Active:    boolToInt16(req.Active),
-			SortOrder: int32(req.SortOrder),
-		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to create banner")
-			return
-		}
-		row, err := q.GetHomepageBannerByID(ctx, id)
-		if err != nil {
-			utils.SuccessCreated(c, gin.H{"id": id.String()})
-			return
-		}
-		utils.SuccessCreated(c, toBannerResponse(row))
-	}
-}
-
-// UpdateAdminHomepageBanner godoc
-// @Summary Update homepage banner (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param bannerID path string true "Banner ID"
-// @Param banner body models.UpdateHomepageBannerRequest true "Banner updates"
-// @Success 200 {object} models.HomepageBannerResponse
-// @Router /admin/homepage/banners/{bannerID} [put]
-func UpdateAdminHomepageBanner() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		bannerID, ok := parsePathID(c, "bannerID")
-		if !ok {
-			return
-		}
-		var req models.UpdateHomepageBannerRequest
-		if !bindJSON(c, &req) {
-			return
-		}
-		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		if err := q.UpdateHomepageBanner(ctx, sqlc.UpdateHomepageBannerParams{
-			ID:        bannerID,
-			Title:     nullString(req.Title),
-			Subtitle:  nullString(req.Subtitle),
-			Image:     strings.TrimSpace(req.Image),
-			Link:      nullString(req.Link),
-			SortOrder: int32(req.SortOrder),
-		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to update banner")
-			return
-		}
-		row, err := q.GetHomepageBannerByID(ctx, bannerID)
-		if handleNotFound(c, err, "Banner not found", "Failed to load banner") {
-			return
-		}
-		utils.Success(c, toBannerResponse(row))
-	}
-}
-
-// SetAdminHomepageBannerActive godoc
-// @Summary Enable or disable homepage banner (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param bannerID path string true "Banner ID"
-// @Param active body models.SetActiveRequest true "Active flag"
-// @Success 200 {object} map[string]interface{}
-// @Router /admin/homepage/banners/{bannerID}/active [put]
-func SetAdminHomepageBannerActive() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		bannerID, ok := parsePathID(c, "bannerID")
-		if !ok {
-			return
-		}
-		var req models.SetActiveRequest
-		if !bindJSON(c, &req) {
-			return
-		}
-		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		if req.Active {
-			rows, err := q.ListAllHomepageBanners(ctx)
-			if err != nil {
-				utils.Error(c, http.StatusInternalServerError, "Failed to update banner")
+			if errors.Is(err, sql.ErrNoRows) || isMissingHomepageTable(err) {
+				utils.Success(c, defaultShowcaseResponse())
 				return
 			}
-			for _, row := range rows {
-				if row.ID == bannerID {
-					continue
-				}
-				if int16ToBool(row.Active) {
-					_ = q.SetHomepageBannerActive(ctx, sqlc.SetHomepageBannerActiveParams{ID: row.ID, Active: 0})
-				}
-			}
-		}
-		if err := q.SetHomepageBannerActive(ctx, sqlc.SetHomepageBannerActiveParams{
-			ID:     bannerID,
-			Active: boolToInt16(req.Active),
-		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to update banner")
+			utils.Error(c, http.StatusInternalServerError, "Failed to load showcase")
 			return
 		}
-		utils.Success(c, gin.H{"active": req.Active})
+		utils.Success(c, toShowcaseResponse(row))
 	}
 }
 
-// DeleteAdminHomepageBanner godoc
-// @Summary Delete homepage banner (admin)
+func showcaseImages(req models.UpsertHomepageShowcaseRequest) [4]string {
+	var out [4]string
+	for i := 0; i < 4 && i < len(req.Images); i++ {
+		out[i] = strings.TrimSpace(req.Images[i])
+	}
+	return out
+}
+
+// UpsertAdminHomepageShowcase godoc
+// @Summary Create or update homepage feature showcase (admin)
 // @Tags Admin
+// @Accept json
+// @Produce json
 // @Security Bearer
-// @Param bannerID path string true "Banner ID"
-// @Success 204
-// @Router /admin/homepage/banners/{bannerID} [delete]
-func DeleteAdminHomepageBanner() gin.HandlerFunc {
+// @Param showcase body models.UpsertHomepageShowcaseRequest true "Showcase content"
+// @Success 200 {object} models.HomepageShowcaseResponse
+// @Router /admin/homepage/showcase [put]
+func UpsertAdminHomepageShowcase() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		bannerID, ok := parsePathID(c, "bannerID")
-		if !ok {
+		var req models.UpsertHomepageShowcaseRequest
+		if !bindJSON(c, &req) {
 			return
 		}
-		if err := getStore(c).Queries().DeleteHomepageBanner(c.Request.Context(), bannerID); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to delete banner")
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		imgs := showcaseImages(req)
+		bg := strings.TrimSpace(req.BackgroundColor)
+		if bg == "" {
+			bg = "#084c54"
+		}
+		btnText := strings.TrimSpace(req.ButtonText)
+		if btnText == "" {
+			btnText = "Explore Trends"
+		}
+		btnLink := strings.TrimSpace(req.ButtonLink)
+		if btnLink == "" {
+			btnLink = "/products?trending=true"
+		}
+		overline := strings.TrimSpace(req.Overline)
+		if overline == "" {
+			overline = "Made for East Africa"
+		}
+
+		existing, err := q.GetHomepageShowcase(ctx)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) && !isMissingHomepageTable(err) {
+			utils.Error(c, http.StatusInternalServerError, "Failed to save showcase")
 			return
 		}
-		c.Status(http.StatusNoContent)
+
+		if errors.Is(err, sql.ErrNoRows) || isMissingHomepageTable(err) {
+			id := utils.GenerateBinaryID()
+			if err := q.CreateHomepageShowcase(ctx, sqlc.CreateHomepageShowcaseParams{
+				ID:              id,
+				Overline:        overline,
+				Headline:        strings.TrimSpace(req.Headline),
+				Description:     strings.TrimSpace(req.Description),
+				ButtonText:      btnText,
+				ButtonLink:      btnLink,
+				BackgroundColor: bg,
+				Image1:          imgs[0],
+				Image2:          imgs[1],
+				Image3:          imgs[2],
+				Image4:          imgs[3],
+				Active:          boolToInt16(req.Active),
+			}); err != nil {
+				utils.Error(c, http.StatusInternalServerError, "Failed to save showcase")
+				return
+			}
+			row, err := q.GetHomepageShowcase(ctx)
+			if err != nil {
+				utils.Success(c, defaultShowcaseResponse())
+				return
+			}
+			utils.Success(c, toShowcaseResponse(row))
+			return
+		}
+
+		if err := q.UpdateHomepageShowcase(ctx, sqlc.UpdateHomepageShowcaseParams{
+			Overline:        overline,
+			Headline:        strings.TrimSpace(req.Headline),
+			Description:     strings.TrimSpace(req.Description),
+			ButtonText:      btnText,
+			ButtonLink:      btnLink,
+			BackgroundColor: bg,
+			Image1:          imgs[0],
+			Image2:          imgs[1],
+			Image3:          imgs[2],
+			Image4:          imgs[3],
+			Active:          boolToInt16(req.Active),
+			ID:              existing.ID,
+		}); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to save showcase")
+			return
+		}
+		row, err := q.GetHomepageShowcase(ctx)
+		if err != nil {
+			utils.Success(c, toShowcaseResponse(existing))
+			return
+		}
+		utils.Success(c, toShowcaseResponse(row))
 	}
 }
 

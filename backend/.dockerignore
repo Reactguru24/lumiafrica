@@ -10,5 +10,4 @@ uploads/
 docs/
 tmp/
 .air.toml
-seeders/
 **/*_test.go

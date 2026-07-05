@@ -98,7 +98,7 @@ func LoadConfig() (*Config, error) {
 }
 
 // applyRailwayDBProxy uses the public TCP proxy when DB host is Railway-internal
-// (required for local `railway run` and local seeders — internal DNS is not reachable).
+// (required for local `railway run` — internal DNS is not reachable).
 func applyRailwayDBProxy(cfg *Config) {
 	if !strings.Contains(cfg.DBHost, "railway.internal") {
 		return

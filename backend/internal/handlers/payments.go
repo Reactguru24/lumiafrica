@@ -11,6 +11,7 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/config"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
+	"github.com/Reactguru24/lumiafrica/internal/idempotency"
 	"github.com/Reactguru24/lumiafrica/internal/middleware"
 	"github.com/Reactguru24/lumiafrica/internal/models"
 	"github.com/Reactguru24/lumiafrica/internal/plans"
@@ -52,19 +53,18 @@ func logPayment(event string, fields map[string]interface{}) {
 }
 
 type paystackInitInput struct {
-	ctx             context.Context
-	cfg             *config.Config
-	q               *sqlc.Queries
-	email           string
-	amount          float64
-	paymentType     sqlc.PaymentTransactionsType
-	userID          types.BinaryUUID
-	vendorID        *types.BinaryUUID
-	metadata        []byte
-	idempotencyKey  sql.NullString
-	logType         string
-	logExtra        map[string]interface{}
-	paystackMeta    map[string]interface{}
+	ctx            context.Context
+	cfg            *config.Config
+	q              *sqlc.Queries
+	email          string
+	amount         float64
+	paymentType    sqlc.PaymentTransactionsType
+	userID         types.BinaryUUID
+	vendorID       *types.BinaryUUID
+	metadata       []byte
+	logType        string
+	logExtra       map[string]interface{}
+	paystackMeta   map[string]interface{}
 }
 
 func paymentInitFromMetadata(payment sqlc.PaymentTransaction) (models.PaymentInitializeResponse, bool) {
@@ -191,8 +191,15 @@ func InitializeOrderPayment(cfg *config.Config) gin.HandlerFunc {
 			utils.Error(c, http.StatusBadRequest, "Invalid user")
 			return
 		}
+
+		rawBody, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			utils.Error(c, http.StatusBadRequest, "Invalid request")
+			return
+		}
 		var req models.CreateOrderRequest
-		if !bindJSON(c, &req) {
+		if err := json.Unmarshal(rawBody, &req); err != nil {
+			utils.Error(c, http.StatusBadRequest, "Invalid request: "+err.Error())
 			return
 		}
 		if len(req.Items) == 0 {
@@ -203,56 +210,50 @@ func InitializeOrderPayment(cfg *config.Config) gin.HandlerFunc {
 		ctx := c.Request.Context()
 		st := getStore(c)
 		q := st.Queries()
-		subtotal, err := validateOrderItems(ctx, q, userID, req.Items)
-		if err != nil {
-			utils.Error(c, http.StatusBadRequest, err.Error())
-			return
-		}
+		clientKey := strings.TrimSpace(c.GetHeader("Idempotency-Key"))
+		endpoint := "POST /payments/orders/initialize"
 
-		user, err := q.GetUserByID(ctx, userID)
-		if err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to fetch user")
-			return
-		}
+		idempotency.WithKey(c, q, userID, endpoint, clientKey, rawBody, func() (int, interface{}, error) {
+			subtotal, err := validateOrderItems(ctx, q, userID, req.Items)
+			if err != nil {
+				return http.StatusBadRequest, nil, err
+			}
 
-		meta, err := prepareOrderPaymentMetadata(ctx, q, userID, req, subtotal)
-		if err != nil {
-			utils.Error(c, http.StatusBadRequest, err.Error())
-			return
-		}
-		metaJSON, err := json.Marshal(meta)
-		if err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to prepare payment")
-			return
-		}
+			user, err := q.GetUserByID(ctx, userID)
+			if err != nil {
+				return http.StatusInternalServerError, nil, fmt.Errorf("failed to fetch user")
+			}
 
-		idempotencyKey := sql.NullString{}
-		if key := strings.TrimSpace(c.GetHeader("Idempotency-Key")); key != "" {
-			idempotencyKey = sql.NullString{String: key, Valid: true}
-		}
+			meta, err := prepareOrderPaymentMetadata(ctx, q, userID, req, subtotal)
+			if err != nil {
+				return http.StatusBadRequest, nil, err
+			}
+			metaJSON, err := json.Marshal(meta)
+			if err != nil {
+				return http.StatusInternalServerError, nil, fmt.Errorf("failed to prepare payment")
+			}
 
-		resp, err := initializePaystackPayment(paystackInitInput{
-			ctx:            ctx,
-			cfg:            cfg,
-			q:              q,
-			email:          user.Email,
-			amount:         meta.Total,
-			paymentType:    sqlc.PaymentTransactionsTypeOrder,
-			userID:         userID,
-			metadata:       metaJSON,
-			idempotencyKey: idempotencyKey,
-			logType:        "order",
-			logExtra:    map[string]interface{}{"userId": userIDStr},
-			paystackMeta: map[string]interface{}{
-				"type":    string(models.PaymentTypeOrder),
-				"user_id": userIDStr,
-			},
+			resp, err := initializePaystackPayment(paystackInitInput{
+				ctx:         ctx,
+				cfg:         cfg,
+				q:           q,
+				email:       user.Email,
+				amount:      meta.Total,
+				paymentType: sqlc.PaymentTransactionsTypeOrder,
+				userID:      userID,
+				metadata:    metaJSON,
+				logType:     "order",
+				logExtra:    map[string]interface{}{"userId": userIDStr},
+				paystackMeta: map[string]interface{}{
+					"type":    string(models.PaymentTypeOrder),
+					"user_id": userIDStr,
+				},
+			})
+			if err != nil {
+				return http.StatusBadGateway, nil, fmt.Errorf("failed to initialize payment: %w", err)
+			}
+			return http.StatusOK, resp, nil
 		})
-		if err != nil {
-			utils.Error(c, http.StatusBadGateway, "Failed to initialize payment: "+err.Error())
-			return
-		}
-		utils.Success(c, resp)
 	}
 }
 

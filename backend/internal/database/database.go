@@ -60,27 +60,6 @@ func Open(cfg *config.Config) (*DB, error) {
 	}, nil
 }
 
-func (db *DB) EnsureConnected(ctx context.Context) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	return db.SQL.PingContext(ctx)
-}
-
-// Reopen replaces the connection pool (use after proxy connection resets).
-func (db *DB) Reopen(cfg *config.Config) error {
-	if db.SQL != nil {
-		_ = db.SQL.Close()
-	}
-	fresh, err := Open(cfg)
-	if err != nil {
-		return err
-	}
-	db.SQL = fresh.SQL
-	db.Q = fresh.Q
-	return nil
-}
-
 func Migrate(db *DB) error {
 	schemaPath := "db/schema_v2.sql"
 	data, err := os.ReadFile(schemaPath)

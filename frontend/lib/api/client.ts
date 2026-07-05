@@ -494,6 +494,28 @@ export const vendorAPI = {
   getAnalytics(period = '30days') {
     return get(`/vendor/analytics${buildQuery({ period })}`)
   },
+
+  getPayoutBalance() {
+    return get('/vendor/payouts/balance')
+  },
+
+  listPayoutMethods() {
+    return get('/vendor/payouts/methods')
+  },
+
+  createMpesaPayoutMethod(data: { accountName: string; phone: string; isDefault?: boolean }) {
+    return post('/vendor/payouts/methods', data)
+  },
+
+  listPayouts(params?: { page?: number; limit?: number }) {
+    return get(`/vendor/payouts${buildQuery(params)}`)
+  },
+
+  requestWithdrawal(data?: { amount?: number }, idempotencyKey?: string) {
+    const headers: Record<string, string> = {}
+    if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
+    return post('/vendor/payouts/withdraw', data ?? {}, { headers })
+  },
 }
 
 // ── Admin Endpoints ───────────────────────────────────────────────────
@@ -693,23 +715,11 @@ export const adminAPI = {
     return del(`/admin/homepage/promo-items/${itemId}`)
   },
 
-  listHomepageBanners() {
-    return get('/admin/homepage/banners')
+  getHomepageShowcase() {
+    return get('/admin/homepage/showcase')
   },
 
-  createHomepageBanner(data: Record<string, unknown>) {
-    return post('/admin/homepage/banners', data)
-  },
-
-  updateHomepageBanner(bannerId: string, data: Record<string, unknown>) {
-    return put(`/admin/homepage/banners/${bannerId}`, data)
-  },
-
-  setHomepageBannerActive(bannerId: string, active: boolean) {
-    return put(`/admin/homepage/banners/${bannerId}/active`, { active })
-  },
-
-  deleteHomepageBanner(bannerId: string) {
-    return del(`/admin/homepage/banners/${bannerId}`)
+  upsertHomepageShowcase(data: Record<string, unknown>) {
+    return put('/admin/homepage/showcase', data)
   },
 }

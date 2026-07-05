@@ -8,7 +8,8 @@ import { filterStorefrontPromotions, type PromotionLike } from '@/lib/utils/prom
 import { ProductCard } from '@/components/product/ProductCard'
 import { HeroSlider } from '@/components/common/HeroSlider'
 import { FeaturedVendorsCarousel, type FeaturedVendorSlide } from '@/components/common/FeaturedVendorsCarousel'
-import { heroImage, HOMEPAGE_GRID_IMAGES, isExternalImageUrl } from '@/lib/utils/images'
+import { HomepageShowcaseSection, type HomepageShowcaseData } from '@/components/homepage/HomepageShowcaseSection'
+import { heroImage, isExternalImageUrl } from '@/lib/utils/images'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
 const fallbackHeroSlides = [
@@ -16,6 +17,22 @@ const fallbackHeroSlides = [
   { label: "Women's Fashion", title: 'Elegant Looks, African Spirit', subtitle: 'Dresses, kitenge-inspired pieces, and contemporary fashion curated for the modern woman.', image: heroImage('women'), link: '/products?category=women' },
   { label: 'Kids & Teens', title: 'Growing Up in Style', subtitle: 'Comfortable, durable clothing for boys, girls, and teens — from playtime to school days.', image: heroImage('kids'), link: '/products?category=kids' },
 ]
+
+const fallbackShowcase: HomepageShowcaseData = {
+  overline: 'Made for East Africa',
+  headline: 'Fashion From Nairobi to Kampala',
+  description: 'Shop local brands and international labels from verified vendors across Kenya, Uganda, Tanzania, Rwanda, and Ethiopia.',
+  buttonText: 'Explore Trends',
+  buttonLink: '/products?trending=true',
+  backgroundColor: '#084c54',
+  images: [
+    'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&h=1000&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=1000&fit=crop&q=80',
+  ],
+  active: true,
+}
 
 const fallbackPromos = [
   { title: 'Fast Shipping', desc: 'Reliable delivery across East Africa', icon: '🚚' },
@@ -35,7 +52,7 @@ export default function HomePage() {
   const content = (homepageContent as {
     heroSlides?: Array<{ label: string; title: string; subtitle?: string; image: string; link: string }>
     promoItems?: Array<{ title: string; description: string; icon: string }>
-    banner?: { title?: string; subtitle?: string; image: string; link?: string }
+    showcase?: HomepageShowcaseData
   }) || {}
 
   const heroSlides = (content.heroSlides?.length ? content.heroSlides : fallbackHeroSlides).map((slide) => ({
@@ -50,7 +67,9 @@ export default function HomePage() {
     ? content.promoItems.map((p) => ({ title: p.title, desc: p.description, icon: p.icon }))
     : fallbackPromos)
 
-  const middleBanner = content.banner
+  const showcase: HomepageShowcaseData = content.showcase?.headline
+    ? content.showcase
+    : fallbackShowcase
 
   const featuredVendorsList = unwrapItems(featuredVendors) as FeaturedVendorSlide[]
   const collectionsData = (homepageProducts as any) || {}
@@ -80,42 +99,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {middleBanner?.image && (
-        <section className="relative h-44 sm:h-56 md:h-64 overflow-hidden">
-          {middleBanner.link ? (
-            <Link href={middleBanner.link} className="block absolute inset-0">
-              <Image
-                src={middleBanner.image}
-                alt={middleBanner.title || 'Homepage banner'}
-                fill
-                className="object-cover"
-                sizes="100vw"
-                priority
-                unoptimized={isExternalImageUrl(middleBanner.image)}
-              />
-            </Link>
-          ) : (
-            <Image
-              src={middleBanner.image}
-              alt={middleBanner.title || 'Homepage banner'}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-              unoptimized={isExternalImageUrl(middleBanner.image)}
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 flex items-center pointer-events-none">
-            <div className="page-width">
-              {middleBanner.title && <h2 className="text-white text-xl sm:text-2xl font-semibold">{middleBanner.title}</h2>}
-              {middleBanner.subtitle && (
-                <p className="text-white/90 text-sm sm:text-base max-w-lg mt-2">{middleBanner.subtitle}</p>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+      <HomepageShowcaseSection showcase={showcase} />
 
       {activePromotions.length > 0 && (
         <section className="page-width py-8 sm:py-12">
@@ -183,30 +167,6 @@ export default function HomePage() {
           </div>
         </section>
       )}
-
-      <section className="bg-brand-teal text-white py-16">
-        <div className="page-width grid md:grid-cols-2 gap-6 sm:gap-8 items-center">
-          <div>
-            <p className="micro-label !text-brand-orange mb-2">Made for East Africa</p>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold mb-4">Fashion From Nairobi to Kampala</h2>
-            <p className="text-brand-100 mb-6">Shop local brands and international labels from verified vendors across Kenya, Uganda, Tanzania, Rwanda, and Ethiopia.</p>
-            <Link href="/products?trending=true" className="btn-primary bg-brand-orange border-brand-orange hover:bg-brand-orange/90">Explore Trends</Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {HOMEPAGE_GRID_IMAGES.map((img, i) => (
-              <Image
-                key={img.alt}
-                src={img.src}
-                alt={img.alt}
-                width={400}
-                height={500}
-                className={`aspect-[4/5] object-cover w-full h-auto rounded-sm ${i === 1 ? 'mt-6' : i === 2 ? '-mt-6' : ''}`}
-                unoptimized
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {trendingProducts.length > 0 && (
         <section className="page-width py-8 sm:py-12">

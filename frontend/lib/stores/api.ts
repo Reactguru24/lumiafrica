@@ -437,29 +437,13 @@ export function useDeleteAdminHomepagePromoItem() {
   )
 }
 
-export function useAdminHomepageBanners() {
-  return useQuery('admin-homepage-banners', () => adminAPI.listHomepageBanners())
+export function useAdminHomepageShowcase() {
+  return useQuery('admin-homepage-showcase', () => adminAPI.getHomepageShowcase())
 }
 
-export function useCreateAdminHomepageBanner() {
-  return useMutation('create-admin-homepage-banner', (data) => adminAPI.createHomepageBanner(data))
-}
-
-export function useUpdateAdminHomepageBanner() {
-  return useMutation('update-admin-homepage-banner', (data: { id: string; payload: Record<string, unknown> }) =>
-    adminAPI.updateHomepageBanner(data.id, data.payload),
-  )
-}
-
-export function useSetAdminHomepageBannerActive() {
-  return useMutation('set-admin-homepage-banner-active', (data: { id: string; active: boolean }) =>
-    adminAPI.setHomepageBannerActive(data.id, data.active),
-  )
-}
-
-export function useDeleteAdminHomepageBanner() {
-  return useMutation('delete-admin-homepage-banner', (data: { id: string }) =>
-    adminAPI.deleteHomepageBanner(data.id),
+export function useUpsertAdminHomepageShowcase() {
+  return useMutation('upsert-admin-homepage-showcase', (data: Record<string, unknown>) =>
+    adminAPI.upsertHomepageShowcase(data),
   )
 }
 
@@ -553,6 +537,37 @@ export function useVendorSubscription() {
 
 export function useVendorAnalytics(period = '30days') {
   return useQuery(`vendor-analytics-${period}`, () => vendorAPI.getAnalytics(period))
+}
+
+export function useVendorPayoutBalance() {
+  return useQuery('vendor-payout-balance', () => vendorAPI.getPayoutBalance())
+}
+
+export function useVendorPayoutMethods() {
+  return useQuery('vendor-payout-methods', () => vendorAPI.listPayoutMethods())
+}
+
+export function useVendorPayouts(page = 1, limit = 20) {
+  return useQuery(`vendor-payouts-${page}-${limit}`, () => vendorAPI.listPayouts({ page, limit }))
+}
+
+export function useCreateMpesaPayoutMethod() {
+  return useMutation(
+    'create-mpesa-payout-method',
+    (data: { accountName: string; phone: string; isDefault?: boolean }) =>
+      vendorAPI.createMpesaPayoutMethod(data),
+  )
+}
+
+export function useRequestVendorWithdrawal() {
+  return useMutation(
+    'request-vendor-withdrawal',
+    (data: { amount?: number; idempotencyKey?: string }) =>
+      vendorAPI.requestWithdrawal(
+        data.amount != null ? { amount: data.amount } : undefined,
+        data.idempotencyKey,
+      ),
+  )
 }
 
 export function useCreateVendorProduct() {

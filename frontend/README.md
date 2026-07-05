@@ -22,16 +22,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The backend must be running on port 8080.
 
-## Demo accounts
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@lumiafrica.com | admin123 |
-| Vendor | vendor@lumiafrica.com | vendor123 |
-| Customer | customer@lumiafrica.com | customer123 |
-
-Run the backend seeder first if the database is empty (`go run ./cmd/seeder/main.go` from `backend/`).
-
 ## Project structure
 
 ```

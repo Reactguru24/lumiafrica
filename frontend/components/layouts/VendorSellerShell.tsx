@@ -19,6 +19,7 @@ const sellerNavItems = [
   { name: 'Analytics', to: '/vendor/analytics' },
   { name: 'Reviews', to: '/vendor/reviews' },
   { name: 'Store Profile', to: '/vendor/profile' },
+  { name: 'Withdrawals', to: '/vendor/withdrawals' },
   { name: 'Featured Listing', to: '/vendor/subscription' },
 ]
 

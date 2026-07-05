@@ -1,4 +1,4 @@
-.PHONY: help build run dev install-air test clean swagger docker-up docker-down docker-tools docker-app seed seed-all seed-users seed-vendors seed-products seed-orders seed-reviews seed-clear seed-vendor-products
+.PHONY: help build run dev install-air test clean swagger docker-up docker-down docker-tools docker-app
 
 # Go is often installed to /usr/local/go/bin but not added to login PATH
 GO := $(or $(wildcard /usr/local/go/bin/go),$(shell command -v go 2>/dev/null),/usr/local/go/bin/go)
@@ -22,16 +22,6 @@ help:
 	@echo "  make docker-tools       - Also start phpMyAdmin"
 	@echo "  make docker-app         - Run API in Docker (requires .env.docker.example or .env)"
 	@echo "  make docker-down        - Stop Docker containers"
-	@echo ""
-	@echo "  Seed commands:"
-	@echo "  make seed-all           - Seed entire database (500 users, 20 vendors, 110+ products)"
-	@echo "  make seed-clear         - Clear and reseed entire database"
-	@echo "  make seed-users         - Seed only users"
-	@echo "  make seed-vendors       - Seed only vendors"
-	@echo "  make seed-products      - Seed only products"
-	@echo "  make seed-orders        - Seed only orders"
-	@echo "  make seed-reviews       - Seed only reviews"
-	@echo "  make seed-vendor-products - Seed 20 products per approved vendor (4 per UI category)"
 	@echo ""
 
 build:
@@ -79,19 +69,3 @@ docker-down:
 
 sqlc:
 	/tmp/sqlc generate -f sqlc.yaml
-
-seed-all:
-	@echo "Seeding database with all data..."
-	$(GO) run ./seeders/ -type=all
-
-seed-clear:
-	@echo "Clearing and reseeding database..."
-	$(GO) run ./seeders/ -type=all -clear=true
-
-seed-users:
-	@echo "Seeding users..."
-	$(GO) run ./seeders/ -type=users -users=500
-
-seed-vendor-products:
-	@echo "Seeding 20 products per approved vendor..."
-	$(GO) run ./cmd/seeder/main.go -seed=false -vendor-products -skip-migrate

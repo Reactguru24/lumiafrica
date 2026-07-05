@@ -10,28 +10,6 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
-const createHomepageBanner = `-- name: CreateHomepageBanner :exec
-INSERT INTO homepage_banners (id, title, subtitle, image, link, active, sort_order)
-VALUES (?, ?, ?, ?, ?, ?, ?)
-`
-
-type CreateHomepageBannerParams struct {
-	ID        types.BinaryUUID `json:"id"`
-	Title     sql.NullString   `json:"title"`
-	Subtitle  sql.NullString   `json:"subtitle"`
-	Image     string           `json:"image"`
-	Link      sql.NullString   `json:"link"`
-	Active    int16            `json:"active"`
-	SortOrder int32            `json:"sort_order"`
-}
-
-func (q *Queries) CreateHomepageBanner(ctx context.Context, arg CreateHomepageBannerParams) error {
-	_, err := q.db.ExecContext(ctx, createHomepageBanner,
-		arg.ID, arg.Title, arg.Subtitle, arg.Image, arg.Link, arg.Active, arg.SortOrder,
-	)
-	return err
-}
-
 const createHomepageHeroSlide = `-- name: CreateHomepageHeroSlide :exec
 INSERT INTO homepage_hero_slides (id, label, title, subtitle, image, link, sort_order, active)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -76,15 +54,6 @@ func (q *Queries) CreateHomepagePromoItem(ctx context.Context, arg CreateHomepag
 	return err
 }
 
-const deleteHomepageBanner = `-- name: DeleteHomepageBanner :exec
-DELETE FROM homepage_banners WHERE id = ?
-`
-
-func (q *Queries) DeleteHomepageBanner(ctx context.Context, id types.BinaryUUID) error {
-	_, err := q.db.ExecContext(ctx, deleteHomepageBanner, id)
-	return err
-}
-
 const deleteHomepageHeroSlide = `-- name: DeleteHomepageHeroSlide :exec
 DELETE FROM homepage_hero_slides WHERE id = ?
 `
@@ -101,19 +70,6 @@ DELETE FROM homepage_promo_items WHERE id = ?
 func (q *Queries) DeleteHomepagePromoItem(ctx context.Context, id types.BinaryUUID) error {
 	_, err := q.db.ExecContext(ctx, deleteHomepagePromoItem, id)
 	return err
-}
-
-const getHomepageBannerByID = `-- name: GetHomepageBannerByID :one
-SELECT id, title, subtitle, image, link, active, sort_order, created_at, updated_at FROM homepage_banners WHERE id = ? LIMIT 1
-`
-
-func (q *Queries) GetHomepageBannerByID(ctx context.Context, id types.BinaryUUID) (HomepageBanner, error) {
-	row := q.db.QueryRowContext(ctx, getHomepageBannerByID, id)
-	var i HomepageBanner
-	err := row.Scan(
-		&i.ID, &i.Title, &i.Subtitle, &i.Image, &i.Link, &i.Active, &i.SortOrder, &i.CreatedAt, &i.UpdatedAt,
-	)
-	return i, err
 }
 
 const getHomepageHeroSlideByID = `-- name: GetHomepageHeroSlideByID :one
@@ -140,32 +96,6 @@ func (q *Queries) GetHomepagePromoItemByID(ctx context.Context, id types.BinaryU
 		&i.ID, &i.Title, &i.Description, &i.Icon, &i.SortOrder, &i.Active, &i.CreatedAt, &i.UpdatedAt,
 	)
 	return i, err
-}
-
-const listActiveHomepageBanners = `-- name: ListActiveHomepageBanners :many
-SELECT id, title, subtitle, image, link, active, sort_order, created_at, updated_at FROM homepage_banners
-WHERE active = true
-ORDER BY sort_order ASC, created_at ASC
-LIMIT 1
-`
-
-func (q *Queries) ListActiveHomepageBanners(ctx context.Context) ([]HomepageBanner, error) {
-	rows, err := q.db.QueryContext(ctx, listActiveHomepageBanners)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []HomepageBanner{}
-	for rows.Next() {
-		var i HomepageBanner
-		if err := rows.Scan(
-			&i.ID, &i.Title, &i.Subtitle, &i.Image, &i.Link, &i.Active, &i.SortOrder, &i.CreatedAt, &i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	return items, rows.Close()
 }
 
 const listActiveHomepageHeroSlides = `-- name: ListActiveHomepageHeroSlides :many
@@ -210,30 +140,6 @@ func (q *Queries) ListActiveHomepagePromoItems(ctx context.Context) ([]HomepageP
 		var i HomepagePromoItem
 		if err := rows.Scan(
 			&i.ID, &i.Title, &i.Description, &i.Icon, &i.SortOrder, &i.Active, &i.CreatedAt, &i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	return items, rows.Close()
-}
-
-const listAllHomepageBanners = `-- name: ListAllHomepageBanners :many
-SELECT id, title, subtitle, image, link, active, sort_order, created_at, updated_at FROM homepage_banners
-ORDER BY sort_order ASC, created_at ASC
-`
-
-func (q *Queries) ListAllHomepageBanners(ctx context.Context) ([]HomepageBanner, error) {
-	rows, err := q.db.QueryContext(ctx, listAllHomepageBanners)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []HomepageBanner{}
-	for rows.Next() {
-		var i HomepageBanner
-		if err := rows.Scan(
-			&i.ID, &i.Title, &i.Subtitle, &i.Image, &i.Link, &i.Active, &i.SortOrder, &i.CreatedAt, &i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -290,20 +196,6 @@ func (q *Queries) ListAllHomepagePromoItems(ctx context.Context) ([]HomepageProm
 	return items, rows.Close()
 }
 
-const setHomepageBannerActive = `-- name: SetHomepageBannerActive :exec
-UPDATE homepage_banners SET active = ? WHERE id = ?
-`
-
-type SetHomepageBannerActiveParams struct {
-	Active int16            `json:"active"`
-	ID     types.BinaryUUID `json:"id"`
-}
-
-func (q *Queries) SetHomepageBannerActive(ctx context.Context, arg SetHomepageBannerActiveParams) error {
-	_, err := q.db.ExecContext(ctx, setHomepageBannerActive, arg.Active, arg.ID)
-	return err
-}
-
 const setHomepageHeroSlideActive = `-- name: SetHomepageHeroSlideActive :exec
 UPDATE homepage_hero_slides SET active = ? WHERE id = ?
 `
@@ -329,28 +221,6 @@ type SetHomepagePromoItemActiveParams struct {
 
 func (q *Queries) SetHomepagePromoItemActive(ctx context.Context, arg SetHomepagePromoItemActiveParams) error {
 	_, err := q.db.ExecContext(ctx, setHomepagePromoItemActive, arg.Active, arg.ID)
-	return err
-}
-
-const updateHomepageBanner = `-- name: UpdateHomepageBanner :exec
-UPDATE homepage_banners
-SET title = ?, subtitle = ?, image = ?, link = ?, sort_order = ?
-WHERE id = ?
-`
-
-type UpdateHomepageBannerParams struct {
-	Title     sql.NullString   `json:"title"`
-	Subtitle  sql.NullString   `json:"subtitle"`
-	Image     string           `json:"image"`
-	Link      sql.NullString   `json:"link"`
-	SortOrder int32            `json:"sort_order"`
-	ID        types.BinaryUUID `json:"id"`
-}
-
-func (q *Queries) UpdateHomepageBanner(ctx context.Context, arg UpdateHomepageBannerParams) error {
-	_, err := q.db.ExecContext(ctx, updateHomepageBanner,
-		arg.Title, arg.Subtitle, arg.Image, arg.Link, arg.SortOrder, arg.ID,
-	)
 	return err
 }
 

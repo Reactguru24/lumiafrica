@@ -1,14 +1,14 @@
 package models
 
 type HomepageHeroSlideResponse struct {
-	ID       string `json:"id"`
-	Label    string `json:"label"`
-	Title    string `json:"title"`
-	Subtitle string `json:"subtitle,omitempty"`
-	Image    string `json:"image"`
-	Link     string `json:"link"`
-	SortOrder int   `json:"sortOrder"`
-	Active   bool   `json:"active"`
+	ID        string `json:"id"`
+	Label     string `json:"label"`
+	Title     string `json:"title"`
+	Subtitle  string `json:"subtitle,omitempty"`
+	Image     string `json:"image"`
+	Link      string `json:"link"`
+	SortOrder int    `json:"sortOrder"`
+	Active    bool   `json:"active"`
 }
 
 type HomepagePromoItemResponse struct {
@@ -20,20 +20,22 @@ type HomepagePromoItemResponse struct {
 	Active      bool   `json:"active"`
 }
 
-type HomepageBannerResponse struct {
-	ID       string `json:"id"`
-	Title    string `json:"title,omitempty"`
-	Subtitle string `json:"subtitle,omitempty"`
-	Image    string `json:"image"`
-	Link     string `json:"link,omitempty"`
-	Active   bool   `json:"active"`
-	SortOrder int   `json:"sortOrder"`
+type HomepageShowcaseResponse struct {
+	ID              string   `json:"id,omitempty"`
+	Overline        string   `json:"overline"`
+	Headline        string   `json:"headline"`
+	Description     string   `json:"description"`
+	ButtonText      string   `json:"buttonText"`
+	ButtonLink      string   `json:"buttonLink"`
+	BackgroundColor string   `json:"backgroundColor"`
+	Images          []string `json:"images"`
+	Active          bool     `json:"active"`
 }
 
 type HomepageContentResponse struct {
 	HeroSlides []HomepageHeroSlideResponse `json:"heroSlides"`
 	PromoItems []HomepagePromoItemResponse `json:"promoItems"`
-	Banner     *HomepageBannerResponse     `json:"banner,omitempty"`
+	Showcase   *HomepageShowcaseResponse   `json:"showcase,omitempty"`
 }
 
 type CreateHomepageHeroSlideRequest struct {
@@ -68,19 +70,13 @@ type UpdateHomepagePromoItemRequest struct {
 	SortOrder   int    `json:"sortOrder"`
 }
 
-type CreateHomepageBannerRequest struct {
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
-	Image     string `json:"image" binding:"required"`
-	Link      string `json:"link"`
-	SortOrder int    `json:"sortOrder"`
-	Active    bool   `json:"active"`
-}
-
-type UpdateHomepageBannerRequest struct {
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
-	Image     string `json:"image" binding:"required"`
-	Link      string `json:"link"`
-	SortOrder int    `json:"sortOrder"`
+type UpsertHomepageShowcaseRequest struct {
+	Overline        string   `json:"overline"`
+	Headline        string   `json:"headline" binding:"required"`
+	Description     string   `json:"description"`
+	ButtonText      string   `json:"buttonText"`
+	ButtonLink      string   `json:"buttonLink"`
+	BackgroundColor string   `json:"backgroundColor"`
+	Images          []string `json:"images"`
+	Active          bool     `json:"active"`
 }

@@ -124,6 +124,11 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		vendor.POST("/subscriptions/initialize", handlers.InitializeSubscriptionPayment(cfg))
 		vendor.DELETE("/subscriptions/active", handlers.CancelSubscription())
 		vendor.GET("/analytics", handlers.GetVendorAnalytics())
+		vendor.GET("/payouts/balance", handlers.GetVendorPayoutBalance())
+		vendor.GET("/payouts/methods", handlers.ListVendorPayoutMethods())
+		vendor.POST("/payouts/methods", handlers.CreateVendorMpesaMethod())
+		vendor.GET("/payouts", handlers.ListVendorPayoutHistory())
+		vendor.POST("/payouts/withdraw", handlers.RequestVendorWithdrawal(cfg))
 	}
 
 	// ── Admin — platform management ────────────────────────────────────────
@@ -176,10 +181,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.PUT("/homepage/promo-items/:itemID", handlers.UpdateAdminHomepagePromoItem())
 		admin.PUT("/homepage/promo-items/:itemID/active", handlers.SetAdminHomepagePromoItemActive())
 		admin.DELETE("/homepage/promo-items/:itemID", handlers.DeleteAdminHomepagePromoItem())
-		admin.GET("/homepage/banners", handlers.ListAdminHomepageBanners())
-		admin.POST("/homepage/banners", handlers.CreateAdminHomepageBanner())
-		admin.PUT("/homepage/banners/:bannerID", handlers.UpdateAdminHomepageBanner())
-		admin.PUT("/homepage/banners/:bannerID/active", handlers.SetAdminHomepageBannerActive())
-		admin.DELETE("/homepage/banners/:bannerID", handlers.DeleteAdminHomepageBanner())
+		admin.GET("/homepage/showcase", handlers.GetAdminHomepageShowcase())
+		admin.PUT("/homepage/showcase", handlers.UpsertAdminHomepageShowcase())
 	}
 }

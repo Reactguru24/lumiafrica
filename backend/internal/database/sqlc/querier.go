@@ -23,6 +23,7 @@ type Querier interface {
 	AvgRatingByVendor(ctx context.Context, vendorID types.BinaryUUID) (interface{}, error)
 	ClearCartItems(ctx context.Context, cartID types.BinaryUUID) error
 	ClearVendorFeaturedProducts(ctx context.Context, vendorID types.BinaryUUID) error
+	ClearVendorDefaultPayoutMethods(ctx context.Context, vendorID types.BinaryUUID) error
 	CompleteIdempotencyKey(ctx context.Context, arg CompleteIdempotencyKeyParams) error
 	CountAdminProducts(ctx context.Context) (int64, error)
 	CountAdminProductsSearch(ctx context.Context, arg CountAdminProductsSearchParams) (int64, error)
@@ -46,8 +47,6 @@ type Querier interface {
 	CountPendingProducts(ctx context.Context) (int64, error)
 	CountPendingProductsSearch(ctx context.Context, arg CountPendingProductsSearchParams) (int64, error)
 	CountProductsByVendor(ctx context.Context, vendorID types.BinaryUUID) (int64, error)
-	ListProductSKUsByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]string, error)
-	ListVendorProductSeedMeta(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorProductSeedMetaRow, error)
 	CountReviewsByProduct(ctx context.Context, productID types.BinaryUUID) (int64, error)
 	CountReviewsByProductID(ctx context.Context, productID types.BinaryUUID) (int64, error)
 	CountReviewsByProductIDs(ctx context.Context, productIds []types.BinaryUUID) (int64, error)
@@ -57,15 +56,16 @@ type Querier interface {
 	CountSubscriptionsByVendor(ctx context.Context, vendorID types.BinaryUUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CountVendorProducts(ctx context.Context, vendorID types.BinaryUUID) (int64, error)
+	CountVendorPayouts(ctx context.Context, vendorID types.BinaryUUID) (int64, error)
 	CountVendorsAdmin(ctx context.Context) (int64, error)
 	CreateAddress(ctx context.Context, arg CreateAddressParams) error
 	CreateCart(ctx context.Context, arg CreateCartParams) error
 	CreateCartItem(ctx context.Context, arg CreateCartItemParams) error
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) error
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) error
-	CreateHomepageBanner(ctx context.Context, arg CreateHomepageBannerParams) error
 	CreateHomepageHeroSlide(ctx context.Context, arg CreateHomepageHeroSlideParams) error
 	CreateHomepagePromoItem(ctx context.Context, arg CreateHomepagePromoItemParams) error
+	CreateHomepageShowcase(ctx context.Context, arg CreateHomepageShowcaseParams) error
 	CreateCoupon(ctx context.Context, arg CreateCouponParams) error
 	CreateCouponUse(ctx context.Context, arg CreateCouponUseParams) error
 	CreateDeliveryZone(ctx context.Context, arg CreateDeliveryZoneParams) error
@@ -84,16 +84,19 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	CreateVendor(ctx context.Context, arg CreateVendorParams) error
 	CreateVendorApplication(ctx context.Context, arg CreateVendorApplicationParams) error
+	CreateVendorPayout(ctx context.Context, arg CreateVendorPayoutParams) error
+	CreateVendorPayoutItem(ctx context.Context, arg CreateVendorPayoutItemParams) error
+	CreateVendorPayoutMethod(ctx context.Context, arg CreateVendorPayoutMethodParams) error
 	DeactivateSubscription(ctx context.Context, id types.BinaryUUID) error
 	DeactivateVendorSubscriptions(ctx context.Context, vendorID types.BinaryUUID) error
 	DecrementProductStock(ctx context.Context, arg DecrementProductStockParams) (int64, error)
 	DeleteCartByID(ctx context.Context, id types.BinaryUUID) error
 	DeleteCartBySessionKey(ctx context.Context, sessionKey sql.NullString) error
 	DeleteCartItem(ctx context.Context, id types.BinaryUUID) error
-	DeleteHomepageBanner(ctx context.Context, id types.BinaryUUID) error
 	DeleteHomepageHeroSlide(ctx context.Context, id types.BinaryUUID) error
 	DeleteHomepagePromoItem(ctx context.Context, id types.BinaryUUID) error
 	DeleteCollectionProducts(ctx context.Context, collectionID types.BinaryUUID) error
+	DeleteIdempotencyKey(ctx context.Context, id types.BinaryUUID) error
 	DeleteProductImages(ctx context.Context, productID types.BinaryUUID) error
 	DeletePromotionProducts(ctx context.Context, promotionID types.BinaryUUID) error
 	DeleteWishlistBySessionKey(ctx context.Context, sessionKey sql.NullString) error
@@ -113,13 +116,14 @@ type Querier interface {
 	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
 	GetCollectionByID(ctx context.Context, id types.BinaryUUID) (Collection, error)
 	GetCollectionBySlug(ctx context.Context, slug string) (Collection, error)
-	GetHomepageBannerByID(ctx context.Context, id types.BinaryUUID) (HomepageBanner, error)
+	GetActiveHomepageShowcase(ctx context.Context) (HomepageShowcase, error)
 	GetHomepageHeroSlideByID(ctx context.Context, id types.BinaryUUID) (HomepageHeroSlide, error)
 	GetHomepagePromoItemByID(ctx context.Context, id types.BinaryUUID) (HomepagePromoItem, error)
+	GetHomepageShowcase(ctx context.Context) (HomepageShowcase, error)
 	GetCouponByCode(ctx context.Context, upper string) (Coupon, error)
 	GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupon, error)
 	GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) (DeliveryZone, error)
-	GetDeliveryZoneByVendorAndName(ctx context.Context, arg GetDeliveryZoneByVendorAndNameParams) (DeliveryZone, error)
+	GetDefaultVendorMpesaMethod(ctx context.Context, vendorID types.BinaryUUID) (VendorPayoutMethod, error)
 	GetFeaturedVendors(ctx context.Context, limit int32) ([]Vendor, error)
 	GetIdempotencyKey(ctx context.Context, keyHash string) (IdempotencyKey, error)
 	GetLatestApplicationByBusinessEmail(ctx context.Context, lower string) (VendorApplication, error)
@@ -148,7 +152,9 @@ type Querier interface {
 	GetVendorByID(ctx context.Context, id types.BinaryUUID) (Vendor, error)
 	GetVendorByIDAdmin(ctx context.Context, id types.BinaryUUID) (Vendor, error)
 	GetVendorByUserID(ctx context.Context, userID types.BinaryUUID) (Vendor, error)
+	GetVendorAvailableBalance(ctx context.Context, vendorID types.BinaryUUID) (interface{}, error)
 	GetVendorCommissionRate(ctx context.Context, id types.BinaryUUID) (string, error)
+	GetVendorPayoutMethodByID(ctx context.Context, arg GetVendorPayoutMethodByIDParams) (VendorPayoutMethod, error)
 	GetVendorDeliveryZoneByID(ctx context.Context, arg GetVendorDeliveryZoneByIDParams) (DeliveryZone, error)
 	GetVendorShippingRate(ctx context.Context, arg GetVendorShippingRateParams) (GetVendorShippingRateRow, error)
 	HideOutOfStockProductByVendor(ctx context.Context, arg HideOutOfStockProductByVendorParams) error
@@ -156,7 +162,6 @@ type Querier interface {
 	InsertVendorCategory(ctx context.Context, arg InsertVendorCategoryParams) error
 	InvalidateUserResetTokens(ctx context.Context, userID types.BinaryUUID) error
 	ListActiveCollections(ctx context.Context) ([]Collection, error)
-	ListActiveHomepageBanners(ctx context.Context) ([]HomepageBanner, error)
 	ListActiveHomepageHeroSlides(ctx context.Context) ([]HomepageHeroSlide, error)
 	ListActiveHomepagePromoItems(ctx context.Context) ([]HomepagePromoItem, error)
 	ListActivePromotions(ctx context.Context) ([]Promotion, error)
@@ -165,7 +170,6 @@ type Querier interface {
 	ListAdminProductsSearch(ctx context.Context, arg ListAdminProductsSearchParams) ([]Product, error)
 	ListAllActiveCategories(ctx context.Context) ([]Category, error)
 	ListAllCollections(ctx context.Context, arg ListAllCollectionsParams) ([]Collection, error)
-	ListAllHomepageBanners(ctx context.Context) ([]HomepageBanner, error)
 	ListAllHomepageHeroSlides(ctx context.Context) ([]HomepageHeroSlide, error)
 	ListAllHomepagePromoItems(ctx context.Context) ([]HomepagePromoItem, error)
 	ListAllCoupons(ctx context.Context, arg ListAllCouponsParams) ([]Coupon, error)
@@ -199,6 +203,7 @@ type Querier interface {
 	ListOrdersByVendor(ctx context.Context, arg ListOrdersByVendorParams) ([]Order, error)
 	ListOrdersByVendorSince(ctx context.Context, arg ListOrdersByVendorSinceParams) ([]Order, error)
 	ListOrdersSince(ctx context.Context, arg ListOrdersSinceParams) ([]Order, error)
+	ListPayableOrderItems(ctx context.Context, vendorID types.BinaryUUID) ([]ListPayableOrderItemsRow, error)
 	ListPendingApplications(ctx context.Context, arg ListPendingApplicationsParams) ([]VendorApplication, error)
 	ListPendingProducts(ctx context.Context, arg ListPendingProductsParams) ([]Product, error)
 	ListPendingProductsSearch(ctx context.Context, arg ListPendingProductsSearchParams) ([]Product, error)
@@ -217,6 +222,8 @@ type Querier interface {
 	ListTopVendorsForAnalytics(ctx context.Context, limit int32) ([]Vendor, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	ListVendorCategoryIDs(ctx context.Context, vendorID types.BinaryUUID) ([]types.BinaryUUID, error)
+	ListVendorPayoutMethods(ctx context.Context, vendorID types.BinaryUUID) ([]VendorPayoutMethod, error)
+	ListVendorPayouts(ctx context.Context, arg ListVendorPayoutsParams) ([]VendorPayout, error)
 	ListVendorProducts(ctx context.Context, arg ListVendorProductsParams) ([]Product, error)
 	ListVendorShippingRatesByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorShippingRatesByVendorRow, error)
 	ListVendorsAdmin(ctx context.Context, arg ListVendorsAdminParams) ([]Vendor, error)
@@ -237,7 +244,6 @@ type Querier interface {
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	SearchVendors(ctx context.Context, arg SearchVendorsParams) ([]Vendor, error)
 	SetCollectionActive(ctx context.Context, arg SetCollectionActiveParams) error
-	SetHomepageBannerActive(ctx context.Context, arg SetHomepageBannerActiveParams) error
 	SetHomepageHeroSlideActive(ctx context.Context, arg SetHomepageHeroSlideActiveParams) error
 	SetHomepagePromoItemActive(ctx context.Context, arg SetHomepagePromoItemActiveParams) error
 	SetCouponActive(ctx context.Context, arg SetCouponActiveParams) error
@@ -258,9 +264,9 @@ type Querier interface {
 	UpdateAllVendorCommissionRates(ctx context.Context, commissionRate string) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
 	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) error
-	UpdateHomepageBanner(ctx context.Context, arg UpdateHomepageBannerParams) error
 	UpdateHomepageHeroSlide(ctx context.Context, arg UpdateHomepageHeroSlideParams) error
 	UpdateHomepagePromoItem(ctx context.Context, arg UpdateHomepagePromoItemParams) error
+	UpdateHomepageShowcase(ctx context.Context, arg UpdateHomepageShowcaseParams) error
 	UpdateCoupon(ctx context.Context, arg UpdateCouponParams) error
 	UpdateDeliveryZone(ctx context.Context, arg UpdateDeliveryZoneParams) error
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error
@@ -278,6 +284,8 @@ type Querier interface {
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) error
 	UpdateUserVendorCredentials(ctx context.Context, arg UpdateUserVendorCredentialsParams) error
 	UpdateVendorCommissionRate(ctx context.Context, arg UpdateVendorCommissionRateParams) error
+	UpdateVendorPayoutMethodRecipient(ctx context.Context, arg UpdateVendorPayoutMethodRecipientParams) error
+	UpdateVendorPayoutStatus(ctx context.Context, arg UpdateVendorPayoutStatusParams) error
 	UpdateVendorProfile(ctx context.Context, arg UpdateVendorProfileParams) error
 	UpdateVendorRating(ctx context.Context, arg UpdateVendorRatingParams) error
 	UpsertVendorShippingRate(ctx context.Context, arg UpsertVendorShippingRateParams) error

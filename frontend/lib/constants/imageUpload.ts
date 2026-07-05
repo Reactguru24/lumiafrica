@@ -3,7 +3,7 @@ export type ImageUploadPresetId =
   | 'logo'
   | 'banner'
   | 'heroCarousel'
-  | 'homepageBanner'
+  | 'homepageShowcase'
   | 'product'
 
 export interface ImageUploadPreset {
@@ -64,14 +64,14 @@ export const IMAGE_UPLOAD_PRESETS: Record<ImageUploadPresetId, ImageUploadPreset
     quality: 0.9,
     extension: 'jpg',
   },
-  /** Wide strip below the promo row on the homepage. */
-  homepageBanner: {
-    id: 'homepageBanner',
-    label: 'Homepage middle banner',
-    width: 1920,
-    height: 480,
-    minWidth: 1200,
-    minHeight: 300,
+  /** Portrait tiles in the homepage feature showcase grid (4:5). */
+  homepageShowcase: {
+    id: 'homepageShowcase',
+    label: 'Showcase grid image',
+    width: 800,
+    height: 1000,
+    minWidth: 400,
+    minHeight: 500,
     mimeType: 'image/jpeg',
     quality: 0.9,
     extension: 'jpg',
@@ -115,11 +115,11 @@ export const HOMEPAGE_HERO_CAROUSEL_GUIDE = {
   note: 'Full-width hero (55–75vh). Keep the main subject on the right — text overlays the left side.',
 }
 
-/** Admin copy for homepage middle banner uploads. */
-export const HOMEPAGE_MIDDLE_BANNER_GUIDE = {
-  preset: IMAGE_UPLOAD_PRESETS.homepageBanner,
+/** Admin copy for homepage feature showcase grid uploads. */
+export const HOMEPAGE_SHOWCASE_GUIDE = {
+  preset: IMAGE_UPLOAD_PRESETS.homepageShowcase,
   title: 'Recommended dimensions',
-  dimensions: `${IMAGE_UPLOAD_PRESETS.homepageBanner.width}×${IMAGE_UPLOAD_PRESETS.homepageBanner.height}px (${imageAspectRatioLabel(IMAGE_UPLOAD_PRESETS.homepageBanner)} wide strip)`,
-  minimum: `Minimum ${IMAGE_UPLOAD_PRESETS.homepageBanner.minWidth}×${IMAGE_UPLOAD_PRESETS.homepageBanner.minHeight}px`,
-  note: 'Displayed as a full-width strip (~176–256px tall). Use a wide, short composition.',
+  dimensions: `${IMAGE_UPLOAD_PRESETS.homepageShowcase.width}×${IMAGE_UPLOAD_PRESETS.homepageShowcase.height}px (${imageAspectRatioLabel(IMAGE_UPLOAD_PRESETS.homepageShowcase)} portrait)`,
+  minimum: `Minimum ${IMAGE_UPLOAD_PRESETS.homepageShowcase.minWidth}×${IMAGE_UPLOAD_PRESETS.homepageShowcase.minHeight}px`,
+  note: 'Four portrait images in a staggered 2×2 grid beside the promo text.',
 }

@@ -52,30 +52,25 @@ UPDATE homepage_promo_items SET active = ? WHERE id = ?;
 -- name: DeleteHomepagePromoItem :exec
 DELETE FROM homepage_promo_items WHERE id = ?;
 
--- name: ListActiveHomepageBanners :many
-SELECT * FROM homepage_banners
+-- name: GetActiveHomepageShowcase :one
+SELECT * FROM homepage_showcase
 WHERE active = true
-ORDER BY sort_order ASC, created_at ASC
+ORDER BY updated_at DESC
 LIMIT 1;
 
--- name: ListAllHomepageBanners :many
-SELECT * FROM homepage_banners
-ORDER BY sort_order ASC, created_at ASC;
+-- name: GetHomepageShowcase :one
+SELECT * FROM homepage_showcase
+ORDER BY updated_at DESC
+LIMIT 1;
 
--- name: GetHomepageBannerByID :one
-SELECT * FROM homepage_banners WHERE id = ? LIMIT 1;
+-- name: CreateHomepageShowcase :exec
+INSERT INTO homepage_showcase (
+  id, overline, headline, description, button_text, button_link,
+  background_color, image_1, image_2, image_3, image_4, active
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
--- name: CreateHomepageBanner :exec
-INSERT INTO homepage_banners (id, title, subtitle, image, link, active, sort_order)
-VALUES (?, ?, ?, ?, ?, ?, ?);
-
--- name: UpdateHomepageBanner :exec
-UPDATE homepage_banners
-SET title = ?, subtitle = ?, image = ?, link = ?, sort_order = ?
+-- name: UpdateHomepageShowcase :exec
+UPDATE homepage_showcase
+SET overline = ?, headline = ?, description = ?, button_text = ?, button_link = ?,
+    background_color = ?, image_1 = ?, image_2 = ?, image_3 = ?, image_4 = ?, active = ?
 WHERE id = ?;
-
--- name: SetHomepageBannerActive :exec
-UPDATE homepage_banners SET active = ? WHERE id = ?;
-
--- name: DeleteHomepageBanner :exec
-DELETE FROM homepage_banners WHERE id = ?;

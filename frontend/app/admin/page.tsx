@@ -1,16 +1,19 @@
 'use client'
 
-import { useAdminVendorApplications, useAdminAnalytics } from '@/lib/stores/api'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import { useAdminVendorApplications, useAdminAnalytics, useAdminPlatformSettings, useUpdateAdminPlatformSettings } from '@/lib/stores/api'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated } from '@/lib/utils/api'
 import { analyticsField } from '@/lib/utils/admin'
+import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { StatCard } from '@/components/common/StatCard'
 import { LineChart } from '@/components/charts/LineChart'
 import { BarChart } from '@/components/charts/BarChart'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import {
   UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
-  CurrencyDollarIcon, ExclamationTriangleIcon,
+  CurrencyDollarIcon, ExclamationTriangleIcon, PhotoIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useMemo } from 'react'
@@ -19,6 +22,15 @@ export default function AdminDashboardPage() {
   const formatPrice = useFormatCurrency()
   const { data: vendorApplicationsAPI } = useAdminVendorApplications(1, 50)
   const { data: analyticsData, loading } = useAdminAnalytics()
+  const { data: platformSettings, refetch: refetchSettings } = useAdminPlatformSettings()
+  const updateSettings = useUpdateAdminPlatformSettings().mutate
+  const [commissionRate, setCommissionRate] = useState<number | null>(null)
+  const [commissionEnabled, setCommissionEnabled] = useState<boolean | null>(null)
+  const [savingCommission, setSavingCommission] = useState(false)
+
+  const settings = platformSettings as { commissionRate?: number; commissionEnabled?: boolean } | null
+  const displayRate = commissionRate ?? settings?.commissionRate ?? 10
+  const displayEnabled = commissionEnabled ?? settings?.commissionEnabled ?? true
 
   const { items: applications } = unwrapPaginated<{
     id: string
@@ -50,12 +62,75 @@ export default function AdminDashboardPage() {
     analytics, 'orderTrends', 'order_trends'
   ) ?? []
 
+  async function saveCommission(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingCommission(true)
+    try {
+      await updateSettings({ commissionRate: displayRate, commissionEnabled: displayEnabled })
+      await refetchSettings()
+      toast.success('Commission settings updated')
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Unable to update commission settings.'))
+    } finally {
+      setSavingCommission(false)
+    }
+  }
+
   return (
     <div>
       <AdminPageHeader
         title="Platform Dashboard"
         subtitle="Overview of marketplace performance and pending actions."
       />
+
+      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+        <form className="card p-5" onSubmit={saveCommission}>
+          <h3 className="font-semibold mb-1">Platform commission</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Revenue share taken from vendor sales. Applies to all vendors.
+          </p>
+          <label className="flex items-center gap-2 text-sm mb-4">
+            <input
+              type="checkbox"
+              checked={displayEnabled}
+              onChange={(e) => setCommissionEnabled(e.target.checked)}
+            />
+            Commission enabled
+          </label>
+          <div className="flex items-center gap-3 mb-4">
+            <input
+              type="range"
+              min={0}
+              max={30}
+              step={0.5}
+              value={displayRate}
+              disabled={!displayEnabled}
+              onChange={(e) => setCommissionRate(Number(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-lg font-semibold w-16 text-right">{displayRate}%</span>
+          </div>
+          <button type="submit" className="btn-primary text-sm" disabled={savingCommission}>
+            {savingCommission ? 'Saving…' : 'Save commission'}
+          </button>
+        </form>
+
+        <div className="card p-5 flex flex-col justify-between">
+          <div>
+            <h3 className="font-semibold mb-1">Homepage content</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Manage hero carousel slides, promo tiles, and the feature showcase section.
+            </p>
+          </div>
+          <Link
+            href="/admin/homepage"
+            className="inline-flex items-center gap-2 text-sm font-medium text-brand-teal dark:text-brand-orange hover:underline"
+          >
+            <PhotoIcon className="w-5 h-5" />
+            Open homepage manager
+          </Link>
+        </div>
+      </div>
 
       {pendingApplications.length > 0 && (
         <div className="card p-5 mb-8 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">

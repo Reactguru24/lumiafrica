@@ -15,3 +15,6 @@ WHERE id = ? AND completed_at IS NULL AND locked_at IS NULL;
 UPDATE idempotency_keys
 SET response_code = ?, response_body = ?, completed_at = NOW()
 WHERE id = ?;
+
+-- name: DeleteIdempotencyKey :exec
+DELETE FROM idempotency_keys WHERE id = ?;

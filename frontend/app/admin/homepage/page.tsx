@@ -1,16 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
-import { HOMEPAGE_HERO_CAROUSEL_GUIDE, HOMEPAGE_MIDDLE_BANNER_GUIDE } from '@/lib/constants/imageUpload'
+import { HOMEPAGE_HERO_CAROUSEL_GUIDE, HOMEPAGE_SHOWCASE_GUIDE } from '@/lib/constants/imageUpload'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import {
   useAdminHomepageHeroSlides,
   useAdminHomepagePromoItems,
-  useAdminHomepageBanners,
+  useAdminHomepageShowcase,
+  useUpsertAdminHomepageShowcase,
   useCreateAdminHomepageHeroSlide,
   useUpdateAdminHomepageHeroSlide,
   useSetAdminHomepageHeroSlideActive,
@@ -19,10 +20,6 @@ import {
   useUpdateAdminHomepagePromoItem,
   useSetAdminHomepagePromoItemActive,
   useDeleteAdminHomepagePromoItem,
-  useCreateAdminHomepageBanner,
-  useUpdateAdminHomepageBanner,
-  useSetAdminHomepageBannerActive,
-  useDeleteAdminHomepageBanner,
 } from '@/lib/stores/api'
 import { unwrapItems } from '@/lib/utils/api'
 
@@ -42,19 +39,38 @@ const emptyPromoForm = () => ({
   sortOrder: 0,
 })
 
-const emptyBannerForm = () => ({
-  title: '',
-  subtitle: '',
-  image: '',
-  link: '',
-  sortOrder: 0,
+const emptyShowcaseForm = () => ({
+  overline: 'Made for East Africa',
+  headline: '',
+  description: '',
+  buttonText: 'Explore Trends',
+  buttonLink: '/products?trending=true',
+  backgroundColor: '#084c54',
+  images: ['', '', '', ''] as string[],
   active: true,
 })
+
+type ShowcaseForm = ReturnType<typeof emptyShowcaseForm>
+
+function showcaseToForm(data: Record<string, unknown> | null): ShowcaseForm {
+  if (!data) return emptyShowcaseForm()
+  const images = Array.isArray(data.images) ? (data.images as string[]) : []
+  return {
+    overline: String(data.overline ?? 'Made for East Africa'),
+    headline: String(data.headline ?? ''),
+    description: String(data.description ?? ''),
+    buttonText: String(data.buttonText ?? 'Explore Trends'),
+    buttonLink: String(data.buttonLink ?? '/products?trending=true'),
+    backgroundColor: String(data.backgroundColor ?? '#084c54'),
+    images: [0, 1, 2, 3].map((i) => images[i] ?? ''),
+    active: data.active !== false,
+  }
+}
 
 export default function AdminHomepagePage() {
   const { data: slidesData, refetch: refetchSlides } = useAdminHomepageHeroSlides()
   const { data: promosData, refetch: refetchPromos } = useAdminHomepagePromoItems()
-  const { data: bannersData, refetch: refetchBanners } = useAdminHomepageBanners()
+  const { data: showcaseData, loading: showcaseLoading, refetch: refetchShowcase } = useAdminHomepageShowcase()
 
   const createSlide = useCreateAdminHomepageHeroSlide().mutate
   const updateSlide = useUpdateAdminHomepageHeroSlide().mutate
@@ -64,22 +80,34 @@ export default function AdminHomepagePage() {
   const updatePromo = useUpdateAdminHomepagePromoItem().mutate
   const setPromoActive = useSetAdminHomepagePromoItemActive().mutate
   const deletePromo = useDeleteAdminHomepagePromoItem().mutate
-  const createBanner = useCreateAdminHomepageBanner().mutate
-  const updateBanner = useUpdateAdminHomepageBanner().mutate
-  const setBannerActive = useSetAdminHomepageBannerActive().mutate
-  const deleteBanner = useDeleteAdminHomepageBanner().mutate
+  const upsertShowcase = useUpsertAdminHomepageShowcase().mutate
 
   const slides = unwrapItems(slidesData) as any[]
   const promos = unwrapItems(promosData) as any[]
-  const banners = unwrapItems(bannersData) as any[]
 
   const [slideForm, setSlideForm] = useState(emptySlideForm)
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null)
   const [promoForm, setPromoForm] = useState(emptyPromoForm)
   const [editingPromoId, setEditingPromoId] = useState<string | null>(null)
-  const [bannerForm, setBannerForm] = useState(emptyBannerForm)
-  const [editingBannerId, setEditingBannerId] = useState<string | null>(null)
+  const [showcaseForm, setShowcaseForm] = useState(emptyShowcaseForm)
+  const [showcaseLoaded, setShowcaseLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savingShowcase, setSavingShowcase] = useState(false)
+
+  useEffect(() => {
+    if (!showcaseLoading && !showcaseLoaded) {
+      setShowcaseForm(showcaseToForm(showcaseData as Record<string, unknown> | null))
+      setShowcaseLoaded(true)
+    }
+  }, [showcaseData, showcaseLoading, showcaseLoaded])
+
+  function setShowcaseImage(index: number, url: string) {
+    setShowcaseForm((prev) => {
+      const images = [...prev.images]
+      images[index] = url
+      return { ...prev, images }
+    })
+  }
 
   async function handleSlideSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -123,24 +151,26 @@ export default function AdminHomepagePage() {
     }
   }
 
-  async function handleBannerSubmit(e: React.FormEvent) {
+  async function handleShowcaseSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
+    setSavingShowcase(true)
     try {
-      if (editingBannerId) {
-        await updateBanner({ id: editingBannerId, payload: bannerForm })
-        toast.success('Banner updated')
-      } else {
-        await createBanner(bannerForm)
-        toast.success('Banner created')
-      }
-      setBannerForm(emptyBannerForm())
-      setEditingBannerId(null)
-      refetchBanners()
+      await upsertShowcase({
+        overline: showcaseForm.overline,
+        headline: showcaseForm.headline,
+        description: showcaseForm.description,
+        buttonText: showcaseForm.buttonText,
+        buttonLink: showcaseForm.buttonLink,
+        backgroundColor: showcaseForm.backgroundColor,
+        images: showcaseForm.images.filter(Boolean),
+        active: showcaseForm.active,
+      })
+      await refetchShowcase()
+      toast.success('Feature showcase saved')
     } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, 'Failed to save banner'))
+      toast.error(getFriendlyErrorMessage(err, 'Failed to save showcase'))
     } finally {
-      setSaving(false)
+      setSavingShowcase(false)
     }
   }
 
@@ -148,7 +178,7 @@ export default function AdminHomepagePage() {
     <div className="space-y-8">
       <AdminPageHeader
         title="Homepage"
-        subtitle="Manage the hero carousel, promo strip, and middle banner shown on the storefront."
+        subtitle="Manage the hero carousel, promo strip, and feature showcase on the storefront."
       />
 
       <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
@@ -258,57 +288,72 @@ export default function AdminHomepagePage() {
 
       <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
         <div>
-          <h2 className="font-semibold text-lg">Middle banner</h2>
-          <p className="text-sm text-gray-500 mt-1">Only one banner can be active at a time. It appears below the promo strip on the homepage.</p>
+          <h2 className="font-semibold text-lg">Feature showcase</h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Full-width promo block below the promo strip — text on the left, four portrait images on the right.
+          </p>
           <div className="mt-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <p className="font-medium text-gray-800 dark:text-gray-200">{HOMEPAGE_MIDDLE_BANNER_GUIDE.title}</p>
-            <p><span className="font-medium">Size:</span> {HOMEPAGE_MIDDLE_BANNER_GUIDE.dimensions}</p>
-            <p><span className="font-medium">Minimum:</span> {HOMEPAGE_MIDDLE_BANNER_GUIDE.minimum}</p>
-            <p className="text-xs">{HOMEPAGE_MIDDLE_BANNER_GUIDE.note}</p>
+            <p className="font-medium text-gray-800 dark:text-gray-200">{HOMEPAGE_SHOWCASE_GUIDE.title}</p>
+            <p><span className="font-medium">Size:</span> {HOMEPAGE_SHOWCASE_GUIDE.dimensions}</p>
+            <p><span className="font-medium">Minimum:</span> {HOMEPAGE_SHOWCASE_GUIDE.minimum}</p>
+            <p className="text-xs">{HOMEPAGE_SHOWCASE_GUIDE.note}</p>
           </div>
         </div>
-        <form onSubmit={handleBannerSubmit} className="grid md:grid-cols-2 gap-4">
-          <label className="block">
-            <span className="text-sm font-medium">Title</span>
-            <input className="input-field mt-1" value={bannerForm.title} onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })} />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">Link (optional)</span>
-            <input className="input-field mt-1" value={bannerForm.link} onChange={(e) => setBannerForm({ ...bannerForm, link: e.target.value })} />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-sm font-medium">Subtitle</span>
-            <textarea className="input-field mt-1" rows={2} value={bannerForm.subtitle} onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })} />
-          </label>
-          <div className="md:col-span-2">
-            <span className="text-sm font-medium block mb-2">Banner image</span>
-            <ImageFieldUpload presetId="homepageBanner" variant="banner" value={bannerForm.image} onChange={(image) => setBannerForm({ ...bannerForm, image })} />
-          </div>
-          <label className="flex items-center gap-2 md:col-span-2">
-            <input type="checkbox" checked={bannerForm.active} onChange={(e) => setBannerForm({ ...bannerForm, active: e.target.checked })} />
-            <span className="text-sm">Active on storefront</span>
-          </label>
-          <div className="md:col-span-2 flex gap-2">
-            <button type="submit" className="btn-primary" disabled={saving}>{editingBannerId ? 'Update banner' : 'Add banner'}</button>
-            {editingBannerId && <button type="button" className="btn-secondary" onClick={() => { setEditingBannerId(null); setBannerForm(emptyBannerForm()) }}>Cancel</button>}
-          </div>
-        </form>
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {banners.map((banner) => (
-            <div key={banner.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium">{banner.title || 'Untitled banner'}</p>
-                <p className="text-xs text-gray-500 truncate">{banner.subtitle || banner.link || banner.image}</p>
+        {showcaseLoading ? (
+          <p className="text-sm text-gray-500">Loading showcase…</p>
+        ) : (
+          <form onSubmit={handleShowcaseSubmit} className="grid md:grid-cols-2 gap-4">
+            <label className="block">
+              <span className="text-sm font-medium">Overline</span>
+              <input className="input-field mt-1" value={showcaseForm.overline} onChange={(e) => setShowcaseForm({ ...showcaseForm, overline: e.target.value })} placeholder="Made for East Africa" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Background color</span>
+              <div className="flex items-center gap-2 mt-1">
+                <input type="color" value={showcaseForm.backgroundColor} onChange={(e) => setShowcaseForm({ ...showcaseForm, backgroundColor: e.target.value })} className="h-10 w-14 rounded border border-gray-200 dark:border-gray-700 cursor-pointer" />
+                <input className="input-field flex-1" value={showcaseForm.backgroundColor} onChange={(e) => setShowcaseForm({ ...showcaseForm, backgroundColor: e.target.value })} />
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <StatusBadge status={banner.active ? 'active' : 'hidden'} />
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => { setEditingBannerId(banner.id); setBannerForm({ title: banner.title || '', subtitle: banner.subtitle || '', image: banner.image, link: banner.link || '', sortOrder: banner.sortOrder || 0, active: !!banner.active }) }}>Edit</button>
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={async () => { await setBannerActive({ id: banner.id, active: !banner.active }); refetchBanners() }}>{banner.active ? 'Deactivate' : 'Activate'}</button>
-                <button type="button" className="text-xs text-red-600" onClick={async () => { if (!confirm('Delete this banner?')) return; await deleteBanner({ id: banner.id }); refetchBanners() }}>Delete</button>
-              </div>
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-medium">Headline</span>
+              <input required className="input-field mt-1" value={showcaseForm.headline} onChange={(e) => setShowcaseForm({ ...showcaseForm, headline: e.target.value })} placeholder="Fashion From Nairobi to Kampala" />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-sm font-medium">Description</span>
+              <textarea className="input-field mt-1" rows={3} value={showcaseForm.description} onChange={(e) => setShowcaseForm({ ...showcaseForm, description: e.target.value })} />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Button text</span>
+              <input className="input-field mt-1" value={showcaseForm.buttonText} onChange={(e) => setShowcaseForm({ ...showcaseForm, buttonText: e.target.value })} />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Button link</span>
+              <input className="input-field mt-1" value={showcaseForm.buttonLink} onChange={(e) => setShowcaseForm({ ...showcaseForm, buttonLink: e.target.value })} />
+            </label>
+            <div className="md:col-span-2 grid sm:grid-cols-2 gap-4">
+              {(['Top left', 'Top right', 'Bottom left', 'Bottom right'] as const).map((label, index) => (
+                <div key={label}>
+                  <span className="text-sm font-medium block mb-2">Image — {label}</span>
+                  <ImageFieldUpload
+                    presetId="homepageShowcase"
+                    variant="square"
+                    value={showcaseForm.images[index]}
+                    onChange={(image) => setShowcaseImage(index, image)}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+            <label className="flex items-center gap-2 md:col-span-2">
+              <input type="checkbox" checked={showcaseForm.active} onChange={(e) => setShowcaseForm({ ...showcaseForm, active: e.target.checked })} />
+              <span className="text-sm">Visible on storefront</span>
+            </label>
+            <div className="md:col-span-2">
+              <button type="submit" className="btn-primary" disabled={savingShowcase}>
+                {savingShowcase ? 'Saving…' : 'Save showcase'}
+              </button>
+            </div>
+          </form>
+        )}
       </section>
     </div>
   )
