@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { create } from 'zustand'
 import { getStorage, setStorage } from '@/lib/utils/storage'
 import { FREE_SHIPPING_KES } from '@/lib/constants/commerce'
@@ -79,3 +80,16 @@ export const useCurrencyStore = create<CurrencyState>((set, get) => ({
     }).format(converted)
   },
 }))
+
+/** Reactive formatter hook — re-renders when currency changes. */
+export function useFormatCurrency() {
+  const currency = useCurrencyStore((s) => s.currency)
+  const format = useCurrencyStore((s) => s.format)
+  return useMemo(() => (amountKes: number) => format(amountKes), [currency, format])
+}
+
+/** Reactive single price string. */
+export function useFormattedPrice(amountKes: number): string {
+  const formatPrice = useFormatCurrency()
+  return useMemo(() => formatPrice(amountKes), [formatPrice, amountKes])
+}

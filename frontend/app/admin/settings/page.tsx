@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useAdminPlatformSettings, useUpdateAdminPlatformSettings } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 
 export default function AdminSettingsPage() {
+  const formatPrice = useFormatCurrency()
   const { data: settings, loading, error, refetch } = useAdminPlatformSettings()
   const updateSettings = useUpdateAdminPlatformSettings().mutate
   const [saving, setSaving] = useState(false)
@@ -131,7 +132,7 @@ export default function AdminSettingsPage() {
             {plans.map((plan) => (
               <div key={plan.label} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <p className="font-semibold">{plan.label}</p>
-                <p className="text-lg font-bold mt-1">{formatCurrency(plan.priceKes)}</p>
+                <p className="text-lg font-bold mt-1">{formatPrice(plan.priceKes)}</p>
                 <p className="text-xs text-gray-500 mt-1">{plan.durationMonths} month{plan.durationMonths > 1 ? 's' : ''} · {plan.featuredSlots} featured slot{plan.featuredSlots > 1 ? 's' : ''}</p>
               </div>
             ))}

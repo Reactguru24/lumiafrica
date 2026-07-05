@@ -38,6 +38,7 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
+/** Non-reactive — prefer `useFormatCurrency()` in client components. */
 export function formatCurrency(amountKes: number): string {
   return useCurrencyStore.getState().format(amountKes)
 }

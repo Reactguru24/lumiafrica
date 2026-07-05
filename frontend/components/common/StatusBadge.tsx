@@ -12,9 +12,10 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function StatusBadge({ status }: { status: string }) {
+  const normalized = status && STATUS_COLORS[status] ? status : 'pending'
   return (
-    <span className={`badge capitalize ${STATUS_COLORS[status] || 'bg-gray-100 text-gray-800'}`}>
-      {status}
+    <span className={`badge capitalize ${STATUS_COLORS[normalized] || 'bg-gray-100 text-gray-800'}`}>
+      {normalized}
     </span>
   )
 }

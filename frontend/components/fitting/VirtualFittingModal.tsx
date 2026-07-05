@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { Modal } from '@/components/common/Modal'
 import { SparklesIcon, CameraIcon } from '@heroicons/react/24/outline'
 
+type FittingPhase = 'idle' | 'analyzing' | 'result'
+
 type FittingResult = {
   validation: {
     valid: boolean
@@ -47,11 +49,14 @@ export function VirtualFittingModal({
   const fileRef = useRef<HTMLInputElement>(null)
   const [height, setHeight] = useState('')
   const [weight, setWeight] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [phase, setPhase] = useState<FittingPhase>('idle')
   const [result, setResult] = useState<FittingResult | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
 
+  const loading = phase === 'analyzing'
+
   function reset() {
+    setPhase('idle')
     setResult(null)
     setPreview(null)
     if (fileRef.current) fileRef.current.value = ''
@@ -75,7 +80,7 @@ export function VirtualFittingModal({
     if (height) formData.append('height', height)
     if (weight) formData.append('weight', weight)
 
-    setLoading(true)
+    setPhase('analyzing')
     setResult(null)
     try {
       const response = await fetch('/api/virtual-fitting/analyze', {
@@ -85,16 +90,19 @@ export function VirtualFittingModal({
       const data = await response.json()
       if (!response.ok) {
         toast.error(data.error || 'Could not analyze photo')
+        setPhase('idle')
         return
       }
       setResult(data)
+      setPhase('result')
       if (!data.validation?.valid) {
         toast.error(data.validation?.message || 'Photo did not pass validation')
+      } else if (data.recommendation?.size) {
+        toast.success(`Best fit: size ${data.recommendation.size}`)
       }
     } catch {
       toast.error('Virtual fitting service is unavailable')
-    } finally {
-      setLoading(false)
+      setPhase('idle')
     }
   }
 
@@ -106,6 +114,7 @@ export function VirtualFittingModal({
     }
     setPreview(URL.createObjectURL(file))
     setResult(null)
+    setPhase('idle')
   }
 
   function applySize(size: string) {
@@ -130,21 +139,33 @@ export function VirtualFittingModal({
       onClose={handleClose}
       size="md"
       footer={
-        <button type="button" className="btn-primary w-full sm:w-auto" disabled={loading} onClick={handleAnalyze}>
-          {loading ? 'Analyzing…' : 'Analyze photo'}
-        </button>
+        phase !== 'analyzing' && (
+          <button type="button" className="btn-primary w-full sm:w-auto" disabled={!preview} onClick={handleAnalyze}>
+            {result ? 'Analyze again' : 'Get size recommendation'}
+          </button>
+        )
       }
     >
       <p className="text-sm text-gray-500 mb-4">
         Upload a full-body photo to get a size recommendation for <span className="font-medium text-gray-700 dark:text-gray-300">{productName}</span>.
       </p>
 
-      <div className="space-y-4">
+      <div className="space-y-4 relative">
+        {phase === 'analyzing' && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm min-h-[280px]">
+            <div className="w-14 h-14 border-4 border-brand-teal border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="font-semibold text-gray-900 dark:text-white">Analyzing your photo…</p>
+            <p className="text-sm text-gray-500 mt-1 text-center max-w-xs">
+              Estimating measurements and matching against this garment&apos;s size chart
+            </p>
+          </div>
+        )}
+
         <label className="block">
           <span className="text-sm font-medium">Photo</span>
           <div
             className="mt-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => !loading && fileRef.current?.click()}
           >
             {preview ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -163,15 +184,35 @@ export function VirtualFittingModal({
         <div className="grid grid-cols-2 gap-3">
           <label>
             <span className="text-sm font-medium">Height (cm)</span>
-            <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 170" className="input-field mt-1" />
+            <input type="number" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="e.g. 170" className="input-field mt-1" disabled={loading} />
           </label>
           <label>
             <span className="text-sm font-medium">Weight (kg)</span>
-            <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 65" className="input-field mt-1" />
+            <input type="number" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="e.g. 65" className="input-field mt-1" disabled={loading} />
           </label>
         </div>
 
-        {result?.validation?.valid && result.measurements && (
+        {phase === 'result' && result?.validation?.valid && result.recommendation && (
+          <div className="rounded-xl border-2 border-brand-teal bg-gradient-to-br from-brand-teal/10 to-brand-orange/5 p-5 text-center">
+            <p className="text-xs uppercase tracking-wider text-brand-teal font-semibold mb-1">Recommended size for you</p>
+            <p className="font-display text-4xl font-bold text-gray-900 dark:text-white">{result.recommendation.size}</p>
+            <p className="text-sm text-gray-500 mt-1">{result.recommendation.confidence}% match for this item</p>
+            {result.recommendation.alternatives.length > 0 && (
+              <p className="text-xs text-gray-500 mt-2">
+                Also consider: {result.recommendation.alternatives.join(', ')}
+              </p>
+            )}
+            <button
+              type="button"
+              className="btn-primary mt-4 w-full"
+              onClick={() => applySize(result.recommendation!.size)}
+            >
+              Use size {result.recommendation.size}
+            </button>
+          </div>
+        )}
+
+        {phase === 'result' && result?.validation?.valid && result.measurements && (
           <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-4 text-sm space-y-2">
             <p className="font-medium flex items-center gap-1.5">
               <SparklesIcon className="w-4 h-4 text-brand-teal" />
@@ -186,43 +227,21 @@ export function VirtualFittingModal({
           </div>
         )}
 
-        {result?.recommendation && (
-          <div className="rounded-lg border border-brand-teal/30 bg-brand-teal/5 p-4">
-            <p className="font-semibold text-lg">
-              Recommended: {result.recommendation.size}
-              <span className="text-sm font-normal text-gray-500 ml-2">
-                ({result.recommendation.confidence}% match)
-              </span>
-            </p>
-            {result.recommendation.alternatives.length > 0 && (
-              <p className="text-sm text-gray-500 mt-1">
-                Alternatives: {result.recommendation.alternatives.join(', ')}
-              </p>
-            )}
-            {result.fit_analysis && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
-                  Chest: {fitLabel(result.fit_analysis.chest_fit)}
-                </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
-                  Waist: {fitLabel(result.fit_analysis.waist_fit)}
-                </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
-                  Length: {fitLabel(result.fit_analysis.length_fit)}
-                </span>
-              </div>
-            )}
-            <button
-              type="button"
-              className="btn-primary mt-4 w-full"
-              onClick={() => applySize(result.recommendation!.size)}
-            >
-              Use size {result.recommendation.size}
-            </button>
+        {phase === 'result' && result?.recommendation && result.fit_analysis && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
+              Chest: {fitLabel(result.fit_analysis.chest_fit)}
+            </span>
+            <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
+              Waist: {fitLabel(result.fit_analysis.waist_fit)}
+            </span>
+            <span className="text-xs px-2 py-1 rounded-full bg-white dark:bg-gray-900 border">
+              Length: {fitLabel(result.fit_analysis.length_fit)}
+            </span>
           </div>
         )}
 
-        {result && !result.validation?.valid && (
+        {phase === 'result' && result && !result.validation?.valid && (
           <p className="text-sm text-red-600">{result.validation.message}</p>
         )}
       </div>

@@ -126,7 +126,7 @@ function PaymentCallbackContent() {
       <p className="text-gray-500 mb-2">
         {paymentType === 'subscription'
           ? 'Your store is now featured and selected products will appear on the homepage.'
-          : 'Thank you for your purchase.'}
+          : 'Thank you for your purchase. Your order is processing — we will notify you when it ships.'}
       </p>
       {orderId && <p className="text-sm text-gray-400 mb-8">Order ID: {orderId}</p>}
       <div className="flex flex-col sm:flex-row gap-3 justify-center">

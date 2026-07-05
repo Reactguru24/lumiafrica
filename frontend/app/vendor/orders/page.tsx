@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useVendorOrders, useUpdateVendorOrderStatus } from '@/lib/stores/api'
-import { formatCurrency, formatDateTime } from '@/lib/utils/storage'
+import { formatDateTime } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapItems, parseOrderItems } from '@/lib/utils/api'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -17,6 +18,7 @@ import { formatOrderShortId } from '@/lib/utils/orders'
 import type { Order, OrderStatus } from '@/lib/types'
 
 export default function VendorOrdersPage() {
+  const formatPrice = useFormatCurrency()
   const { data: ordersAPI, loading, error, refetch } = useVendorOrders()
   const { mutate: updateOrderStatus, loading: updating } = useUpdateVendorOrderStatus()
   const [filter, setFilter] = useState<'all' | OrderStatus>('all')
@@ -102,9 +104,9 @@ export default function VendorOrdersPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <span className="font-semibold text-sm">{formatCurrency(order.total || 0)}</span>
+                      <span className="font-semibold text-sm">{formatPrice(order.total || 0)}</span>
                       {(order.discount ?? 0) > 0 && (
-                        <span className="text-xs text-green-600">−{formatCurrency(order.discount ?? 0)}</span>
+                        <span className="text-xs text-green-600">−{formatPrice(order.discount ?? 0)}</span>
                       )}
                       <StatusBadge status={order.status} />
                       <button

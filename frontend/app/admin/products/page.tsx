@@ -6,7 +6,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useAdminProducts, useModerateProduct } from '@/lib/stores/api'
 import { unwrapPaginated } from '@/lib/utils/api'
 import { confirmAction } from '@/lib/utils/swal'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { MediaImage } from '@/components/common/MediaImage'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { ResponsiveDataTable } from '@/components/common/ResponsiveDataTable'
@@ -17,6 +17,7 @@ import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import type { Product } from '@/lib/types'
 
 export default function AdminProductsPage() {
+  const formatPrice = useFormatCurrency()
   const [page, setPage] = useState(1)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -149,7 +150,7 @@ export default function AdminProductsPage() {
             columns={[
               { key: 'name', label: 'Product', width: '40%' },
               { key: 'brand', label: 'Brand', width: '20%' },
-              { key: 'price', label: 'Price', width: '20%', format: (v) => formatCurrency(v as number) },
+              { key: 'price', label: 'Price', width: '20%', format: (v) => formatPrice(v as number) },
               { key: 'status', label: 'Status', width: '20%' },
             ]}
             rows={tableData}

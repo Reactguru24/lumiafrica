@@ -18,7 +18,8 @@ import { confirmAction } from '@/lib/utils/swal'
 import { unwrapItems } from '@/lib/utils/api'
 import { isFeaturedListingActive, subscriptionDaysRemaining } from '@/lib/utils/subscriptions'
 import { CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/outline'
-import { formatDate, formatCurrency } from '@/lib/utils/storage'
+import { formatDate } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import Link from 'next/link'
 import type { Product, Vendor, VendorSubscription } from '@/lib/types'
 
@@ -33,6 +34,7 @@ type SubscriptionPlan = {
 }
 
 export default function VendorSubscriptionPage() {
+  const formatPrice = useFormatCurrency()
   const { data: vendor, loading: vendorLoading } = useVendorProfile()
   const { data: activeSubscription, refetch: refetchActive } = useVendorSubscription()
   const { data: historyData } = useVendorSubscriptionHistory()
@@ -207,7 +209,7 @@ export default function VendorSubscriptionPage() {
                 <span className="font-semibold">{plan.label}</span>
                 <span className="text-xs text-gray-500">{plan.featuredSlots || 1} product slots</span>
               </div>
-              <p className="text-lg sm:text-2xl font-bold text-brand-teal dark:text-brand-orange break-words">{formatCurrency(plan.priceKes)}</p>
+              <p className="text-lg sm:text-2xl font-bold text-brand-teal dark:text-brand-orange break-words">{formatPrice(plan.priceKes)}</p>
               <p className="text-xs text-gray-500 mt-2">
                 {plan.durationMonths === 1 ? 'Billed monthly' : `${plan.durationMonths} months of homepage visibility`}
               </p>
@@ -260,7 +262,7 @@ export default function VendorSubscriptionPage() {
                   />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-sm truncate">{product.name}</p>
-                    <p className="text-xs text-gray-500">{formatCurrency(product.price)}</p>
+                    <p className="text-xs text-gray-500">{formatPrice(product.price)}</p>
                   </div>
                   <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-xs ${selected ? 'bg-brand-teal text-white border-brand-teal dark:bg-brand-orange dark:border-brand-orange' : 'border-gray-300'}`}>
                     {selected ? '✓' : ''}
@@ -299,7 +301,7 @@ export default function VendorSubscriptionPage() {
                 {history.map((sub) => (
                   <tr key={sub.id}>
                     <td className="px-4 py-3 capitalize">{sub.planName || sub.plan}</td>
-                    <td className="px-4 py-3">{formatCurrency(sub.amountPaid)}</td>
+                    <td className="px-4 py-3">{formatPrice(sub.amountPaid)}</td>
                     <td className="px-4 py-3 hidden sm:table-cell">{sub.paymentMethod}</td>
                     <td className="px-4 py-3">{formatDate(sub.expiresAt)}</td>
                     <td className="px-4 py-3">

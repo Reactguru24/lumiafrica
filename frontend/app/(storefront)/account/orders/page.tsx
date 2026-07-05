@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useUserOrders } from '@/lib/stores/api'
-import { formatCurrency, formatDateTime } from '@/lib/utils/storage'
+import { formatDateTime } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { parseOrderItems } from '@/lib/utils/api'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { EmptyState } from '@/components/common/EmptyState'
@@ -14,6 +15,7 @@ import { formatOrderShortId } from '@/lib/utils/orders'
 import type { Order } from '@/lib/types'
 
 export default function AccountOrdersPage() {
+  const formatPrice = useFormatCurrency()
   const { data: ordersData, loading } = useUserOrders()
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'delivered' | 'cancelled'>('all')
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -57,9 +59,9 @@ export default function AccountOrdersPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <span className="font-semibold text-sm">{formatCurrency(order.total || 0)}</span>
+                      <span className="font-semibold text-sm">{formatPrice(order.total || 0)}</span>
                       {(order.discount ?? 0) > 0 && (
-                        <span className="text-xs text-green-600">−{formatCurrency(order.discount ?? 0)}{order.couponCode ? ` ${order.couponCode}` : ''}</span>
+                        <span className="text-xs text-green-600">−{formatPrice(order.discount ?? 0)}{order.couponCode ? ` ${order.couponCode}` : ''}</span>
                       )}
                       <StatusBadge status={order.status} />
                       <button

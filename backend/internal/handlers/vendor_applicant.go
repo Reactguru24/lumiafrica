@@ -89,16 +89,6 @@ func promoteUserToVendor(ctx context.Context, q *sqlc.Queries, user sqlc.User, b
 	return user.ID, nil
 }
 
-func isDuplicateUserError(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "duplicate") ||
-		strings.Contains(msg, "unique constraint") ||
-		strings.Contains(msg, "duplicate entry")
-}
-
 func uniqueVendorPhone(ctx context.Context, q *sqlc.Queries) (string, error) {
 	for i := 0; i < 12; i++ {
 		candidate := fmt.Sprintf("+V%014x", time.Now().UnixNano()+int64(i))

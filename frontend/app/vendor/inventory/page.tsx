@@ -4,12 +4,13 @@ import { MediaImage } from '@/components/common/MediaImage'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useVendorAnalytics, useVendorProducts, useRestoreVendorProduct } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { unwrapItems } from '@/lib/utils/api'
 import type { Product } from '@/lib/types'
 
 export default function VendorInventoryPage() {
+  const formatPrice = useFormatCurrency()
   const { data: analytics, loading, error, refetch: refetchAnalytics } = useVendorAnalytics()
   const { data: productsData, refetch: refetchProducts } = useVendorProducts()
   const { mutate: restoreProduct, loading: restoring } = useRestoreVendorProduct()
@@ -49,7 +50,7 @@ export default function VendorInventoryPage() {
               <MediaImage src={p.images?.[0]} alt={p.name} width={48} height={56} transform={{ width: 96, aspect: '3:4' }} className="w-12 h-14 object-cover shrink-0 rounded" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.name}</p>
-                <p className="text-xs text-gray-500">{p.stock} in stock · {formatCurrency(p.price)}</p>
+                <p className="text-xs text-gray-500">{p.stock} in stock · {formatPrice(p.price)}</p>
               </div>
               <button
                 type="button"
@@ -72,7 +73,7 @@ export default function VendorInventoryPage() {
               <MediaImage src={p.images?.[0]} alt={p.name} width={48} height={56} transform={{ width: 96, aspect: '3:4' }} className="w-12 h-14 object-cover shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.name}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{formatCurrency(p.price)}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{formatPrice(p.price)}</p>
               </div>
               <span className="text-yellow-600 font-semibold text-sm shrink-0">{p.stock} left</span>
             </div>
@@ -85,7 +86,7 @@ export default function VendorInventoryPage() {
               <MediaImage src={p.images?.[0]} alt={p.name} width={48} height={56} transform={{ width: 96, aspect: '3:4' }} className="w-12 h-14 object-cover shrink-0 opacity-60" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{p.name}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{formatCurrency(p.price)}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{formatPrice(p.price)}</p>
               </div>
               <Link href="/vendor/products" className="text-xs text-brand-teal dark:text-brand-orange underline shrink-0">
                 Restock

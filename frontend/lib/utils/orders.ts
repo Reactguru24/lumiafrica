@@ -16,8 +16,14 @@ export function formatShippingAddress(shipping?: Partial<Address> | null): strin
 }
 
 export function orderStatusActionOptions(current: OrderStatus) {
-  return ORDER_STATUSES
-    .filter((s) => s !== current)
+  const transitions: Record<OrderStatus, OrderStatus[]> = {
+    pending: ['processing', 'cancelled'],
+    processing: ['shipped', 'cancelled'],
+    shipped: ['delivered', 'cancelled'],
+    delivered: [],
+    cancelled: [],
+  }
+  return (transitions[current] || [])
     .map((s) => ({
       id: s,
       label: s.charAt(0).toUpperCase() + s.slice(1),

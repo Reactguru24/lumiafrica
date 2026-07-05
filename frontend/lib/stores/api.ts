@@ -148,6 +148,10 @@ export function useCollections() {
   return useQuery('collections', () => publicAPI.getCollections())
 }
 
+export function useHomepageContent() {
+  return useQuery('homepage-content', () => publicAPI.getHomepageContent())
+}
+
 export function useCollection(slug: string) {
   return useQuery(`collection:${slug}`, () => publicAPI.getCollection(slug), { enabled: !!slug })
 }
@@ -379,6 +383,84 @@ export function useSetAdminCollectionActive() {
 
 export function useDeleteAdminCollection() {
   return useMutation('delete-admin-collection', (data: { id: string }) => adminAPI.deleteCollection(data.id))
+}
+
+export function useAdminHomepageHeroSlides() {
+  return useQuery('admin-homepage-hero-slides', () => adminAPI.listHomepageHeroSlides())
+}
+
+export function useCreateAdminHomepageHeroSlide() {
+  return useMutation('create-admin-homepage-hero-slide', (data) => adminAPI.createHomepageHeroSlide(data))
+}
+
+export function useUpdateAdminHomepageHeroSlide() {
+  return useMutation('update-admin-homepage-hero-slide', (data: { id: string; payload: Record<string, unknown> }) =>
+    adminAPI.updateHomepageHeroSlide(data.id, data.payload),
+  )
+}
+
+export function useSetAdminHomepageHeroSlideActive() {
+  return useMutation('set-admin-homepage-hero-slide-active', (data: { id: string; active: boolean }) =>
+    adminAPI.setHomepageHeroSlideActive(data.id, data.active),
+  )
+}
+
+export function useDeleteAdminHomepageHeroSlide() {
+  return useMutation('delete-admin-homepage-hero-slide', (data: { id: string }) =>
+    adminAPI.deleteHomepageHeroSlide(data.id),
+  )
+}
+
+export function useAdminHomepagePromoItems() {
+  return useQuery('admin-homepage-promo-items', () => adminAPI.listHomepagePromoItems())
+}
+
+export function useCreateAdminHomepagePromoItem() {
+  return useMutation('create-admin-homepage-promo-item', (data) => adminAPI.createHomepagePromoItem(data))
+}
+
+export function useUpdateAdminHomepagePromoItem() {
+  return useMutation('update-admin-homepage-promo-item', (data: { id: string; payload: Record<string, unknown> }) =>
+    adminAPI.updateHomepagePromoItem(data.id, data.payload),
+  )
+}
+
+export function useSetAdminHomepagePromoItemActive() {
+  return useMutation('set-admin-homepage-promo-item-active', (data: { id: string; active: boolean }) =>
+    adminAPI.setHomepagePromoItemActive(data.id, data.active),
+  )
+}
+
+export function useDeleteAdminHomepagePromoItem() {
+  return useMutation('delete-admin-homepage-promo-item', (data: { id: string }) =>
+    adminAPI.deleteHomepagePromoItem(data.id),
+  )
+}
+
+export function useAdminHomepageBanners() {
+  return useQuery('admin-homepage-banners', () => adminAPI.listHomepageBanners())
+}
+
+export function useCreateAdminHomepageBanner() {
+  return useMutation('create-admin-homepage-banner', (data) => adminAPI.createHomepageBanner(data))
+}
+
+export function useUpdateAdminHomepageBanner() {
+  return useMutation('update-admin-homepage-banner', (data: { id: string; payload: Record<string, unknown> }) =>
+    adminAPI.updateHomepageBanner(data.id, data.payload),
+  )
+}
+
+export function useSetAdminHomepageBannerActive() {
+  return useMutation('set-admin-homepage-banner-active', (data: { id: string; active: boolean }) =>
+    adminAPI.setHomepageBannerActive(data.id, data.active),
+  )
+}
+
+export function useDeleteAdminHomepageBanner() {
+  return useMutation('delete-admin-homepage-banner', (data: { id: string }) =>
+    adminAPI.deleteHomepageBanner(data.id),
+  )
 }
 
 export function useSetAdminCouponActive() {

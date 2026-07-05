@@ -130,6 +130,14 @@ func GetProductSizeChart() gin.HandlerFunc {
 		}
 
 		product := store.LoadProduct(ctx, q, row)
+		if !commerce.SupportsAISizeFitting(product.Category, product.Subcategory) {
+			utils.Success(c, models.ProductSizeChartResponse{
+				ProductID: product.ID,
+				Gender:    string(product.Gender),
+				Chart:     map[string]map[string]string{},
+			})
+			return
+		}
 		chart := commerce.BuildProductSizeChart(product.Gender, product.Sizes)
 		utils.Success(c, models.ProductSizeChartResponse{
 			ProductID: product.ID,

@@ -73,9 +73,9 @@ export function ImageFieldUpload({
             {value ? (
               <MediaImage src={value} alt={preset.label} width={1200} height={400} className="w-full h-full object-cover" />
             ) : (
-              <span className="absolute inset-0 flex flex-col items-center justify-center text-xs text-gray-500 gap-1 px-4">
+              <span className="absolute inset-0 flex flex-col items-center justify-center text-xs text-gray-500 gap-1 px-4 text-center">
                 <span className="font-medium text-gray-600 dark:text-gray-300">Click to upload cover image</span>
-                <span>{preset.width}×{preset.height}px · JPEG, PNG or WebP</span>
+                <span>{imageSizeHint(preset)}</span>
               </span>
             )}
           </button>
@@ -131,6 +131,9 @@ export function ImageFieldUpload({
             >
               Remove
             </button>
+          )}
+          {previewBanner && (
+            <p className="text-xs text-gray-500">{imageSizeHint(preset)}</p>
           )}
           {!previewBanner && <p className="text-xs text-gray-500 mt-1">{imageSizeHint(preset)}</p>}
         </div>

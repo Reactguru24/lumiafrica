@@ -183,6 +183,12 @@ FROM products WHERE status = 'active' AND total_stock > 0;
 -- name: CountProductsByVendor :one
 SELECT COUNT(*) FROM products WHERE vendor_id = ?;
 
+-- name: ListProductSKUsByVendor :many
+SELECT sku FROM products WHERE vendor_id = ?;
+
+-- name: ListVendorProductSeedMeta :many
+SELECT id, category_id, featured FROM products WHERE vendor_id = ?;
+
 -- name: ListProductsByVendor :many
 SELECT * FROM products WHERE vendor_id = ?;
 

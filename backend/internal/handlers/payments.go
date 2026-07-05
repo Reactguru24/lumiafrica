@@ -812,6 +812,14 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 		tx.Rollback()
 		return "", err
 	}
+	if err := qtx.UpdateOrderStatus(ctx, sqlc.UpdateOrderStatusParams{
+		Status:      sqlc.OrdersStatusProcessing,
+		DeliveredAt: sql.NullTime{},
+		ID:          orderID,
+	}); err != nil {
+		tx.Rollback()
+		return "", err
+	}
 	if meta.CouponID != nil && meta.DiscountAmount > 0 {
 		couponID := optionalBinaryUUID(meta.CouponID)
 		if couponID != nil {

@@ -1,12 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { MediaImage } from '@/components/common/MediaImage'
 import { HeartIcon } from '@heroicons/react/24/outline'
 import { HeartIcon as HeartSolid, StarIcon } from '@heroicons/react/24/solid'
 import type { Product } from '@/lib/types'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { useCartStore } from '@/lib/stores/cart'
+import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 
 interface ProductCardProps {
   product: Product
@@ -14,11 +16,21 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, listView = false }: ProductCardProps) {
+  const formatPrice = useFormatCurrency()
   const { isInWishlist, toggleWishlist } = useCartStore()
   const discountAmount = product.discount > 100 ? product.discount : product.price * (product.discount / 100)
   const salePrice = Math.max(0, product.price - discountAmount)
   const productImage = product.images?.[0]
   const inWishlist = isInWishlist(product.id)
+
+  async function handleWishlist(e: React.MouseEvent) {
+    e.preventDefault()
+    try {
+      await toggleWishlist(product.id)
+    } catch (err) {
+      toast.error(getFriendlyErrorMessage(err, 'Could not update wishlist'))
+    }
+  }
 
   return (
     <div className={`group relative ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 card p-3 sm:p-4' : ''}`}>
@@ -54,9 +66,9 @@ export function ProductCard({ product, listView = false }: ProductCardProps) {
           <span className="text-xs text-gray-500">{product.rating} ({product.reviewCount})</span>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(salePrice)}</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{formatPrice(salePrice)}</span>
           {product.discount > 0 && (
-            <span className="text-sm text-gray-400 line-through">{formatCurrency(product.price)}</span>
+            <span className="text-sm text-gray-400 line-through">{formatPrice(product.price)}</span>
           )}
         </div>
         {listView && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{product.description}</p>}
@@ -64,7 +76,7 @@ export function ProductCard({ product, listView = false }: ProductCardProps) {
 
       <button
         className={`absolute top-2 right-2 p-2 bg-white/80 dark:bg-gray-900/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${inWishlist ? 'opacity-100' : ''}`}
-        onClick={(e) => { e.preventDefault(); toggleWishlist(product.id) }}
+        onClick={handleWishlist}
       >
         {inWishlist ? <HeartSolid className="w-5 h-5 text-red-500" /> : <HeartIcon className="w-5 h-5" />}
       </button>

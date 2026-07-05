@@ -1,7 +1,8 @@
 'use client'
 
-import { ORDER_STATUSES } from '@/lib/utils/orders'
+import { orderStatusActionOptions } from '@/lib/utils/orders'
 import type { OrderStatus } from '@/lib/types'
+import { StatusBadge } from '@/components/common/StatusBadge'
 
 interface OrderStatusButtonsProps {
   current: OrderStatus
@@ -18,19 +19,29 @@ export function OrderStatusButtons({
   prefix = '',
   className = '',
 }: OrderStatusButtonsProps) {
+  const actions = orderStatusActionOptions(current)
+
   return (
-    <div className={`flex flex-wrap gap-2 ${className}`}>
-      {ORDER_STATUSES.map((status) => (
-        <button
-          key={status}
-          type="button"
-          className={`px-3 py-1.5 text-xs border rounded capitalize ${current === status ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : ''}`}
-          onClick={() => onChange(status)}
-          disabled={disabled || current === status}
-        >
-          {prefix}{status}
-        </button>
-      ))}
+    <div className={`space-y-2 ${className}`}>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-500 uppercase tracking-wide">Current</span>
+        <StatusBadge status={current} />
+      </div>
+      {actions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {actions.map(({ id, label, variant }) => (
+            <button
+              key={id}
+              type="button"
+              className={`px-3 py-1.5 text-xs border rounded capitalize ${variant === 'danger' ? 'border-red-300 text-red-700 hover:bg-red-50' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}`}
+              onClick={() => onChange(id)}
+              disabled={disabled}
+            >
+              {prefix}{label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

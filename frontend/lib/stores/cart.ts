@@ -214,9 +214,21 @@ export const useCartStore = create<CartState>((set, get) => ({
   },
 
   toggleWishlist: async (productId) => {
-    const nextActive = !get().wishlist.includes(productId)
-    const remote = await cartAPI.setWishlist(productId, nextActive) as CartApiPayload
-    get().applyRemoteCart(remote)
+    const previous = get().wishlist
+    const nextActive = !previous.includes(productId)
+    const optimistic = nextActive
+      ? [...previous, productId]
+      : previous.filter((id) => id !== productId)
+    persist(get().items, optimistic)
+    set(buildState(get().items, optimistic))
+    try {
+      const remote = await cartAPI.setWishlist(productId, nextActive) as CartApiPayload
+      get().applyRemoteCart(remote)
+    } catch {
+      persist(get().items, previous)
+      set(buildState(get().items, previous))
+      throw new Error('Could not update wishlist')
+    }
   },
 
   isInWishlist: (productId) => get().wishlist.includes(productId),

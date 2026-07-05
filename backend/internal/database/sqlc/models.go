@@ -942,6 +942,42 @@ type Category struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 
+type HomepageHeroSlide struct {
+	ID        types.BinaryUUID `json:"id"`
+	Label     string           `json:"label"`
+	Title     string           `json:"title"`
+	Subtitle  sql.NullString   `json:"subtitle"`
+	Image     string           `json:"image"`
+	Link      string           `json:"link"`
+	SortOrder int32            `json:"sort_order"`
+	Active    int16            `json:"active"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+}
+
+type HomepagePromoItem struct {
+	ID          types.BinaryUUID `json:"id"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	Icon        string           `json:"icon"`
+	SortOrder   int32            `json:"sort_order"`
+	Active      int16            `json:"active"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
+}
+
+type HomepageBanner struct {
+	ID        types.BinaryUUID `json:"id"`
+	Title     sql.NullString   `json:"title"`
+	Subtitle  sql.NullString   `json:"subtitle"`
+	Image     string           `json:"image"`
+	Link      sql.NullString   `json:"link"`
+	Active    int16            `json:"active"`
+	SortOrder int32            `json:"sort_order"`
+	CreatedAt time.Time        `json:"created_at"`
+	UpdatedAt time.Time        `json:"updated_at"`
+}
+
 type Collection struct {
 	ID          types.BinaryUUID  `json:"id"`
 	Name        string            `json:"name"`

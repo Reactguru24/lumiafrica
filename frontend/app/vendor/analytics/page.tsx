@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useVendorProfile, useVendorAnalytics } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { LineChart } from '@/components/charts/LineChart'
 import { BarChart } from '@/components/charts/BarChart'
@@ -40,6 +40,7 @@ type VendorAnalyticsData = {
 }
 
 export default function VendorAnalyticsPage() {
+  const formatPrice = useFormatCurrency()
   const [period, setPeriod] = useState<string>('30days')
   const { data: vendorProfile } = useVendorProfile()
   const { data: analytics, loading, error } = useVendorAnalytics(period)
@@ -93,7 +94,7 @@ export default function VendorAnalyticsPage() {
 
       <div className="space-y-4 sm:space-y-6">
         <div className="stat-grid lg:grid-cols-3 xl:grid-cols-5">
-          <StatCard title="Revenue" value={formatCurrency(revenue)} icon={CurrencyDollarIcon} />
+          <StatCard title="Revenue" value={formatPrice(revenue)} icon={CurrencyDollarIcon} />
           <StatCard title="Orders" value={totalOrders} icon={ShoppingCartIcon} />
           <StatCard title="Products" value={totalProducts} icon={CubeIcon} />
           <StatCard title="Customers" value={customers} icon={UsersIcon} />

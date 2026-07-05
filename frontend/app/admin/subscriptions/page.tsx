@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useAdminSubscriptions } from '@/lib/stores/api'
-import { formatCurrency, formatDate } from '@/lib/utils/storage'
+import { formatDate } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated } from '@/lib/utils/api'
 import { MediaImage } from '@/components/common/MediaImage'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -12,6 +13,7 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 type Filter = 'all' | 'active' | 'expired'
 
 export default function AdminSubscriptionsPage() {
+  const formatPrice = useFormatCurrency()
   const [page, setPage] = useState(1)
   const [filter, setFilter] = useState<Filter>('all')
   const limit = 20
@@ -71,7 +73,7 @@ export default function AdminSubscriptionsPage() {
             </div>
             <div className="card p-4">
               <p className="text-xs text-gray-500 mb-1">Page revenue</p>
-              <p className="text-2xl font-bold">{formatCurrency(pageRevenue)}</p>
+              <p className="text-2xl font-bold">{formatPrice(pageRevenue)}</p>
             </div>
             <div className="card p-4">
               <p className="text-xs text-gray-500 mb-1">Expiring ≤7 days</p>
@@ -102,7 +104,7 @@ export default function AdminSubscriptionsPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                       <div>
                         <p className="text-xs text-gray-500">Amount</p>
-                        <p className="font-semibold">{formatCurrency(sub.amount || 0)}</p>
+                        <p className="font-semibold">{formatPrice(sub.amount || 0)}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Started</p>

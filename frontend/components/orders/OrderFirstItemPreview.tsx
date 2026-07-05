@@ -1,7 +1,7 @@
 'use client'
 
 import { MediaImage } from '@/components/common/MediaImage'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import type { OrderItem } from '@/lib/types'
 
 interface OrderFirstItemPreviewProps {
@@ -17,6 +17,7 @@ export function OrderFirstItemPreview({
   showMoreHint = true,
   imageClassName = 'w-12 h-16 object-cover shrink-0 rounded-sm',
 }: OrderFirstItemPreviewProps) {
+  const formatPrice = useFormatCurrency()
   if (!items.length) return null
   const item = items[0]
 
@@ -42,7 +43,7 @@ export function OrderFirstItemPreview({
           </p>
         )}
       </div>
-      {showPrice && <span className="font-medium shrink-0">{formatCurrency(item.price * item.quantity)}</span>}
+      {showPrice && <span className="font-medium shrink-0">{formatPrice(item.price * item.quantity)}</span>}
     </div>
   )
 }

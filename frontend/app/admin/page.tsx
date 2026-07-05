@@ -1,7 +1,7 @@
 'use client'
 
 import { useAdminVendorApplications, useAdminAnalytics } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated } from '@/lib/utils/api'
 import { analyticsField } from '@/lib/utils/admin'
 import { StatCard } from '@/components/common/StatCard'
@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { useMemo } from 'react'
 
 export default function AdminDashboardPage() {
+  const formatPrice = useFormatCurrency()
   const { data: vendorApplicationsAPI } = useAdminVendorApplications(1, 50)
   const { data: analyticsData, loading } = useAdminAnalytics()
 
@@ -99,7 +100,7 @@ export default function AdminDashboardPage() {
             <StatCard title="Total Vendors" value={analyticsField<number>(analytics, 'totalVendors', 'total_vendors') ?? 0} icon={BuildingStorefrontIcon} />
             <StatCard title="Total Products" value={analyticsField<number>(analytics, 'totalProducts', 'total_products') ?? 0} icon={CubeIcon} />
             <StatCard title="Total Orders" value={analyticsField<number>(analytics, 'totalOrders', 'total_orders') ?? 0} icon={ShoppingCartIcon} />
-            <StatCard title="Total Revenue" value={formatCurrency(analyticsField<number>(analytics, 'totalRevenue', 'total_revenue') ?? 0)} icon={CurrencyDollarIcon} />
+            <StatCard title="Total Revenue" value={formatPrice(analyticsField<number>(analytics, 'totalRevenue', 'total_revenue') ?? 0)} icon={CurrencyDollarIcon} />
           </div>
 
           {(monthlySales.length > 0 || vendorGrowth.length > 0 || orderTrends.length > 0) && (

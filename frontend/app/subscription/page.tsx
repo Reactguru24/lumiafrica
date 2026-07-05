@@ -1,7 +1,7 @@
 'use client'
 
 import { useSubscriptionPlans } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { CheckCircleIcon, SparklesIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -15,6 +15,7 @@ type SubscriptionPlan = {
 }
 
 export default function SubscriptionPage() {
+  const formatPrice = useFormatCurrency()
   const { data: plans, loading, error } = useSubscriptionPlans()
   const plansMap = (plans as Record<string, SubscriptionPlan>) || {}
   const plansList = Object.values(plansMap)
@@ -52,7 +53,7 @@ export default function SubscriptionPage() {
           <div key={plan.id} className="card p-6 text-center hover:shadow-lg transition-shadow">
             <h3 className="text-lg font-semibold mb-2">{plan.label}</h3>
             <p className="text-3xl font-bold text-brand-teal dark:text-brand-orange mb-1">
-              {formatCurrency(plan.priceKes)}
+              {formatPrice(plan.priceKes)}
             </p>
             <p className="text-sm text-gray-500 mb-4">
               {plan.durationMonths === 1 ? '1 month' : `${plan.durationMonths} months`} of visibility

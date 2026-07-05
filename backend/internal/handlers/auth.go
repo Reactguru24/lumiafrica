@@ -7,11 +7,13 @@ import (
 	"github.com/Reactguru24/lumiafrica/internal/config"
 	"github.com/Reactguru24/lumiafrica/internal/email"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 	"github.com/Reactguru24/lumiafrica/internal/middleware"
 	"github.com/Reactguru24/lumiafrica/internal/models"
 	"github.com/Reactguru24/lumiafrica/internal/store"
 	"github.com/Reactguru24/lumiafrica/internal/utils"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -65,6 +67,75 @@ func Login(cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// CheckCredentials godoc
+// @Summary Check whether email or phone can be used for registration
+// @Description Validates that credentials are not already registered before sign-up or vendor application
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param body body models.CheckCredentialsRequest true "Credentials to check"
+// @Success 200 {object} models.CheckCredentialsResponse
+// @Router /auth/check-credentials [post]
+func CheckCredentials() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req models.CheckCredentialsRequest
+		if !bindJSON(c, &req) {
+			return
+		}
+
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		resp := models.CheckCredentialsResponse{Available: true, Fields: map[string]models.CredentialFieldStatus{}}
+
+		switch strings.TrimSpace(strings.ToLower(req.Context)) {
+		case "vendor_application", "vendor":
+			if req.Email != "" {
+				emailResult := checkVendorBusinessEmail(ctx, q, req.Email)
+				resp.Fields["email"] = models.CredentialFieldStatus{
+					Available: emailResult.Available,
+					Message:   emailResult.Message,
+				}
+				if !emailResult.Available {
+					resp.Available = false
+				}
+			}
+			if req.Phone != "" {
+				phoneResult := checkVendorContactPhone(ctx, q, req.Phone, req.Email)
+				resp.Fields["phone"] = models.CredentialFieldStatus{
+					Available: phoneResult.Available,
+					Message:   phoneResult.Message,
+				}
+				if !phoneResult.Available {
+					resp.Available = false
+				}
+			}
+		default:
+			if req.Email != "" {
+				emailResult := checkRegistrationEmail(ctx, q, req.Email)
+				resp.Fields["email"] = models.CredentialFieldStatus{
+					Available: emailResult.Available,
+					Message:   emailResult.Message,
+				}
+				if !emailResult.Available {
+					resp.Available = false
+				}
+			}
+			if req.Phone != "" {
+				phoneResult := checkRegistrationPhone(ctx, q, req.Phone, types.BinaryUUID{})
+				resp.Fields["phone"] = models.CredentialFieldStatus{
+					Available: phoneResult.Available,
+					Message:   phoneResult.Message,
+				}
+				if !phoneResult.Available {
+					resp.Available = false
+				}
+			}
+		}
+
+		utils.Success(c, resp)
+	}
+}
+
 // Register godoc
 // @Summary Customer registration
 // @Description Register as a new customer
@@ -83,20 +154,18 @@ func Register(cfg *config.Config) gin.HandlerFunc {
 
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
+		email := normalizeEmail(req.Email)
+		phone := normalizePhone(req.Phone)
 
-		if pending, checkErr := isPendingBusinessEmail(ctx, q, req.Email); checkErr != nil {
-			utils.Error(c, http.StatusInternalServerError, "Database error")
-			return
-		} else if pending {
-			utils.Error(c, http.StatusConflict, errApplicationUnderReviewForEmail(normalizeEmail(req.Email)))
+		emailResult := checkRegistrationEmail(ctx, q, email)
+		if !emailResult.Available {
+			utils.Error(c, http.StatusConflict, emailResult.Message)
 			return
 		}
 
-		if _, err := q.GetUserByEmail(ctx, req.Email); err == nil {
-			utils.Error(c, http.StatusConflict, "Email already registered")
-			return
-		} else if err != sql.ErrNoRows {
-			utils.Error(c, http.StatusInternalServerError, "Database error")
+		phoneResult := checkRegistrationPhone(ctx, q, phone, types.BinaryUUID{})
+		if !phoneResult.Available {
+			utils.Error(c, http.StatusConflict, phoneResult.Message)
 			return
 		}
 
@@ -110,8 +179,8 @@ func Register(cfg *config.Config) gin.HandlerFunc {
 		user := models.User{
 			ID:       userID.String(),
 			FullName: req.FullName,
-			Email:    req.Email,
-			Phone:    req.Phone,
+			Email:    email,
+			Phone:    phone,
 			Password: hashedPassword,
 			Role:     models.RoleCustomer,
 		}
@@ -121,6 +190,10 @@ func Register(cfg *config.Config) gin.HandlerFunc {
 			Password: user.Password, Role: sqlc.UsersRoleCUSTOMER,
 			Disabled: 0,
 		}); err != nil {
+			if isDuplicateUserError(err) {
+				utils.Error(c, http.StatusConflict, duplicateCredentialMessage(err))
+				return
+			}
 			utils.Error(c, http.StatusInternalServerError, "Failed to create user")
 			return
 		}

@@ -87,13 +87,6 @@ export async function apiRequest<T>(
     headersObj['Content-Type'] = 'application/json'
   }
 
-  if (!options.skipAuth) {
-    const token = await getAuthToken()
-    if (token) {
-      headersObj.Authorization = `Bearer ${token}`
-    }
-  }
-
   const guestSessionId = getGuestSessionId()
   if (guestSessionId) {
     headersObj['X-Guest-Session'] = guestSessionId
@@ -101,6 +94,11 @@ export async function apiRequest<T>(
 
   if (options.headers) {
     Object.assign(headersObj, options.headers)
+  }
+
+  const token = await getAuthToken()
+  if (token) {
+    headersObj.Authorization = `Bearer ${token}`
   }
 
   let body = options.body
@@ -252,6 +250,10 @@ export const publicAPI = {
     return get(`/collections/${slug}`, { skipAuth: true })
   },
 
+  getHomepageContent() {
+    return get('/homepage', { skipAuth: true })
+  },
+
   applyVendor(data: any) {
     return post('/vendors/applications', data, { skipAuth: true })
   },
@@ -323,6 +325,10 @@ export const authAPI = {
     password: string
   }) {
     return post('/auth/register', data, { skipAuth: true })
+  },
+
+  checkCredentials(data: { email?: string; phone?: string; context?: string }) {
+    return post('/auth/check-credentials', data, { skipAuth: true })
   },
 
   getCurrentUser() {
@@ -645,5 +651,65 @@ export const adminAPI = {
 
   deleteCollection(collectionId: string) {
     return del(`/admin/collections/${collectionId}`)
+  },
+
+  listHomepageHeroSlides() {
+    return get('/admin/homepage/hero-slides')
+  },
+
+  createHomepageHeroSlide(data: Record<string, unknown>) {
+    return post('/admin/homepage/hero-slides', data)
+  },
+
+  updateHomepageHeroSlide(slideId: string, data: Record<string, unknown>) {
+    return put(`/admin/homepage/hero-slides/${slideId}`, data)
+  },
+
+  setHomepageHeroSlideActive(slideId: string, active: boolean) {
+    return put(`/admin/homepage/hero-slides/${slideId}/active`, { active })
+  },
+
+  deleteHomepageHeroSlide(slideId: string) {
+    return del(`/admin/homepage/hero-slides/${slideId}`)
+  },
+
+  listHomepagePromoItems() {
+    return get('/admin/homepage/promo-items')
+  },
+
+  createHomepagePromoItem(data: Record<string, unknown>) {
+    return post('/admin/homepage/promo-items', data)
+  },
+
+  updateHomepagePromoItem(itemId: string, data: Record<string, unknown>) {
+    return put(`/admin/homepage/promo-items/${itemId}`, data)
+  },
+
+  setHomepagePromoItemActive(itemId: string, active: boolean) {
+    return put(`/admin/homepage/promo-items/${itemId}/active`, { active })
+  },
+
+  deleteHomepagePromoItem(itemId: string) {
+    return del(`/admin/homepage/promo-items/${itemId}`)
+  },
+
+  listHomepageBanners() {
+    return get('/admin/homepage/banners')
+  },
+
+  createHomepageBanner(data: Record<string, unknown>) {
+    return post('/admin/homepage/banners', data)
+  },
+
+  updateHomepageBanner(bannerId: string, data: Record<string, unknown>) {
+    return put(`/admin/homepage/banners/${bannerId}`, data)
+  },
+
+  setHomepageBannerActive(bannerId: string, active: boolean) {
+    return put(`/admin/homepage/banners/${bannerId}/active`, { active })
+  },
+
+  deleteHomepageBanner(bannerId: string) {
+    return del(`/admin/homepage/banners/${bannerId}`)
   },
 }

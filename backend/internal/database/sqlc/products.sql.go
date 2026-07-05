@@ -152,6 +152,66 @@ func (q *Queries) CountProductsByVendor(ctx context.Context, vendorID types.Bina
 	return count, err
 }
 
+const listProductSKUsByVendor = `-- name: ListProductSKUsByVendor :many
+SELECT sku FROM products WHERE vendor_id = ?
+`
+
+func (q *Queries) ListProductSKUsByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, listProductSKUsByVendor, vendorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var sku string
+		if err := rows.Scan(&sku); err != nil {
+			return nil, err
+		}
+		items = append(items, sku)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listVendorProductSeedMeta = `-- name: ListVendorProductSeedMeta :many
+SELECT id, category_id, featured FROM products WHERE vendor_id = ?
+`
+
+type ListVendorProductSeedMetaRow struct {
+	ID         types.BinaryUUID `json:"id"`
+	CategoryID types.BinaryUUID `json:"category_id"`
+	Featured   int16            `json:"featured"`
+}
+
+func (q *Queries) ListVendorProductSeedMeta(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorProductSeedMetaRow, error) {
+	rows, err := q.db.QueryContext(ctx, listVendorProductSeedMeta, vendorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListVendorProductSeedMetaRow
+	for rows.Next() {
+		var i ListVendorProductSeedMetaRow
+		if err := rows.Scan(&i.ID, &i.CategoryID, &i.Featured); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countSearchProducts = `-- name: CountSearchProducts :one
 SELECT COUNT(*) FROM products p
 LEFT JOIN categories c ON c.id = p.category_id

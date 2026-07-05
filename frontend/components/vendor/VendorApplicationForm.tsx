@@ -7,6 +7,7 @@ import { publicAPI } from '@/lib/api/client'
 import { useApplyVendor, useProductFilters } from '@/lib/stores/api'
 import { vendorApplicationSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { credentialErrorsFromApiError, validateCredentialsBeforeSubmit } from '@/lib/utils/credentials'
 import { resolveAssetUrl } from '@/lib/utils/api'
 import { MediaImage } from '@/components/common/MediaImage'
 import {
@@ -63,6 +64,19 @@ export function VendorApplicationForm() {
       return
     }
     try {
+      const credentialErrors = await validateCredentialsBeforeSubmit(
+        {
+          email: form.businessEmail,
+          phone: form.contactPhone,
+          context: 'vendor_application',
+        },
+        { email: 'businessEmail', phone: 'contactPhone' },
+      )
+      if (Object.keys(credentialErrors).length > 0) {
+        setErrors(credentialErrors)
+        return
+      }
+
       await applyVendor({
         applicantName: form.applicantName,
         storeName: form.storeName,
@@ -80,6 +94,16 @@ export function VendorApplicationForm() {
       toast.success('Application submitted!')
       router.push(`/application-submitted?email=${encodeURIComponent(form.businessEmail)}`)
     } catch (e: unknown) {
+      const fieldErrors = credentialErrorsFromApiError(e)
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors((prev) => ({
+          ...prev,
+          ...(fieldErrors.businessEmail ? { businessEmail: fieldErrors.businessEmail } : {}),
+          ...(fieldErrors.contactPhone ? { contactPhone: fieldErrors.contactPhone } : {}),
+          ...(fieldErrors.email ? { businessEmail: fieldErrors.email } : {}),
+          ...(fieldErrors.phone ? { contactPhone: fieldErrors.phone } : {}),
+        }))
+      }
       toast.error(getFriendlyErrorMessage(e, 'Unable to submit your application. Please try again.'))
     }
   }

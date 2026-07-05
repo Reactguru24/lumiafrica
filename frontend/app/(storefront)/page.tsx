@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections, useProducts } from '@/lib/stores/api'
+import { useFeaturedVendors, useHomepageProducts, usePromotions, useCollections, useProducts, useHomepageContent } from '@/lib/stores/api'
 import { unwrapItems, unwrapPaginated } from '@/lib/utils/api'
 import { filterStorefrontPromotions, type PromotionLike } from '@/lib/utils/promotions'
 import { ProductCard } from '@/components/product/ProductCard'
@@ -11,13 +11,13 @@ import { FeaturedVendorsCarousel, type FeaturedVendorSlide } from '@/components/
 import { heroImage, HOMEPAGE_GRID_IMAGES, isExternalImageUrl } from '@/lib/utils/images'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
-const heroSlides = [
+const fallbackHeroSlides = [
   { label: "Men's Collection", title: 'Sharp Style for Every Occasion', subtitle: 'From Nairobi boardrooms to weekend outings — discover premium menswear across East Africa.', image: heroImage('men'), link: '/products?category=men' },
   { label: "Women's Fashion", title: 'Elegant Looks, African Spirit', subtitle: 'Dresses, kitenge-inspired pieces, and contemporary fashion curated for the modern woman.', image: heroImage('women'), link: '/products?category=women' },
   { label: 'Kids & Teens', title: 'Growing Up in Style', subtitle: 'Comfortable, durable clothing for boys, girls, and teens — from playtime to school days.', image: heroImage('kids'), link: '/products?category=kids' },
 ]
 
-const promos = [
+const fallbackPromos = [
   { title: 'Fast Shipping', desc: 'Reliable delivery across East Africa', icon: '🚚' },
   { title: 'M-Pesa & Cards', desc: 'Pay your way, securely', icon: '📱' },
   { title: 'Easy Returns', desc: '14-day return policy', icon: '↩️' },
@@ -30,6 +30,27 @@ export default function HomePage() {
   const { data: promotions } = usePromotions()
   const { data: collections } = useCollections()
   const { data: saleProductsData } = useProducts({ onSale: true, limit: 1 })
+  const { data: homepageContent } = useHomepageContent()
+
+  const content = (homepageContent as {
+    heroSlides?: Array<{ label: string; title: string; subtitle?: string; image: string; link: string }>
+    promoItems?: Array<{ title: string; description: string; icon: string }>
+    banner?: { title?: string; subtitle?: string; image: string; link?: string }
+  }) || {}
+
+  const heroSlides = (content.heroSlides?.length ? content.heroSlides : fallbackHeroSlides).map((slide) => ({
+    label: slide.label,
+    title: slide.title,
+    subtitle: slide.subtitle || '',
+    image: slide.image || heroImage('men'),
+    link: slide.link || '/products',
+  }))
+
+  const promos = (content.promoItems?.length
+    ? content.promoItems.map((p) => ({ title: p.title, desc: p.description, icon: p.icon }))
+    : fallbackPromos)
+
+  const middleBanner = content.banner
 
   const featuredVendorsList = unwrapItems(featuredVendors) as FeaturedVendorSlide[]
   const collectionsData = (homepageProducts as any) || {}
@@ -59,26 +80,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Promo banner — hidden for now
-      <section className="relative h-44 sm:h-56 md:h-64 overflow-hidden">
-        <Image
-          src={HOMEPAGE_PROMO_BANNER}
-          alt="East African fashion marketplace"
-          fill
-          className="object-cover"
-          sizes="100vw"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex items-center">
-          <div className="page-width">
-            <p className="text-white/90 text-sm sm:text-base max-w-lg">
-              Discover curated fashion from verified vendors across East Africa — delivered to your door.
-            </p>
+      {middleBanner?.image && (
+        <section className="relative h-44 sm:h-56 md:h-64 overflow-hidden">
+          {middleBanner.link ? (
+            <Link href={middleBanner.link} className="block absolute inset-0">
+              <Image
+                src={middleBanner.image}
+                alt={middleBanner.title || 'Homepage banner'}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+                unoptimized={isExternalImageUrl(middleBanner.image)}
+              />
+            </Link>
+          ) : (
+            <Image
+              src={middleBanner.image}
+              alt={middleBanner.title || 'Homepage banner'}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+              unoptimized={isExternalImageUrl(middleBanner.image)}
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 flex items-center pointer-events-none">
+            <div className="page-width">
+              {middleBanner.title && <h2 className="text-white text-xl sm:text-2xl font-semibold">{middleBanner.title}</h2>}
+              {middleBanner.subtitle && (
+                <p className="text-white/90 text-sm sm:text-base max-w-lg mt-2">{middleBanner.subtitle}</p>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
-      */}
+        </section>
+      )}
 
       {activePromotions.length > 0 && (
         <section className="page-width py-8 sm:py-12">

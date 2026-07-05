@@ -8,7 +8,7 @@ import { useCartStore } from '@/lib/stores/cart'
 import { useProducts, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
 import { useAuthStore } from '@/lib/stores/auth'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE } from '@/lib/constants/commerce'
 import { toShippingEstimateItems } from '@/lib/utils/shipping'
 import { readStoredDeliveryZoneId, storeDeliveryZoneId } from '@/lib/constants/checkout'
@@ -18,6 +18,7 @@ import type { Product, CartItem } from '@/lib/types'
 import type { ProductListResponse } from '@/lib/types/filters'
 
 export default function CartPage() {
+  const formatPrice = useFormatCurrency()
   const router = useRouter()
   const cart = useCartStore()
   const auth = useAuthStore()
@@ -186,7 +187,7 @@ export default function CartPage() {
                   <p className={`text-xs mt-1 ${stock > 10 ? 'text-green-600' : stock > 0 ? 'text-amber-600' : 'text-red-600'}`}>
                     {stock > 0 ? `${stock} in stock for ${item.size} / ${item.color}` : 'Out of stock'}
                   </p>
-                  <p className="font-semibold mt-2">{formatCurrency(item.product.price * (1 - item.product.discount / 100))}</p>
+                  <p className="font-semibold mt-2">{formatPrice(item.product.price * (1 - item.product.discount / 100))}</p>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
                     <div className="flex items-center border border-gray-300 dark:border-gray-700 text-sm">
                       <button className="px-3 py-1" onClick={() => updateCartQuantity(item, item.quantity - 1)}>−</button>
@@ -254,10 +255,10 @@ export default function CartPage() {
                 </div>
               )}
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{shipping === 0 ? 'FREE' : formatCurrency(shipping)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatCurrency(tax)}</span></div>
-                <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between font-semibold text-base"><span>Total</span><span>{formatCurrency(total)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Tax ({(TAX_RATE * 100).toFixed(0)}%)</span><span>{formatPrice(tax)}</span></div>
+                <div className="border-t border-gray-200 dark:border-gray-800 pt-3 flex justify-between font-semibold text-base"><span>Total</span><span>{formatPrice(total)}</span></div>
               </div>
               <button
                 className="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed"

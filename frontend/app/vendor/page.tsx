@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useVendorProfile, useVendorSubscription, useVendorAnalytics } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { isFeaturedListingActive, subscriptionDaysRemaining } from '@/lib/utils/subscriptions'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { StatCard } from '@/components/common/StatCard'
@@ -32,6 +32,7 @@ type VendorAnalyticsData = {
 }
 
 export default function VendorDashboardPage() {
+  const formatPrice = useFormatCurrency()
   const { data: vendorProfile, loading: profileLoading } = useVendorProfile()
   const { data: subscriptionData } = useVendorSubscription()
   const { data: vendorAnalytics, loading: analyticsLoading, error: analyticsError } = useVendorAnalytics()
@@ -71,7 +72,7 @@ export default function VendorDashboardPage() {
       ) : (
         <>
           <div className="stat-grid mb-6 sm:mb-8">
-            <StatCard title="Revenue" value={formatCurrency(revenue)} icon={CurrencyDollarIcon} />
+            <StatCard title="Revenue" value={formatPrice(revenue)} icon={CurrencyDollarIcon} />
             <StatCard title="Orders" value={totalOrders} icon={ShoppingCartIcon} />
             <StatCard title="Products" value={totalProducts} icon={CubeIcon} />
             <StatCard title="Customers" value={customers} icon={UsersIcon} />

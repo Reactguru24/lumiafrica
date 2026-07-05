@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { CouponModal, couponFormToPayload, couponToFormValues, emptyCouponForm } from '@/components/admin/CouponModal'
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import {
   useAdminCoupons,
@@ -69,6 +69,7 @@ const emptyCollectionForm = () => ({
 })
 
 export default function AdminCommercePage() {
+  const formatPrice = useFormatCurrency()
   const { data: couponsData, refetch: refetchCoupons } = useAdminCoupons()
   const { data: promosData, refetch: refetchPromos } = useAdminPromotions()
   const { data: collectionsData, refetch: refetchCollections } = useAdminCollections()
@@ -475,7 +476,7 @@ export default function AdminCommercePage() {
                 <tr key={c.id} className="border-b border-gray-100 dark:border-gray-800">
                   <td className="py-2 font-medium">{c.code}</td>
                   <td>{c.type}</td>
-                  <td>{c.type === 'percentage' ? `${c.value}%` : formatCurrency(c.value)}</td>
+                  <td>{c.type === 'percentage' ? `${c.value}%` : formatPrice(c.value)}</td>
                   <td>{c.usesCount}{c.maxUses ? ` / ${c.maxUses}` : ''}</td>
                   <td>{c.active ? 'Active' : 'Inactive'}</td>
                   <td className="py-2 text-right">

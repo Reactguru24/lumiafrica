@@ -54,13 +54,22 @@ func UpdateProfile() gin.HandlerFunc {
 			params.FullName = sql.NullString{String: req.FullName, Valid: true}
 		}
 		if req.Phone != "" {
-			params.Phone = sql.NullString{String: req.Phone, Valid: true}
+			phoneResult := checkRegistrationPhone(ctx, q, req.Phone, userID)
+			if !phoneResult.Available {
+				utils.Error(c, http.StatusConflict, phoneResult.Message)
+				return
+			}
+			params.Phone = sql.NullString{String: normalizePhone(req.Phone), Valid: true}
 		}
 		if req.Avatar != nil {
 			params.Avatar = sql.NullString{String: *req.Avatar, Valid: true}
 		}
 
 		if err := q.UpdateUserProfile(ctx, params); err != nil {
+			if isDuplicateUserError(err) {
+				utils.Error(c, http.StatusConflict, duplicateCredentialMessage(err))
+				return
+			}
 			utils.Error(c, http.StatusInternalServerError, "Failed to update profile")
 			return
 		}

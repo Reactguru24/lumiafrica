@@ -13,7 +13,7 @@ import {
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
 import { DeliveryZoneForm, type DeliveryZoneFormValues } from '@/components/vendor/DeliveryZoneForm'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import type { Vendor } from '@/lib/types'
 
 type VendorZone = {
@@ -24,6 +24,7 @@ type VendorZone = {
 }
 
 export default function VendorProfilePage() {
+  const formatPrice = useFormatCurrency()
   const { data: vendor, refetch } = useVendorProfile()
   const { data: zonesData, refetch: refetchZones } = useVendorDeliveryZones()
   const updateProfile = useUpdateVendorProfile().mutate
@@ -187,7 +188,7 @@ export default function VendorProfilePage() {
                 <li key={zone.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-gray-900/50">
                   <div>
                     <p className="font-medium text-sm">{zone.name}</p>
-                    <p className="text-xs text-gray-500">{zone.estimatedDays} · {formatCurrency(zone.fee)}</p>
+                    <p className="text-xs text-gray-500">{zone.estimatedDays} · {formatPrice(zone.fee)}</p>
                   </div>
                   <button
                     type="button"

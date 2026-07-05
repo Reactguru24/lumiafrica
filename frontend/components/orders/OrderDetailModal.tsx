@@ -5,7 +5,8 @@ import { Modal } from '@/components/common/Modal'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { OrderStatusButtons } from '@/components/orders/OrderStatusButtons'
 import { parseOrderItems } from '@/lib/utils/api'
-import { formatCurrency, formatDateTime } from '@/lib/utils/storage'
+import { formatDateTime } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { formatOrderShortId, formatShippingAddress } from '@/lib/utils/orders'
 import type { Order, OrderStatus } from '@/lib/types'
 
@@ -26,6 +27,7 @@ export function OrderDetailModal({
   onStatusChange,
   updating,
 }: OrderDetailModalProps) {
+  const formatPrice = useFormatCurrency()
   const detailItems = order ? parseOrderItems(order.items) : []
 
   return (
@@ -40,7 +42,7 @@ export function OrderDetailModal({
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={order.status} />
             <span className="text-sm text-gray-500">{order.paymentMethod}</span>
-            <span className="text-sm font-semibold ml-auto">{formatCurrency(order.total)}</span>
+            <span className="text-sm font-semibold ml-auto">{formatPrice(order.total)}</span>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
@@ -73,7 +75,7 @@ export function OrderDetailModal({
                       Qty: {item.quantity} · {item.size}{item.color ? ` · ${item.color}` : ''}
                     </p>
                   </div>
-                  <p className="text-sm font-medium shrink-0">{formatCurrency(item.price * item.quantity)}</p>
+                  <p className="text-sm font-medium shrink-0">{formatPrice(item.price * item.quantity)}</p>
                 </div>
               ))}
             </div>
@@ -88,19 +90,19 @@ export function OrderDetailModal({
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatCurrency(order.subtotal ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(order.subtotal ?? 0)}</span></div>
             {(order.discount ?? 0) > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
-                <span>−{formatCurrency(order.discount ?? 0)}</span>
+                <span>−{formatPrice(order.discount ?? 0)}</span>
               </div>
             )}
-            <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{formatCurrency(order.shipping ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{formatPrice(order.shipping ?? 0)}</span></div>
             {(order.tax ?? 0) > 0 && (
-              <div className="flex justify-between"><span className="text-gray-500">Tax</span><span>{formatCurrency(order.tax ?? 0)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Tax</span><span>{formatPrice(order.tax ?? 0)}</span></div>
             )}
             <div className="flex justify-between font-semibold pt-1 border-t border-gray-100 dark:border-gray-800">
-              <span>Total</span><span>{formatCurrency(order.total)}</span>
+              <span>Total</span><span>{formatPrice(order.total)}</span>
             </div>
           </div>
 

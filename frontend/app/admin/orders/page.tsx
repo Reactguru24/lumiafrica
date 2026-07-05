@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react'
 import { MediaImage } from '@/components/common/MediaImage'
 import { useAdminOrders, useAdminAnalytics } from '@/lib/stores/api'
-import { formatCurrency, formatDate } from '@/lib/utils/storage'
+import { formatDate } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated, parseOrderItems } from '@/lib/utils/api'
 import { analyticsField } from '@/lib/utils/admin'
 import { StatusBadge } from '@/components/common/StatusBadge'
@@ -14,6 +15,7 @@ import { formatOrderShortId, ORDER_STATUSES } from '@/lib/utils/orders'
 import type { Order, OrderStatus } from '@/lib/types'
 
 export default function AdminOrdersPage() {
+  const formatPrice = useFormatCurrency()
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | 'all'>('all')
@@ -58,7 +60,7 @@ export default function AdminOrdersPage() {
         </div>
         <div className="card p-4">
           <p className="text-xs text-gray-500 mb-1">Platform Revenue</p>
-          <p className="text-2xl font-bold text-green-600">{formatCurrency(analyticsField<number>(analytics, 'totalRevenue', 'total_revenue') ?? 0)}</p>
+          <p className="text-2xl font-bold text-green-600">{formatPrice(analyticsField<number>(analytics, 'totalRevenue', 'total_revenue') ?? 0)}</p>
         </div>
       </div>
 
@@ -144,7 +146,7 @@ export default function AdminOrdersPage() {
                           )}
                         </td>
                         <td className="px-4 py-3">{order.createdAt ? formatDate(order.createdAt) : '—'}</td>
-                        <td className="px-4 py-3 font-semibold">{formatCurrency(order.total)}</td>
+                        <td className="px-4 py-3 font-semibold">{formatPrice(order.total)}</td>
                         <td className="px-4 py-3"><StatusBadge status={order.status} /></td>
                         <td className="px-4 py-3">
                           <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => setSelectedOrder(order)}>

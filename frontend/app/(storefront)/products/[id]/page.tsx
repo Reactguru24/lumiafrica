@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 import { useProduct, useProductReviews, useCreateReview } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { ReviewReplyBlock } from '@/components/reviews/ReviewReplyBlock'
 import { VendorVerificationBadge } from '@/components/vendor/VendorVerificationBadge'
@@ -21,9 +21,11 @@ import { parseProductColors } from '@/lib/constants/productColors'
 import { VirtualFittingModal, VirtualFittingButton } from '@/components/fitting/VirtualFittingModal'
 import { useVendorProfile } from '@/lib/stores/api'
 import { isOwnVendorProduct, VENDOR_SELF_PURCHASE_MSG } from '@/lib/utils/vendorPurchase'
+import { supportsAISizeFitting } from '@/lib/utils/fitting'
 import type { Product } from '@/lib/types'
 
 export default function ProductDetailPage() {
+  const formatPrice = useFormatCurrency()
   const params = useParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -75,6 +77,7 @@ export default function ProductDetailPage() {
       .reduce((sum, item) => sum + item.quantity, 0)
     : 0
   const maxSelectable = Math.max(0, stockAvailable - inCartQty)
+  const showAIFitting = supportsAISizeFitting(productAny) && (productAny?.sizes?.length ?? 0) > 0
 
   useEffect(() => {
     setQuantity(1)
@@ -166,8 +169,8 @@ export default function ProductDetailPage() {
             <span className="text-sm text-gray-500">{productAny.rating || 0} ({productAny.reviewCount || 0} reviews)</span>
           </div>
           <div className="flex items-center gap-3 mt-4 justify-center md:justify-start flex-wrap">
-            <span className="text-xl sm:text-2xl font-bold">{formatCurrency(salePrice)}</span>
-            {(productAny.discount || 0) > 0 && <><span className="text-base sm:text-lg text-gray-400 line-through">{formatCurrency(productAny.price || 0)}</span><span className="text-sm text-red-600 font-medium">{productAny.discount > 100 ? `-${formatCurrency(productAny.discount)}` : `-${productAny.discount}%`}</span></>}
+            <span className="text-xl sm:text-2xl font-bold">{formatPrice(salePrice)}</span>
+            {(productAny.discount || 0) > 0 && <><span className="text-base sm:text-lg text-gray-400 line-through">{formatPrice(productAny.price || 0)}</span><span className="text-sm text-red-600 font-medium">{productAny.discount > 100 ? `-${formatPrice(productAny.discount)}` : `-${productAny.discount}%`}</span></>}
           </div>
           <p className="text-gray-600 dark:text-gray-400 mt-4 leading-relaxed text-sm sm:text-base text-left">{productAny.description || ''}</p>
           <div className="mt-6">
@@ -177,7 +180,7 @@ export default function ProductDetailPage() {
                 <button key={size} type="button" className={`min-w-[2.5rem] px-4 py-2 text-sm border transition-colors ${selectedSize === size ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 border-gray-900' : 'border-gray-300 dark:border-gray-700 hover:border-gray-900'}`} onClick={() => setSelectedSize(size)}>{size}</button>
               ))}
             </div>
-            {(productAny.sizes || []).length > 0 && (
+            {(productAny.sizes || []).length > 0 && showAIFitting && (
               <div className="mt-4 flex justify-center md:justify-start">
                 <VirtualFittingButton onClick={() => setFittingOpen(true)} />
               </div>
@@ -244,7 +247,18 @@ export default function ProductDetailPage() {
             </div>
             <div className="flex gap-2 sm:gap-4 w-full max-w-sm md:max-w-none">
               <button className="btn-primary flex-1 min-w-0 text-sm sm:text-base" disabled={!selectedSize || !selectedColor || stockAvailable === 0 || maxSelectable === 0} onClick={handleAddToCart}>Add to Cart</button>
-              <button type="button" className="p-3 border border-gray-300 dark:border-gray-700 shrink-0" onClick={() => productAny && toggleWishlist(productAny.id)}>
+              <button
+                type="button"
+                className="p-3 border border-gray-300 dark:border-gray-700 shrink-0"
+                onClick={async () => {
+                  if (!productAny) return
+                  try {
+                    await toggleWishlist(productAny.id)
+                  } catch (err) {
+                    toast.error(getFriendlyErrorMessage(err, 'Could not update wishlist'))
+                  }
+                }}
+              >
                 {inWishlist ? <HeartSolid className="w-6 h-6 text-red-500" /> : <HeartIcon className="w-6 h-6" />}
               </button>
             </div>
@@ -252,13 +266,15 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      <VirtualFittingModal
-        open={fittingOpen}
-        onClose={() => setFittingOpen(false)}
-        productId={productAny.id}
-        productName={productAny.name}
-        onSelectSize={setSelectedSize}
-      />
+      {showAIFitting && (
+        <VirtualFittingModal
+          open={fittingOpen}
+          onClose={() => setFittingOpen(false)}
+          productId={productAny.id}
+          productName={productAny.name}
+          onSelectSize={setSelectedSize}
+        />
+      )}
 
       {relatedProducts.length > 0 && (
         <section className="mt-12 sm:mt-16">

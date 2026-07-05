@@ -44,8 +44,10 @@ type Config struct {
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() (*Config, error) {
-	// In development, .env overrides existing shell env so local edits take effect after restart.
-	if os.Getenv("SERVER_ENV") == "" || os.Getenv("SERVER_ENV") == "development" {
+	// When Railway CLI injects env (railway run), do not let .env override it.
+	if os.Getenv("RAILWAY_ENVIRONMENT") != "" {
+		_ = godotenv.Load()
+	} else if os.Getenv("SERVER_ENV") == "" || os.Getenv("SERVER_ENV") == "development" {
 		_ = godotenv.Overload()
 	} else {
 		_ = godotenv.Load()
@@ -83,6 +85,7 @@ func LoadConfig() (*Config, error) {
 	}
 	cfg.SwaggerEnabled = swaggerEnabled(getEnv("SWAGGER_ENABLED", ""), cfg.ServerEnv)
 	cfg.CORSOrigins = parseCORSOrigins(getEnv("CORS_ORIGINS", ""), cfg.FrontendURL)
+	applyRailwayDBProxy(cfg)
 
 	// Validate required config
 	if cfg.ServerEnv == "production" {
@@ -92,6 +95,20 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// applyRailwayDBProxy uses the public TCP proxy when DB host is Railway-internal
+// (required for local `railway run` and local seeders — internal DNS is not reachable).
+func applyRailwayDBProxy(cfg *Config) {
+	if !strings.Contains(cfg.DBHost, "railway.internal") {
+		return
+	}
+	if proxyHost := os.Getenv("RAILWAY_TCP_PROXY_DOMAIN"); proxyHost != "" {
+		cfg.DBHost = proxyHost
+		if proxyPort := os.Getenv("RAILWAY_TCP_PROXY_PORT"); proxyPort != "" {
+			cfg.DBPort = proxyPort
+		}
+	}
 }
 
 // getEnv gets an environment variable with a default value

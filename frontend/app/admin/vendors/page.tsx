@@ -6,7 +6,8 @@ import {
   useAdminVendorApplications, useApproveVendor, useRejectVendor, useResendVendorActivation, useSetVendorFeatured,
   useDisableUser, useEnableUser, useAdminVendors, useAdminFeaturedListings, useSetAdminProductFeatured,
 } from '@/lib/stores/api'
-import { formatDate, formatCurrency } from '@/lib/utils/storage'
+import { formatDate } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated, resolveAssetUrl } from '@/lib/utils/api'
 import { buildVendorApplicationChecklist } from '@/lib/utils/admin'
 import { confirmAction } from '@/lib/utils/swal'
@@ -23,6 +24,7 @@ import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 type Tab = 'applications' | 'vendors' | 'carousels'
 
 export default function AdminVendorsPage() {
+  const formatPrice = useFormatCurrency()
   const [tab, setTab] = useState<Tab>('applications')
   const [appPage, setAppPage] = useState(1)
   const [vendorPage, setVendorPage] = useState(1)
@@ -492,7 +494,7 @@ export default function AdminVendorsPage() {
                     productName: row.product.name,
                     productImage: row.product.images?.[0],
                     vendorName: row.vendorName,
-                    price: formatCurrency(row.product.price),
+                    price: row.product.price,
                     productId: row.product.id,
                   }))}
                   renderCell={(key, row) => {
@@ -503,6 +505,9 @@ export default function AdminVendorsPage() {
                           <span className="font-medium">{row.productName as string}</span>
                         </div>
                       )
+                    }
+                    if (key === 'price') {
+                      return formatPrice(Number(row.price) || 0)
                     }
                     return undefined
                   }}

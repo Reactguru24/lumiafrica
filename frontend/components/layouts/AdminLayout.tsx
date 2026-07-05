@@ -21,6 +21,7 @@ const navItems = [
   { name: 'Products', to: '/admin/products', icon: CubeIcon },
   { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon },
   { name: 'Commerce', to: '/admin/commerce', icon: TicketIcon },
+  { name: 'Homepage', to: '/admin/homepage', icon: SparklesIcon },
   { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon },
 ]
 

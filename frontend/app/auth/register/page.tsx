@@ -9,6 +9,7 @@ import { useAuthStore } from '@/lib/stores/auth'
 import { useCartStore } from '@/lib/stores/cart'
 import { registerSchema } from '@/lib/utils/validation'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { credentialErrorsFromApiError, validateCredentialsBeforeSubmit } from '@/lib/utils/credentials'
 import { safeRedirect } from '@/lib/utils/safeRedirect'
 import { useGuestRedirect } from '@/lib/hooks/useGuestRedirect'
 
@@ -32,6 +33,16 @@ export default function RegisterPage() {
       return
     }
     try {
+      const credentialErrors = await validateCredentialsBeforeSubmit({
+        email: form.email,
+        phone: form.phone,
+        context: 'register',
+      })
+      if (Object.keys(credentialErrors).length > 0) {
+        setErrors(credentialErrors)
+        return
+      }
+
       await useCartStore.getState().pushLocalToGuestCart()
       await auth.register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password })
       toast.success('Account created successfully!')
@@ -40,6 +51,10 @@ export default function RegisterPage() {
         : null
       router.push(safeRedirect(redirect, '/account'))
     } catch (e: unknown) {
+      const fieldErrors = credentialErrorsFromApiError(e)
+      if (Object.keys(fieldErrors).length > 0) {
+        setErrors(fieldErrors)
+      }
       toast.error(getFriendlyErrorMessage(e, 'Unable to create your account. Please try again.'))
     }
   }

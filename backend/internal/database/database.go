@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 
@@ -25,19 +26,28 @@ type DB struct {
 }
 
 func Open(cfg *config.Config) (*DB, error) {
+	params := "charset=utf8mb4&parseTime=true&loc=Local&multiStatements=true"
+	if cfg.DBHost != "localhost" && cfg.DBHost != "127.0.0.1" {
+		params += "&timeout=30s&readTimeout=300s&writeTimeout=300s"
+	}
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true&loc=Local&multiStatements=true",
+		"%s:%s@tcp(%s:%s)/%s?%s",
 		cfg.DBUser,
 		cfg.DBPassword,
 		cfg.DBHost,
 		cfg.DBPort,
 		cfg.DBName,
+		params,
 	)
 
 	sqlDB, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(90 * time.Second)
+	sqlDB.SetMaxOpenConns(5)
+	sqlDB.SetMaxIdleConns(2)
 
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("ping database: %w", err)
@@ -48,6 +58,27 @@ func Open(cfg *config.Config) (*DB, error) {
 		SQL: sqlDB,
 		Q:   sqlc.New(sqlDB),
 	}, nil
+}
+
+func (db *DB) EnsureConnected(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return db.SQL.PingContext(ctx)
+}
+
+// Reopen replaces the connection pool (use after proxy connection resets).
+func (db *DB) Reopen(cfg *config.Config) error {
+	if db.SQL != nil {
+		_ = db.SQL.Close()
+	}
+	fresh, err := Open(cfg)
+	if err != nil {
+		return err
+	}
+	db.SQL = fresh.SQL
+	db.Q = fresh.Q
+	return nil
 }
 
 func Migrate(db *DB) error {

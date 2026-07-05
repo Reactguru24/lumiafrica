@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "deploy:ml": "./scripts/deploy-ai-fitting.sh"
+    "deploy:ml": "./scripts/deploy-ai-fitting.sh",
+    "seed:vendor-products": "cd backend && npx --yes @railway/cli run -- go run ./cmd/seeder/main.go -seed=false -vendor-products -skip-migrate"
   },
   "devDependencies": {
     "@railway/cli": "^5.23.3"

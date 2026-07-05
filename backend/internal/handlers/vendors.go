@@ -89,23 +89,17 @@ func ApplyVendor() gin.HandlerFunc {
 		ctx := c.Request.Context()
 		q := getStore(c).Queries()
 		businessEmail := normalizeEmail(req.BusinessEmail)
+		contactPhone := normalizePhone(req.ContactPhone)
 
-		if _, err := q.GetPendingApplicationByBusinessEmail(ctx, businessEmail); err == nil {
-			utils.Error(c, http.StatusConflict, errApplicationUnderReviewForEmail(businessEmail))
-			return
-		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			utils.Error(c, http.StatusInternalServerError, "Failed to validate business email")
+		emailResult := checkVendorBusinessEmail(ctx, q, businessEmail)
+		if !emailResult.Available {
+			utils.Error(c, http.StatusConflict, emailResult.Message)
 			return
 		}
-		if existing, err := q.GetUserByEmail(ctx, businessEmail); err == nil {
-			if existing.Role == sqlc.UsersRoleVENDOR {
-				utils.Error(c, http.StatusConflict, "This email already has a vendor account")
-			} else {
-				utils.Error(c, http.StatusConflict, "This email is already registered. Use a different business email for your application.")
-			}
-			return
-		} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			utils.Error(c, http.StatusInternalServerError, "Failed to validate business email")
+
+		phoneResult := checkVendorContactPhone(ctx, q, contactPhone, businessEmail)
+		if !phoneResult.Available {
+			utils.Error(c, http.StatusConflict, phoneResult.Message)
 			return
 		}
 
@@ -121,7 +115,7 @@ func ApplyVendor() gin.HandlerFunc {
 			VendorPhoto:         req.VendorPhoto,
 			BusinessPhoto:       req.BusinessPhoto,
 			BusinessEmail:       businessEmail,
-			ContactPhone:        req.ContactPhone,
+			ContactPhone:        contactPhone,
 			Country:             req.Country,
 			City:                req.City,
 			RegistrationNumber:  req.RegistrationNumber,

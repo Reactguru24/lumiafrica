@@ -46,6 +46,8 @@ type Querier interface {
 	CountPendingProducts(ctx context.Context) (int64, error)
 	CountPendingProductsSearch(ctx context.Context, arg CountPendingProductsSearchParams) (int64, error)
 	CountProductsByVendor(ctx context.Context, vendorID types.BinaryUUID) (int64, error)
+	ListProductSKUsByVendor(ctx context.Context, vendorID types.BinaryUUID) ([]string, error)
+	ListVendorProductSeedMeta(ctx context.Context, vendorID types.BinaryUUID) ([]ListVendorProductSeedMetaRow, error)
 	CountReviewsByProduct(ctx context.Context, productID types.BinaryUUID) (int64, error)
 	CountReviewsByProductID(ctx context.Context, productID types.BinaryUUID) (int64, error)
 	CountReviewsByProductIDs(ctx context.Context, productIds []types.BinaryUUID) (int64, error)
@@ -61,6 +63,9 @@ type Querier interface {
 	CreateCartItem(ctx context.Context, arg CreateCartItemParams) error
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) error
 	CreateCollection(ctx context.Context, arg CreateCollectionParams) error
+	CreateHomepageBanner(ctx context.Context, arg CreateHomepageBannerParams) error
+	CreateHomepageHeroSlide(ctx context.Context, arg CreateHomepageHeroSlideParams) error
+	CreateHomepagePromoItem(ctx context.Context, arg CreateHomepagePromoItemParams) error
 	CreateCoupon(ctx context.Context, arg CreateCouponParams) error
 	CreateCouponUse(ctx context.Context, arg CreateCouponUseParams) error
 	CreateDeliveryZone(ctx context.Context, arg CreateDeliveryZoneParams) error
@@ -85,6 +90,9 @@ type Querier interface {
 	DeleteCartByID(ctx context.Context, id types.BinaryUUID) error
 	DeleteCartBySessionKey(ctx context.Context, sessionKey sql.NullString) error
 	DeleteCartItem(ctx context.Context, id types.BinaryUUID) error
+	DeleteHomepageBanner(ctx context.Context, id types.BinaryUUID) error
+	DeleteHomepageHeroSlide(ctx context.Context, id types.BinaryUUID) error
+	DeleteHomepagePromoItem(ctx context.Context, id types.BinaryUUID) error
 	DeleteCollectionProducts(ctx context.Context, collectionID types.BinaryUUID) error
 	DeleteProductImages(ctx context.Context, productID types.BinaryUUID) error
 	DeletePromotionProducts(ctx context.Context, promotionID types.BinaryUUID) error
@@ -105,6 +113,9 @@ type Querier interface {
 	GetCategoryBySlug(ctx context.Context, slug string) (Category, error)
 	GetCollectionByID(ctx context.Context, id types.BinaryUUID) (Collection, error)
 	GetCollectionBySlug(ctx context.Context, slug string) (Collection, error)
+	GetHomepageBannerByID(ctx context.Context, id types.BinaryUUID) (HomepageBanner, error)
+	GetHomepageHeroSlideByID(ctx context.Context, id types.BinaryUUID) (HomepageHeroSlide, error)
+	GetHomepagePromoItemByID(ctx context.Context, id types.BinaryUUID) (HomepagePromoItem, error)
 	GetCouponByCode(ctx context.Context, upper string) (Coupon, error)
 	GetCouponByID(ctx context.Context, id types.BinaryUUID) (Coupon, error)
 	GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) (DeliveryZone, error)
@@ -145,12 +156,18 @@ type Querier interface {
 	InsertVendorCategory(ctx context.Context, arg InsertVendorCategoryParams) error
 	InvalidateUserResetTokens(ctx context.Context, userID types.BinaryUUID) error
 	ListActiveCollections(ctx context.Context) ([]Collection, error)
+	ListActiveHomepageBanners(ctx context.Context) ([]HomepageBanner, error)
+	ListActiveHomepageHeroSlides(ctx context.Context) ([]HomepageHeroSlide, error)
+	ListActiveHomepagePromoItems(ctx context.Context) ([]HomepagePromoItem, error)
 	ListActivePromotions(ctx context.Context) ([]Promotion, error)
 	ListAddressesByUser(ctx context.Context, userID types.BinaryUUID) ([]Address, error)
 	ListAdminProducts(ctx context.Context, arg ListAdminProductsParams) ([]Product, error)
 	ListAdminProductsSearch(ctx context.Context, arg ListAdminProductsSearchParams) ([]Product, error)
 	ListAllActiveCategories(ctx context.Context) ([]Category, error)
 	ListAllCollections(ctx context.Context, arg ListAllCollectionsParams) ([]Collection, error)
+	ListAllHomepageBanners(ctx context.Context) ([]HomepageBanner, error)
+	ListAllHomepageHeroSlides(ctx context.Context) ([]HomepageHeroSlide, error)
+	ListAllHomepagePromoItems(ctx context.Context) ([]HomepagePromoItem, error)
 	ListAllCoupons(ctx context.Context, arg ListAllCouponsParams) ([]Coupon, error)
 	ListAllOrders(ctx context.Context, arg ListAllOrdersParams) ([]Order, error)
 	ListAllPromotions(ctx context.Context, arg ListAllPromotionsParams) ([]Promotion, error)
@@ -220,6 +237,9 @@ type Querier interface {
 	SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error)
 	SearchVendors(ctx context.Context, arg SearchVendorsParams) ([]Vendor, error)
 	SetCollectionActive(ctx context.Context, arg SetCollectionActiveParams) error
+	SetHomepageBannerActive(ctx context.Context, arg SetHomepageBannerActiveParams) error
+	SetHomepageHeroSlideActive(ctx context.Context, arg SetHomepageHeroSlideActiveParams) error
+	SetHomepagePromoItemActive(ctx context.Context, arg SetHomepagePromoItemActiveParams) error
 	SetCouponActive(ctx context.Context, arg SetCouponActiveParams) error
 	SetDeliveryZoneActive(ctx context.Context, arg SetDeliveryZoneActiveParams) error
 	SetOrderTimestamps(ctx context.Context, arg SetOrderTimestampsParams) error
@@ -238,6 +258,9 @@ type Querier interface {
 	UpdateAllVendorCommissionRates(ctx context.Context, commissionRate string) error
 	UpdateCartItemQuantity(ctx context.Context, arg UpdateCartItemQuantityParams) error
 	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) error
+	UpdateHomepageBanner(ctx context.Context, arg UpdateHomepageBannerParams) error
+	UpdateHomepageHeroSlide(ctx context.Context, arg UpdateHomepageHeroSlideParams) error
+	UpdateHomepagePromoItem(ctx context.Context, arg UpdateHomepagePromoItemParams) error
 	UpdateCoupon(ctx context.Context, arg UpdateCouponParams) error
 	UpdateDeliveryZone(ctx context.Context, arg UpdateDeliveryZoneParams) error
 	UpdateOrderStatus(ctx context.Context, arg UpdateOrderStatusParams) error

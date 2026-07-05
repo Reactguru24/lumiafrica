@@ -42,6 +42,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	// ── Guest (public) ───────────────────────────────────────────────────
 	// Auth entry and marketplace browsing — no login required.
 	router.POST("/auth/login", handlers.Login(cfg))
+	router.POST("/auth/check-credentials", handlers.CheckCredentials())
 	router.POST("/auth/register", handlers.Register(cfg))
 	router.POST("/auth/forgot-password", handlers.ForgotPassword(cfg))
 	router.POST("/auth/reset-password", handlers.ResetPassword())
@@ -69,6 +70,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/promotions", handlers.ListActivePromotions())
 	router.GET("/collections", handlers.ListCollections())
 	router.GET("/collections/:slug", handlers.GetCollection())
+	router.GET("/homepage", handlers.GetHomepageContent())
 
 	router.POST("/auth/upload", auth, activeUser, handlers.UploadImage(cfg))
 
@@ -164,5 +166,20 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.PUT("/collections/:collectionID", handlers.UpdateAdminCollection())
 		admin.PUT("/collections/:collectionID/active", handlers.SetAdminCollectionActive())
 		admin.DELETE("/collections/:collectionID", handlers.DeleteAdminCollection())
+		admin.GET("/homepage/hero-slides", handlers.ListAdminHomepageHeroSlides())
+		admin.POST("/homepage/hero-slides", handlers.CreateAdminHomepageHeroSlide())
+		admin.PUT("/homepage/hero-slides/:slideID", handlers.UpdateAdminHomepageHeroSlide())
+		admin.PUT("/homepage/hero-slides/:slideID/active", handlers.SetAdminHomepageHeroSlideActive())
+		admin.DELETE("/homepage/hero-slides/:slideID", handlers.DeleteAdminHomepageHeroSlide())
+		admin.GET("/homepage/promo-items", handlers.ListAdminHomepagePromoItems())
+		admin.POST("/homepage/promo-items", handlers.CreateAdminHomepagePromoItem())
+		admin.PUT("/homepage/promo-items/:itemID", handlers.UpdateAdminHomepagePromoItem())
+		admin.PUT("/homepage/promo-items/:itemID/active", handlers.SetAdminHomepagePromoItemActive())
+		admin.DELETE("/homepage/promo-items/:itemID", handlers.DeleteAdminHomepagePromoItem())
+		admin.GET("/homepage/banners", handlers.ListAdminHomepageBanners())
+		admin.POST("/homepage/banners", handlers.CreateAdminHomepageBanner())
+		admin.PUT("/homepage/banners/:bannerID", handlers.UpdateAdminHomepageBanner())
+		admin.PUT("/homepage/banners/:bannerID/active", handlers.SetAdminHomepageBannerActive())
+		admin.DELETE("/homepage/banners/:bannerID", handlers.DeleteAdminHomepageBanner())
 	}
 }

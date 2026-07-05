@@ -5,7 +5,7 @@ import { MediaImage } from '@/components/common/MediaImage'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useVendorProducts, useCreateVendorProduct, useUpdateVendorProduct, useDeleteVendorProduct, useUpdateVendorProductFeatured, useVendorSubscription, useSubscriptionPlans, useProductFilters } from '@/lib/stores/api'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapItems } from '@/lib/utils/api'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { productSchema } from '@/lib/utils/validation'
@@ -86,6 +86,7 @@ function buildPayload(form: ProductForm) {
 }
 
 export default function VendorProductsPage() {
+  const formatPrice = useFormatCurrency()
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<ProductForm>(emptyForm())
@@ -424,7 +425,7 @@ export default function VendorProductsPage() {
             columns={[
               { key: 'name', label: 'Product', width: '30%' },
               { key: 'sku', label: 'SKU', width: '15%' },
-              { key: 'price', label: 'Price', width: '15%', format: (v) => formatCurrency(v as number) },
+              { key: 'price', label: 'Price', width: '15%', format: (v) => formatPrice(v as number) },
               { key: 'stock', label: 'Stock', width: '10%' },
               { key: 'featured', label: 'Featured', width: '12%' },
               { key: 'status', label: 'Status', width: '15%' },

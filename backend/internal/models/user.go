@@ -67,6 +67,22 @@ type RegisterRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
+type CheckCredentialsRequest struct {
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Context string `json:"context"`
+}
+
+type CredentialFieldStatus struct {
+	Available bool   `json:"available"`
+	Message   string `json:"message,omitempty"`
+}
+
+type CheckCredentialsResponse struct {
+	Available bool                             `json:"available"`
+	Fields    map[string]CredentialFieldStatus `json:"fields"`
+}
+
 // AuthResponse represents authentication response
 type AuthResponse struct {
 	User  *User  `json:"user"`

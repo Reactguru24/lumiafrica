@@ -8,7 +8,7 @@ import { useCartStore } from '@/lib/stores/cart'
 import { useAuthStore } from '@/lib/stores/auth'
 import { useProducts, useCreateOrder, useValidateCoupon, useShippingEstimate, useDeliveryZones, useVendorProfile } from '@/lib/stores/api'
 import { checkoutShippingSchema } from '@/lib/utils/validation'
-import { formatCurrency } from '@/lib/utils/storage'
+import { useFormatCurrency } from '@/lib/stores/currency'
 import { TAX_RATE, PAYMENT_METHODS } from '@/lib/constants/commerce'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import { isAllowedPaystackUrl } from '@/lib/utils/safeRedirect'
@@ -23,6 +23,7 @@ import type { ProductListResponse } from '@/lib/types/filters'
 type DeliveryZone = { id: string; name: string; estimatedDays: string }
 
 export default function CheckoutPage() {
+  const formatPrice = useFormatCurrency()
   const router = useRouter()
   const cart = useCartStore()
   const auth = useAuthStore()
@@ -312,7 +313,7 @@ export default function CheckoutPage() {
                         {group.shipping?.shippingCost === 0
                           ? 'FREE'
                           : group.shipping
-                            ? formatCurrency(group.shipping.shippingCost)
+                            ? formatPrice(group.shipping.shippingCost)
                             : '—'}
                       </span>
                     </div>
@@ -345,12 +346,12 @@ export default function CheckoutPage() {
                 {shippingBreakdown.map((line) => (
                   <div key={line.vendorId} className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>{line.storeName}</span>
-                    <span>{line.shippingCost === 0 ? 'FREE' : formatCurrency(line.shippingCost)}</span>
+                    <span>{line.shippingCost === 0 ? 'FREE' : formatPrice(line.shippingCost)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between font-medium border-t pt-2">
                   <span>Total shipping</span>
-                  <span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span>
+                  <span>{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span>
                 </div>
               </div>
             )}
@@ -375,7 +376,7 @@ export default function CheckoutPage() {
                 <button type="button" className="btn-secondary shrink-0" onClick={applyCoupon}>Apply</button>
               </div>
               {appliedCoupon && (
-                <p className="text-sm text-green-600 mt-2">Applied {appliedCoupon.code} (−{formatCurrency(appliedCoupon.discount)})</p>
+                <p className="text-sm text-green-600 mt-2">Applied {appliedCoupon.code} (−{formatPrice(appliedCoupon.discount)})</p>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
@@ -384,11 +385,11 @@ export default function CheckoutPage() {
               ))}
             </div>
             <div className="card p-4 mb-6 text-sm space-y-2">
-              <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-              {discount > 0 && <div className="flex justify-between text-green-600"><span>Coupon</span><span>−{formatCurrency(discount)}</span></div>}
-              <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}</span></div>
-              {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatCurrency(tax)}</span></div>}
-              <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatCurrency(total)}</span></div>
+              <div className="flex justify-between"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+              {discount > 0 && <div className="flex justify-between text-green-600"><span>Coupon</span><span>−{formatPrice(discount)}</span></div>}
+              <div className="flex justify-between"><span>Shipping</span><span>{shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}</span></div>
+              {tax > 0 && <div className="flex justify-between"><span>Tax</span><span>{formatPrice(tax)}</span></div>}
+              <div className="flex justify-between font-semibold border-t pt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
             </div>
             <div className="flex gap-4">
               <button className="btn-secondary flex-1" onClick={() => setStep(2)}>Back</button>
