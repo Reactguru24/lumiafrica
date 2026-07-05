@@ -85,3 +85,59 @@ func recordOrderSettlements(ctx context.Context, q *sqlc.Queries, orderID string
 	}
 	return createOrderItems(ctx, q, parsedOrderID, items)
 }
+
+func recordVendorOrderSettlements(
+	ctx context.Context,
+	q *sqlc.Queries,
+	orderID types.BinaryUUID,
+	shipments []models.VendorShipmentMeta,
+) error {
+	items, err := q.ListOrderItemsByOrder(ctx, orderID)
+	if err != nil {
+		return err
+	}
+
+	type vendorAgg struct {
+		productSubtotal float64
+		platformFee     float64
+		vendorEarnings  float64
+	}
+	byVendor := make(map[types.BinaryUUID]vendorAgg)
+	for _, item := range items {
+		sub := store.ParseDecimalString(item.Subtotal)
+		fee := store.ParseDecimalString(item.PlatformFee)
+		earn := store.ParseDecimalString(item.VendorEarnings)
+		agg := byVendor[item.VendorID]
+		agg.productSubtotal += sub
+		agg.platformFee += fee
+		agg.vendorEarnings += earn
+		byVendor[item.VendorID] = agg
+	}
+
+	shippingByVendor := make(map[types.BinaryUUID]float64)
+	for _, line := range shipments {
+		vid, err := utils.ParseID(line.VendorID)
+		if err != nil {
+			continue
+		}
+		shippingByVendor[vid] += line.ShippingFee
+	}
+
+	for vendorID, agg := range byVendor {
+		shipping := shippingByVendor[vendorID]
+		totalEarnings := agg.vendorEarnings + shipping
+		if err := q.CreateOrderVendorSettlement(ctx, sqlc.CreateOrderVendorSettlementParams{
+			ID:              utils.GenerateBinaryID(),
+			OrderID:         orderID,
+			VendorID:        vendorID,
+			ProductSubtotal: store.FloatToDecimalString(agg.productSubtotal),
+			ShippingFee:     store.FloatToDecimalString(shipping),
+			PlatformFee:     store.FloatToDecimalString(agg.platformFee),
+			VendorEarnings:  store.FloatToDecimalString(totalEarnings),
+			Status:          string(models.OrderStatusProcessing),
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}

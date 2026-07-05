@@ -54,6 +54,12 @@ type Order struct {
 	CreatedAt        time.Time             `json:"createdAt"`
 	UpdatedAt        time.Time             `json:"updatedAt"`
 	DeliveredAt      *time.Time            `json:"deliveredAt"`
+	// Vendor-scoped fields (only populated on vendor order APIs).
+	VendorShipmentID   string  `json:"vendorShipmentId,omitempty"`
+	VendorShippingFee  float64 `json:"vendorShippingFee,omitempty"`
+	VendorProductTotal float64 `json:"vendorProductTotal,omitempty"`
+	VendorEarnings     float64 `json:"vendorEarnings,omitempty"`
+	IsMultiVendor      bool    `json:"isMultiVendor,omitempty"`
 }
 
 type CreateOrderRequest struct {

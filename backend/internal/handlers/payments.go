@@ -854,6 +854,10 @@ func createOrderFromPayment(ctx context.Context, st *store.Store, payment sqlc.P
 			return "", fmt.Errorf("failed to create shipments")
 		}
 	}
+	if err := recordVendorOrderSettlements(ctx, qtx, orderID, meta.VendorShipments); err != nil {
+		tx.Rollback()
+		return "", fmt.Errorf("failed to create vendor settlements")
+	}
 	now := utils.Now()
 	if err := qtx.SetOrderTimestamps(ctx, sqlc.SetOrderTimestampsParams{
 		CreatedAt: now,

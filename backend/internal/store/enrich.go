@@ -44,6 +44,49 @@ func LoadOrder(ctx context.Context, q *sqlc.Queries, o sqlc.Order) models.Order 
 	return order
 }
 
+func LoadOrderForVendor(ctx context.Context, q *sqlc.Queries, o sqlc.Order, vendorID types.BinaryUUID) models.Order {
+	allItems, _ := q.ListOrderItemsByOrder(ctx, o.ID)
+	vendorItems := make([]sqlc.OrderItem, 0, len(allItems))
+	for _, item := range allItems {
+		if item.VendorID == vendorID {
+			vendorItems = append(vendorItems, item)
+		}
+	}
+	order := LoadOrder(ctx, q, o)
+	order.Items = make([]models.OrderItem, len(vendorItems))
+	for i, item := range vendorItems {
+		order.Items[i] = sqlcOrderItemToModel(item)
+	}
+
+	settlements, _ := q.ListOrderVendorSettlementsByOrder(ctx, o.ID)
+	order.IsMultiVendor = len(settlements) > 1
+
+	settlement, err := q.GetOrderVendorSettlement(ctx, o.ID, vendorID)
+	if err == nil {
+		order.Status = models.OrderStatus(settlement.Status)
+		order.Subtotal = parseDecimal(settlement.ProductSubtotal)
+		order.ShippingCost = parseDecimal(settlement.ShippingFee)
+		order.Total = parseDecimal(settlement.VendorEarnings)
+		order.VendorProductTotal = order.Subtotal
+		order.VendorShippingFee = order.ShippingCost
+		order.VendorEarnings = order.Total
+	}
+
+	if shipment, err := q.GetShipmentByOrderAndVendor(ctx, o.ID, vendorID); err == nil {
+		order.VendorShipmentID = shipment.ID.String()
+	}
+
+	return order
+}
+
+func LoadOrdersForVendor(ctx context.Context, q *sqlc.Queries, orders []sqlc.Order, vendorID types.BinaryUUID) []models.Order {
+	out := make([]models.Order, len(orders))
+	for i, o := range orders {
+		out[i] = LoadOrderForVendor(ctx, q, o, vendorID)
+	}
+	return out
+}
+
 func orderBinaryFK(id *types.BinaryUUID) (types.BinaryUUID, bool) {
 	if id == nil || id.IsZero() {
 		return types.BinaryUUID{}, false

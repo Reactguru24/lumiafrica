@@ -68,11 +68,18 @@ func toPayoutResponse(row sqlc.VendorPayout) models.VendorPayoutResponse {
 }
 
 func vendorAvailableBalance(ctx context.Context, q *sqlc.Queries, vendorID types.BinaryUUID) (float64, error) {
-	raw, err := q.GetVendorAvailableBalance(ctx, vendorID)
+	raw, err := q.GetVendorAvailableSettlementBalance(ctx, vendorID)
+	if err == nil {
+		balance := store.ParseDecimalString(raw)
+		if balance > 0 {
+			return balance, nil
+		}
+	}
+	legacy, err := q.GetVendorAvailableBalance(ctx, vendorID)
 	if err != nil {
 		return 0, err
 	}
-	switch v := raw.(type) {
+	switch v := legacy.(type) {
 	case float64:
 		return v, nil
 	case []byte:
@@ -271,6 +278,128 @@ func resolvePaystackRecipient(cfg *config.Config, method sqlc.VendorPayoutMethod
 	return data.RecipientCode, nil
 }
 
+func processVendorSettlementWithdrawal(
+	ctx context.Context,
+	cfg *config.Config,
+	q *sqlc.Queries,
+	vendorID types.BinaryUUID,
+	method sqlc.VendorPayoutMethod,
+	settlements []sqlc.OrderVendorSettlement,
+	requestedAmount *float64,
+) (models.RequestVendorWithdrawalResponse, error) {
+	var selected []sqlc.OrderVendorSettlement
+	var selectedTotal float64
+	if requestedAmount == nil {
+		selected = settlements
+		for _, s := range settlements {
+			selectedTotal += store.ParseDecimalString(s.VendorEarnings)
+		}
+	} else {
+		amount := *requestedAmount
+		for _, s := range settlements {
+			line := store.ParseDecimalString(s.VendorEarnings)
+			if selectedTotal+line > amount+0.01 {
+				break
+			}
+			selected = append(selected, s)
+			selectedTotal += line
+		}
+	}
+	if selectedTotal < minWithdrawalKES {
+		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("not enough settled earnings to withdraw")
+	}
+	amount := math.Floor(selectedTotal*100) / 100
+
+	periodStart := time.Now()
+	periodEnd := time.Now()
+	if len(selected) > 0 {
+		periodStart = selected[0].UpdatedAt
+		periodEnd = selected[len(selected)-1].UpdatedAt
+	}
+
+	payoutID := utils.GenerateBinaryID()
+	if err := q.CreateVendorPayout(ctx, sqlc.CreateVendorPayoutParams{
+		ID:             payoutID,
+		VendorID:       vendorID,
+		PayoutMethodID: method.ID,
+		Amount:         store.FloatToDecimalString(amount),
+		Status:         sqlc.VendorPayoutsStatusProcessing,
+		PeriodStart:    periodStart,
+		PeriodEnd:      periodEnd,
+		Reference:      sql.NullString{},
+	}); err != nil {
+		return models.RequestVendorWithdrawalResponse{}, err
+	}
+	for _, settlement := range selected {
+		lineItem, err := q.GetFirstOrderItemForVendorOrder(ctx, settlement.OrderID, vendorID)
+		if err != nil {
+			return models.RequestVendorWithdrawalResponse{}, err
+		}
+		if err := q.CreateVendorPayoutItem(ctx, sqlc.CreateVendorPayoutItemParams{
+			PayoutID:    payoutID,
+			OrderItemID: lineItem.ID,
+			Amount:      settlement.VendorEarnings,
+		}); err != nil {
+			return models.RequestVendorWithdrawalResponse{}, err
+		}
+		if err := q.MarkOrderVendorSettlementPaid(ctx, settlement.ID, vendorID); err != nil {
+			return models.RequestVendorWithdrawalResponse{}, err
+		}
+	}
+
+	recipient, err := resolvePaystackRecipient(cfg, method)
+	if err != nil {
+		_ = q.UpdateVendorPayoutStatus(ctx, sqlc.UpdateVendorPayoutStatusParams{
+			Status: sqlc.VendorPayoutsStatusFailed, Reference: sql.NullString{},
+			StatusEq: sqlc.VendorPayoutsStatusPaid, AdminNote: sql.NullString{String: err.Error(), Valid: true}, ID: payoutID,
+		})
+		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("M-Pesa transfer setup failed: %w", err)
+	}
+	if !method.BankName.Valid || method.BankName.String != recipient {
+		_ = q.UpdateVendorPayoutMethodRecipient(ctx, sqlc.UpdateVendorPayoutMethodRecipientParams{
+			BankName: sql.NullString{String: recipient, Valid: true}, ID: method.ID, VendorID: vendorID,
+		})
+	}
+
+	transfer, err := paystackClient(cfg).InitiateTransfer(paystack.TransferRequest{
+		Source: "balance", Amount: paystack.AmountToKobo(amount), Recipient: recipient,
+		Reason: "Lumi vendor earnings", Currency: "KES",
+	})
+	if err != nil {
+		_ = q.UpdateVendorPayoutStatus(ctx, sqlc.UpdateVendorPayoutStatusParams{
+			Status: sqlc.VendorPayoutsStatusFailed, Reference: sql.NullString{},
+			StatusEq: sqlc.VendorPayoutsStatusPaid, AdminNote: sql.NullString{String: err.Error(), Valid: true}, ID: payoutID,
+		})
+		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("M-Pesa transfer failed: %w", err)
+	}
+
+	ref := transfer.Reference
+	if ref == "" {
+		ref = transfer.TransferCode
+	}
+	status := sqlc.VendorPayoutsStatusPaid
+	if strings.ToLower(transfer.Status) != "success" {
+		status = sqlc.VendorPayoutsStatusProcessing
+	}
+	if err := q.UpdateVendorPayoutStatus(ctx, sqlc.UpdateVendorPayoutStatusParams{
+		Status: status, Reference: sql.NullString{String: ref, Valid: ref != ""},
+		StatusEq: sqlc.VendorPayoutsStatusPaid, AdminNote: sql.NullString{}, ID: payoutID,
+	}); err != nil {
+		return models.RequestVendorWithdrawalResponse{}, err
+	}
+
+	row := sqlc.VendorPayout{
+		ID: payoutID, VendorID: vendorID, PayoutMethodID: method.ID,
+		Amount: store.FloatToDecimalString(amount), Currency: "KES", Status: status,
+		PeriodStart: periodStart, PeriodEnd: periodEnd,
+		Reference: sql.NullString{String: ref, Valid: ref != ""}, CreatedAt: time.Now(),
+	}
+	if status == sqlc.VendorPayoutsStatusPaid {
+		row.CompletedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	}
+	return models.RequestVendorWithdrawalResponse{Payout: toPayoutResponse(row)}, nil
+}
+
 func processVendorWithdrawal(ctx context.Context, cfg *config.Config, q *sqlc.Queries, vendorID types.BinaryUUID, requestedAmount *float64) (models.RequestVendorWithdrawalResponse, error) {
 	method, err := q.GetDefaultVendorMpesaMethod(ctx, vendorID)
 	if err != nil {
@@ -294,6 +423,14 @@ func processVendorWithdrawal(ctx context.Context, cfg *config.Config, q *sqlc.Qu
 	}
 	if amount > balance+0.01 {
 		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("insufficient balance")
+	}
+
+	settlements, err := q.ListPayableVendorSettlements(ctx, vendorID)
+	if err != nil {
+		return models.RequestVendorWithdrawalResponse{}, err
+	}
+	if len(settlements) > 0 {
+		return processVendorSettlementWithdrawal(ctx, cfg, q, vendorID, method, settlements, requestedAmount)
 	}
 
 	items, err := q.ListPayableOrderItems(ctx, vendorID)

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"github.com/Reactguru24/lumiafrica/internal/database/sqlc"
 	"github.com/Reactguru24/lumiafrica/internal/middleware"
 	"github.com/Reactguru24/lumiafrica/internal/models"
@@ -139,15 +138,21 @@ func UpdateOrderStatus() gin.HandlerFunc {
 			return
 		}
 
-		var deliveredAt sql.NullTime
-		if req.Status == models.OrderStatusDelivered {
-			deliveredAt = sql.NullTime{Time: utils.Now(), Valid: true}
-		}
-		if err := q.UpdateOrderStatus(ctx, sqlc.UpdateOrderStatusParams{
-			Status: sqlc.OrdersStatus(req.Status), DeliveredAt: deliveredAt, ID: orderID,
+		if err := q.UpdateOrderVendorSettlementStatus(ctx, sqlc.UpdateOrderVendorSettlementStatusParams{
+			Status:   string(req.Status),
+			OrderID:  orderID,
+			VendorID: vendorID,
 		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to update order status")
+			utils.Error(c, http.StatusInternalServerError, "Failed to update vendor order status")
 			return
+		}
+		_ = q.UpdateShipmentStatus(ctx, sqlc.UpdateShipmentStatusParams{
+			Status:   shipmentStatusFromOrderStatus(req.Status),
+			OrderID:  orderID,
+			VendorID: vendorID,
+		})
+		if req.Status == models.OrderStatusDelivered {
+			_ = syncOrderStatusAfterVendorUpdate(ctx, q, orderID)
 		}
 		if err := q.SetOrderUpdatedAt(ctx, sqlc.SetOrderUpdatedAtParams{
 			UpdatedAt: utils.Now(),
@@ -161,7 +166,7 @@ func UpdateOrderStatus() gin.HandlerFunc {
 		if handleNotFound(c, err, "Order not found", "Failed to fetch order") {
 			return
 		}
-		utils.Success(c, store.LoadOrder(ctx, q, updated))
+		utils.Success(c, store.LoadOrderForVendor(ctx, q, updated, vendorID))
 	}
 }
 
@@ -204,7 +209,7 @@ func GetVendorOrders() gin.HandlerFunc {
 			utils.Error(c, http.StatusInternalServerError, "Failed to fetch orders")
 			return
 		}
-		respondPaginated(c, store.LoadOrders(ctx, q, rows), total, page, limit)
+		respondPaginated(c, store.LoadOrdersForVendor(ctx, q, rows, vendorID), total, page, limit)
 	}
 }
 
