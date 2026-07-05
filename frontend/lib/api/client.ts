@@ -695,26 +695,6 @@ export const adminAPI = {
     return del(`/admin/homepage/hero-slides/${slideId}`)
   },
 
-  listHomepagePromoItems() {
-    return get('/admin/homepage/promo-items')
-  },
-
-  createHomepagePromoItem(data: Record<string, unknown>) {
-    return post('/admin/homepage/promo-items', data)
-  },
-
-  updateHomepagePromoItem(itemId: string, data: Record<string, unknown>) {
-    return put(`/admin/homepage/promo-items/${itemId}`, data)
-  },
-
-  setHomepagePromoItemActive(itemId: string, active: boolean) {
-    return put(`/admin/homepage/promo-items/${itemId}/active`, { active })
-  },
-
-  deleteHomepagePromoItem(itemId: string) {
-    return del(`/admin/homepage/promo-items/${itemId}`)
-  },
-
   getHomepageShowcase() {
     return get('/admin/homepage/showcase')
   },

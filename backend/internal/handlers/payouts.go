@@ -440,10 +440,12 @@ func processVendorWithdrawal(ctx context.Context, cfg *config.Config, q *sqlc.Qu
 
 // RequestVendorWithdrawal godoc
 // @Summary Withdraw vendor earnings to M-Pesa
+// @Description Transfers available earnings from delivered orders to the vendor default M-Pesa number via Paystack.
 // @Tags Vendor
 // @Accept json
 // @Produce json
 // @Security Bearer
+// @Param Idempotency-Key header string false "Prevents duplicate withdrawal requests"
 // @Param body body models.RequestVendorWithdrawalRequest false "Optional partial amount"
 // @Success 200 {object} models.RequestVendorWithdrawalResponse
 // @Router /vendor/payouts/withdraw [post]

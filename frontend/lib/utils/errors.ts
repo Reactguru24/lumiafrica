@@ -15,6 +15,9 @@ const FRIENDLY_MESSAGES: Record<number, string> = {
 
 export function getFriendlyErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
   if (error instanceof APIError) {
+    if (error.status === 403 && error.message.includes('Required role')) {
+      return 'Your account does not have admin access. Sign in with an admin account and try again.'
+    }
     if (error.message && error.message !== 'An error occurred' && !error.message.startsWith('Invalid request:')) {
       return error.message
     }

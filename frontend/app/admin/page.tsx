@@ -119,7 +119,7 @@ export default function AdminDashboardPage() {
           <div>
             <h3 className="font-semibold mb-1">Homepage content</h3>
             <p className="text-sm text-gray-500 mb-4">
-              Manage hero carousel slides, promo tiles, and the feature showcase section.
+              Manage hero carousel slides and the feature showcase section. The promo strip stays fixed in the app.
             </p>
           </div>
           <Link

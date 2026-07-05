@@ -12,6 +12,7 @@ import type { Vendor } from '@/lib/types'
 
 const sellerNavItems = [
   { name: 'Dashboard', to: '/vendor' },
+  { name: 'Withdrawals', to: '/vendor/withdrawals' },
   { name: 'My Account', to: '/vendor/account' },
   { name: 'Products', to: '/vendor/products' },
   { name: 'Orders', to: '/vendor/orders' },
@@ -19,7 +20,6 @@ const sellerNavItems = [
   { name: 'Analytics', to: '/vendor/analytics' },
   { name: 'Reviews', to: '/vendor/reviews' },
   { name: 'Store Profile', to: '/vendor/profile' },
-  { name: 'Withdrawals', to: '/vendor/withdrawals' },
   { name: 'Featured Listing', to: '/vendor/subscription' },
 ]
 
@@ -77,9 +77,9 @@ export function VendorSellerShell({ children }: { children: ReactNode }) {
         <VendorModeToggle />
       </div>
       <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-        <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100dvh-5.5rem)] flex flex-col overflow-hidden">
+        <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100dvh-5.5rem)] flex flex-col min-h-0">
           <SidebarStoreCard vendor={vendor} featured={featured} />
-          <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0 -mx-1 px-1 md:mx-0 md:px-0 hide-scrollbar md:hide-scrollbar">
+          <nav className="flex md:flex-col gap-1 overflow-x-auto md:overflow-y-auto md:overflow-x-visible pb-2 md:pb-2 -mx-1 px-1 md:mx-0 md:px-0 hide-scrollbar flex-1 min-h-0">
             {sellerNavItems.map((item) => (
               <Link
                 key={item.to}

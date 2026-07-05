@@ -176,11 +176,6 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		admin.PUT("/homepage/hero-slides/:slideID", handlers.UpdateAdminHomepageHeroSlide())
 		admin.PUT("/homepage/hero-slides/:slideID/active", handlers.SetAdminHomepageHeroSlideActive())
 		admin.DELETE("/homepage/hero-slides/:slideID", handlers.DeleteAdminHomepageHeroSlide())
-		admin.GET("/homepage/promo-items", handlers.ListAdminHomepagePromoItems())
-		admin.POST("/homepage/promo-items", handlers.CreateAdminHomepagePromoItem())
-		admin.PUT("/homepage/promo-items/:itemID", handlers.UpdateAdminHomepagePromoItem())
-		admin.PUT("/homepage/promo-items/:itemID/active", handlers.SetAdminHomepagePromoItemActive())
-		admin.DELETE("/homepage/promo-items/:itemID", handlers.DeleteAdminHomepagePromoItem())
 		admin.GET("/homepage/showcase", handlers.GetAdminHomepageShowcase())
 		admin.PUT("/homepage/showcase", handlers.UpsertAdminHomepageShowcase())
 	}

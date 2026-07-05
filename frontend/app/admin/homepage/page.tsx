@@ -9,17 +9,12 @@ import { StatusBadge } from '@/components/common/StatusBadge'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import {
   useAdminHomepageHeroSlides,
-  useAdminHomepagePromoItems,
   useAdminHomepageShowcase,
   useUpsertAdminHomepageShowcase,
   useCreateAdminHomepageHeroSlide,
   useUpdateAdminHomepageHeroSlide,
   useSetAdminHomepageHeroSlideActive,
   useDeleteAdminHomepageHeroSlide,
-  useCreateAdminHomepagePromoItem,
-  useUpdateAdminHomepagePromoItem,
-  useSetAdminHomepagePromoItemActive,
-  useDeleteAdminHomepagePromoItem,
 } from '@/lib/stores/api'
 import { unwrapItems } from '@/lib/utils/api'
 
@@ -29,13 +24,6 @@ const emptySlideForm = () => ({
   subtitle: '',
   image: '',
   link: '/products',
-  sortOrder: 0,
-})
-
-const emptyPromoForm = () => ({
-  title: '',
-  description: '',
-  icon: '✓',
   sortOrder: 0,
 })
 
@@ -67,28 +55,29 @@ function showcaseToForm(data: Record<string, unknown> | null): ShowcaseForm {
   }
 }
 
+async function runAdminAction(action: () => Promise<unknown>, successMsg: string, errorMsg: string) {
+  try {
+    await action()
+    toast.success(successMsg)
+  } catch (err) {
+    toast.error(getFriendlyErrorMessage(err, errorMsg))
+  }
+}
+
 export default function AdminHomepagePage() {
   const { data: slidesData, refetch: refetchSlides } = useAdminHomepageHeroSlides()
-  const { data: promosData, refetch: refetchPromos } = useAdminHomepagePromoItems()
   const { data: showcaseData, loading: showcaseLoading, refetch: refetchShowcase } = useAdminHomepageShowcase()
 
   const createSlide = useCreateAdminHomepageHeroSlide().mutate
   const updateSlide = useUpdateAdminHomepageHeroSlide().mutate
   const setSlideActive = useSetAdminHomepageHeroSlideActive().mutate
   const deleteSlide = useDeleteAdminHomepageHeroSlide().mutate
-  const createPromo = useCreateAdminHomepagePromoItem().mutate
-  const updatePromo = useUpdateAdminHomepagePromoItem().mutate
-  const setPromoActive = useSetAdminHomepagePromoItemActive().mutate
-  const deletePromo = useDeleteAdminHomepagePromoItem().mutate
   const upsertShowcase = useUpsertAdminHomepageShowcase().mutate
 
   const slides = unwrapItems(slidesData) as any[]
-  const promos = unwrapItems(promosData) as any[]
 
   const [slideForm, setSlideForm] = useState(emptySlideForm)
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null)
-  const [promoForm, setPromoForm] = useState(emptyPromoForm)
-  const [editingPromoId, setEditingPromoId] = useState<string | null>(null)
   const [showcaseForm, setShowcaseForm] = useState(emptyShowcaseForm)
   const [showcaseLoaded, setShowcaseLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -130,27 +119,6 @@ export default function AdminHomepagePage() {
     }
   }
 
-  async function handlePromoSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      if (editingPromoId) {
-        await updatePromo({ id: editingPromoId, payload: promoForm })
-        toast.success('Promo item updated')
-      } else {
-        await createPromo(promoForm)
-        toast.success('Promo item created')
-      }
-      setPromoForm(emptyPromoForm())
-      setEditingPromoId(null)
-      refetchPromos()
-    } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, 'Failed to save promo item'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
   async function handleShowcaseSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSavingShowcase(true)
@@ -178,7 +146,7 @@ export default function AdminHomepagePage() {
     <div className="space-y-8">
       <AdminPageHeader
         title="Homepage"
-        subtitle="Manage the hero carousel, promo strip, and feature showcase on the storefront."
+        subtitle="Manage the hero carousel and feature showcase on the storefront. The promo strip (shipping, M-Pesa, etc.) is fixed in the app."
       />
 
       <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
@@ -233,53 +201,8 @@ export default function AdminHomepagePage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={slide.active ? 'active' : 'hidden'} />
                 <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => { setEditingSlideId(slide.id); setSlideForm({ label: slide.label || '', title: slide.title, subtitle: slide.subtitle || '', image: slide.image, link: slide.link || '/products', sortOrder: slide.sortOrder || 0 }) }}>Edit</button>
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={async () => { await setSlideActive({ id: slide.id, active: !slide.active }); refetchSlides() }}>{slide.active ? 'Hide' : 'Show'}</button>
-                <button type="button" className="text-xs text-red-600" onClick={async () => { if (!confirm('Delete this slide?')) return; await deleteSlide({ id: slide.id }); refetchSlides() }}>Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
-        <h2 className="font-semibold text-lg">Promo strip</h2>
-        <form onSubmit={handlePromoSubmit} className="grid md:grid-cols-2 gap-4">
-          <label className="block">
-            <span className="text-sm font-medium">Title</span>
-            <input required className="input-field mt-1" value={promoForm.title} onChange={(e) => setPromoForm({ ...promoForm, title: e.target.value })} />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">Icon (emoji)</span>
-            <input className="input-field mt-1" value={promoForm.icon} onChange={(e) => setPromoForm({ ...promoForm, icon: e.target.value })} />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-sm font-medium">Description</span>
-            <input className="input-field mt-1" value={promoForm.description} onChange={(e) => setPromoForm({ ...promoForm, description: e.target.value })} />
-          </label>
-          <label className="block">
-            <span className="text-sm font-medium">Sort order</span>
-            <input type="number" className="input-field mt-1" value={promoForm.sortOrder} onChange={(e) => setPromoForm({ ...promoForm, sortOrder: Number(e.target.value) })} />
-          </label>
-          <div className="md:col-span-2 flex gap-2">
-            <button type="submit" className="btn-primary" disabled={saving}>{editingPromoId ? 'Update item' : 'Add item'}</button>
-            {editingPromoId && <button type="button" className="btn-secondary" onClick={() => { setEditingPromoId(null); setPromoForm(emptyPromoForm()) }}>Cancel</button>}
-          </div>
-        </form>
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {promos.map((item) => (
-            <div key={item.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex items-center gap-3 flex-1">
-                <span className="text-2xl">{item.icon}</span>
-                <div>
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-xs text-gray-500">{item.description}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <StatusBadge status={item.active ? 'active' : 'hidden'} />
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => { setEditingPromoId(item.id); setPromoForm({ title: item.title, description: item.description || '', icon: item.icon || '✓', sortOrder: item.sortOrder || 0 }) }}>Edit</button>
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={async () => { await setPromoActive({ id: item.id, active: !item.active }); refetchPromos() }}>{item.active ? 'Hide' : 'Show'}</button>
-                <button type="button" className="text-xs text-red-600" onClick={async () => { if (!confirm('Delete this promo item?')) return; await deletePromo({ id: item.id }); refetchPromos() }}>Delete</button>
+                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => void runAdminAction(async () => { await setSlideActive({ id: slide.id, active: !slide.active }); await refetchSlides() }, slide.active ? 'Slide hidden' : 'Slide visible', 'Failed to update slide')}>{slide.active ? 'Hide' : 'Show'}</button>
+                <button type="button" className="text-xs text-red-600" onClick={() => { if (!confirm('Delete this slide?')) return; void runAdminAction(async () => { await deleteSlide({ id: slide.id }); await refetchSlides() }, 'Slide deleted', 'Failed to delete slide') }}>Delete</button>
               </div>
             </div>
           ))}
@@ -290,7 +213,7 @@ export default function AdminHomepagePage() {
         <div>
           <h2 className="font-semibold text-lg">Feature showcase</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Full-width promo block below the promo strip — text on the left, four portrait images on the right.
+            Full-width feature block below featured products — text on the left, four portrait images on the right.
           </p>
           <div className="mt-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 space-y-1">
             <p className="font-medium text-gray-800 dark:text-gray-200">{HOMEPAGE_SHOWCASE_GUIDE.title}</p>

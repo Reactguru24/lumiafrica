@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/stores/auth'
 import type { UserRole } from '@/lib/types'
@@ -22,6 +22,10 @@ export function useRouteGuard({ requiresAuth, guest, roles }: RouteGuardOptions)
   const canAccessRoute = useAuthStore((s) => s.canAccessRoute)
   const role = useAuthStore((s) => s.role)
   const rolesKey = roles?.join(',') ?? ''
+  const requiredRoles = useMemo(
+    () => (rolesKey ? rolesKey.split(',') as UserRole[] : []),
+    [rolesKey],
+  )
 
   useEffect(() => {
     if (!hasHydrated) refreshUser()
@@ -46,8 +50,19 @@ export function useRouteGuard({ requiresAuth, guest, roles }: RouteGuardOptions)
       return
     }
 
-    if (rolesKey && isAuthenticated && !canAccessRoute(rolesKey.split(',') as UserRole[])) {
+    if (requiredRoles.length > 0 && isAuthenticated && !canAccessRoute(requiredRoles)) {
       router.replace(getDashboardRoute())
     }
-  }, [hasHydrated, user, isAuthenticated, guest, requiresAuth, rolesKey, role, router, logout, getDashboardRoute, canAccessRoute])
+  }, [hasHydrated, user, isAuthenticated, guest, requiresAuth, requiredRoles, role, router, logout, getDashboardRoute, canAccessRoute])
+
+  const ready = useMemo(() => {
+    if (!hasHydrated) return false
+    if (user?.disabled) return false
+    if (guest && isAuthenticated) return false
+    if (requiresAuth && !isAuthenticated) return false
+    if (requiredRoles.length > 0 && (!isAuthenticated || !canAccessRoute(requiredRoles))) return false
+    return true
+  }, [hasHydrated, user, guest, isAuthenticated, requiresAuth, requiredRoles, canAccessRoute])
+
+  return ready
 }

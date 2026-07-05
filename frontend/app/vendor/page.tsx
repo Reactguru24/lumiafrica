@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useVendorProfile, useVendorSubscription, useVendorAnalytics } from '@/lib/stores/api'
+import { useVendorProfile, useVendorSubscription, useVendorAnalytics, useVendorPayoutBalance } from '@/lib/stores/api'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { isFeaturedListingActive, subscriptionDaysRemaining } from '@/lib/utils/subscriptions'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
@@ -9,7 +9,7 @@ import { StatCard } from '@/components/common/StatCard'
 import { LineChart } from '@/components/charts/LineChart'
 import { BarChart } from '@/components/charts/BarChart'
 import { VendorRatingInsight } from '@/components/vendor/VendorStoreHeader'
-import { CurrencyDollarIcon, ShoppingCartIcon, CubeIcon, UsersIcon, SparklesIcon, StarIcon } from '@heroicons/react/24/outline'
+import { CurrencyDollarIcon, ShoppingCartIcon, CubeIcon, UsersIcon, SparklesIcon, StarIcon, BanknotesIcon } from '@heroicons/react/24/outline'
 import type { Vendor, VendorSubscription } from '@/lib/types'
 
 type VendorAnalyticsData = {
@@ -36,11 +36,13 @@ export default function VendorDashboardPage() {
   const { data: vendorProfile, loading: profileLoading } = useVendorProfile()
   const { data: subscriptionData } = useVendorSubscription()
   const { data: vendorAnalytics, loading: analyticsLoading, error: analyticsError } = useVendorAnalytics()
+  const { data: payoutBalance } = useVendorPayoutBalance()
 
   const vendor = vendorProfile as Vendor | null
   const subscription = subscriptionData as VendorSubscription | null
   const analytics = (vendorAnalytics as VendorAnalyticsData) || {}
   const isFeatured = isFeaturedListingActive(subscription)
+  const withdrawable = (payoutBalance as { availableBalance?: number } | null)?.availableBalance ?? 0
 
   const revenue = analytics.revenue ?? analytics.total_revenue ?? 0
   const totalOrders = analytics.totalOrders ?? analytics.total_orders ?? 0
@@ -108,6 +110,20 @@ export default function VendorDashboardPage() {
         </>
       )}
 
+      <div className="card p-5 border border-brand-teal/30 bg-brand-teal/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <BanknotesIcon className="w-6 h-6 text-brand-teal shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">M-Pesa withdrawals</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Available to withdraw: <span className="font-medium text-gray-900 dark:text-gray-100">{formatPrice(withdrawable)}</span>
+            </p>
+            <p className="text-xs text-gray-500 mt-1">Earnings from delivered orders, paid out to your M-Pesa number.</p>
+          </div>
+        </div>
+        <Link href="/vendor/withdrawals" className="btn-primary shrink-0 text-center">Manage withdrawals</Link>
+      </div>
+
       {vendor && !isFeatured && (
         <div className="card p-5 mb-6 border-brand-orange/30 bg-brand-orange/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -128,7 +144,11 @@ export default function VendorDashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <Link href="/vendor/withdrawals" className="card p-4 hover:shadow-md transition-shadow border-brand-teal/20">
+          <p className="font-semibold text-sm">Withdrawals</p>
+          <p className="text-xs text-gray-500 mt-1">Cash out to M-Pesa</p>
+        </Link>
         <Link href="/vendor/products" className="card p-4 hover:shadow-md transition-shadow">
           <p className="font-semibold text-sm">Products</p>
           <p className="text-xs text-gray-500 mt-1">Manage your catalog</p>

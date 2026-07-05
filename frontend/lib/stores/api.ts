@@ -411,32 +411,6 @@ export function useDeleteAdminHomepageHeroSlide() {
   )
 }
 
-export function useAdminHomepagePromoItems() {
-  return useQuery('admin-homepage-promo-items', () => adminAPI.listHomepagePromoItems())
-}
-
-export function useCreateAdminHomepagePromoItem() {
-  return useMutation('create-admin-homepage-promo-item', (data) => adminAPI.createHomepagePromoItem(data))
-}
-
-export function useUpdateAdminHomepagePromoItem() {
-  return useMutation('update-admin-homepage-promo-item', (data: { id: string; payload: Record<string, unknown> }) =>
-    adminAPI.updateHomepagePromoItem(data.id, data.payload),
-  )
-}
-
-export function useSetAdminHomepagePromoItemActive() {
-  return useMutation('set-admin-homepage-promo-item-active', (data: { id: string; active: boolean }) =>
-    adminAPI.setHomepagePromoItemActive(data.id, data.active),
-  )
-}
-
-export function useDeleteAdminHomepagePromoItem() {
-  return useMutation('delete-admin-homepage-promo-item', (data: { id: string }) =>
-    adminAPI.deleteHomepagePromoItem(data.id),
-  )
-}
-
 export function useAdminHomepageShowcase() {
   return useQuery('admin-homepage-showcase', () => adminAPI.getHomepageShowcase())
 }

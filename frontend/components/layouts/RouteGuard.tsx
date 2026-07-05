@@ -12,6 +12,11 @@ interface RouteGuardProps {
 }
 
 export function RouteGuard({ children, requiresAuth, guest, roles }: RouteGuardProps) {
-  useRouteGuard({ requiresAuth, guest, roles })
+  const ready = useRouteGuard({ requiresAuth, guest, roles })
+
+  if (!ready) {
+    return <div className="p-8 text-center text-gray-500">Loading...</div>
+  }
+
   return <>{children}</>
 }

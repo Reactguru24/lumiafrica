@@ -51,7 +51,6 @@ export default function HomePage() {
 
   const content = (homepageContent as {
     heroSlides?: Array<{ label: string; title: string; subtitle?: string; image: string; link: string }>
-    promoItems?: Array<{ title: string; description: string; icon: string }>
     showcase?: HomepageShowcaseData
   }) || {}
 
@@ -63,9 +62,7 @@ export default function HomePage() {
     link: slide.link || '/products',
   }))
 
-  const promos = (content.promoItems?.length
-    ? content.promoItems.map((p) => ({ title: p.title, desc: p.description, icon: p.icon }))
-    : fallbackPromos)
+  const promos = fallbackPromos
 
   const showcase: HomepageShowcaseData = content.showcase?.headline
     ? content.showcase
@@ -98,8 +95,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      <HomepageShowcaseSection showcase={showcase} />
 
       {activePromotions.length > 0 && (
         <section className="page-width py-8 sm:py-12">
@@ -167,6 +162,8 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      <HomepageShowcaseSection showcase={showcase} />
 
       {trendingProducts.length > 0 && (
         <section className="page-width py-8 sm:py-12">

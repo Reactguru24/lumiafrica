@@ -54,17 +54,6 @@ func toHeroSlideResponse(row sqlc.HomepageHeroSlide) models.HomepageHeroSlideRes
 	}
 }
 
-func toPromoItemResponse(row sqlc.HomepagePromoItem) models.HomepagePromoItemResponse {
-	return models.HomepagePromoItemResponse{
-		ID:          row.ID.String(),
-		Title:       row.Title,
-		Description: row.Description,
-		Icon:        row.Icon,
-		SortOrder:   int(row.SortOrder),
-		Active:      int16ToBool(row.Active),
-	}
-}
-
 func toShowcaseResponse(row sqlc.HomepageShowcase) models.HomepageShowcaseResponse {
 	images := []string{}
 	for _, img := range []string{row.Image1, row.Image2, row.Image3, row.Image4} {
@@ -110,12 +99,6 @@ func defaultHomepageContent() models.HomepageContentResponse {
 			{Label: "Women's Fashion", Title: "Elegant Looks, African Spirit", Subtitle: "Dresses, kitenge-inspired pieces, and contemporary fashion curated for the modern woman.", Image: "/images/hero-women.jpg", Link: "/products?category=women", SortOrder: 1, Active: true},
 			{Label: "Kids & Teens", Title: "Growing Up in Style", Subtitle: "Comfortable, durable clothing for boys, girls, and teens — from playtime to school days.", Image: "/images/hero-kids.jpg", Link: "/products?category=kids", SortOrder: 2, Active: true},
 		},
-		PromoItems: []models.HomepagePromoItemResponse{
-			{Title: "Fast Shipping", Description: "Reliable delivery across East Africa", Icon: "🚚", SortOrder: 0, Active: true},
-			{Title: "M-Pesa & Cards", Description: "Pay your way, securely", Icon: "📱", SortOrder: 1, Active: true},
-			{Title: "Easy Returns", Description: "14-day return policy", Icon: "↩️", SortOrder: 2, Active: true},
-			{Title: "Verified Vendors", Description: "Trusted East African sellers", Icon: "✓", SortOrder: 3, Active: true},
-		},
 	}
 }
 
@@ -123,7 +106,6 @@ func loadPublicHomepageContent(ctx context.Context, q *sqlc.Queries) models.Home
 	defaults := defaultHomepageContent()
 	out := models.HomepageContentResponse{
 		HeroSlides: []models.HomepageHeroSlideResponse{},
-		PromoItems: []models.HomepagePromoItemResponse{},
 	}
 
 	slides, err := q.ListActiveHomepageHeroSlides(ctx)
@@ -132,15 +114,6 @@ func loadPublicHomepageContent(ctx context.Context, q *sqlc.Queries) models.Home
 	} else {
 		for _, row := range slides {
 			out.HeroSlides = append(out.HeroSlides, toHeroSlideResponse(row))
-		}
-	}
-
-	promos, err := q.ListActiveHomepagePromoItems(ctx)
-	if err != nil || len(promos) == 0 {
-		out.PromoItems = defaults.PromoItems
-	} else {
-		for _, row := range promos {
-			out.PromoItems = append(out.PromoItems, toPromoItemResponse(row))
 		}
 	}
 
@@ -156,7 +129,7 @@ func loadPublicHomepageContent(ctx context.Context, q *sqlc.Queries) models.Home
 }
 
 // GetHomepageContent godoc
-// @Summary Get homepage carousel, promo strip, and showcase
+// @Summary Get homepage carousel and feature showcase
 // @Description Returns active homepage marketing content managed by admins.
 // @Tags Guest
 // @Produce json
@@ -316,154 +289,6 @@ func DeleteAdminHomepageHeroSlide() gin.HandlerFunc {
 		}
 		if err := getStore(c).Queries().DeleteHomepageHeroSlide(c.Request.Context(), slideID); err != nil {
 			utils.Error(c, http.StatusInternalServerError, "Failed to delete hero slide")
-			return
-		}
-		c.Status(http.StatusNoContent)
-	}
-}
-
-// ListAdminHomepagePromoItems godoc
-// @Summary List promo strip items (admin)
-// @Tags Admin
-// @Produce json
-// @Security Bearer
-// @Success 200 {array} models.HomepagePromoItemResponse
-// @Router /admin/homepage/promo-items [get]
-func ListAdminHomepagePromoItems() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		ctx := c.Request.Context()
-		rows, err := getStore(c).Queries().ListAllHomepagePromoItems(ctx)
-		if err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to load promo items")
-			return
-		}
-		out := make([]models.HomepagePromoItemResponse, len(rows))
-		for i, row := range rows {
-			out[i] = toPromoItemResponse(row)
-		}
-		utils.Success(c, out)
-	}
-}
-
-// CreateAdminHomepagePromoItem godoc
-// @Summary Create promo strip item (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param item body models.CreateHomepagePromoItemRequest true "Promo item"
-// @Success 201 {object} models.HomepagePromoItemResponse
-// @Router /admin/homepage/promo-items [post]
-func CreateAdminHomepagePromoItem() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req models.CreateHomepagePromoItemRequest
-		if !bindJSON(c, &req) {
-			return
-		}
-		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		id := utils.GenerateBinaryID()
-		icon := strings.TrimSpace(req.Icon)
-		if icon == "" {
-			icon = "✓"
-		}
-		if err := q.CreateHomepagePromoItem(ctx, sqlc.CreateHomepagePromoItemParams{
-			ID:          id,
-			Title:       strings.TrimSpace(req.Title),
-			Description: strings.TrimSpace(req.Description),
-			Icon:        icon,
-			SortOrder:   int32(req.SortOrder),
-			Active:      1,
-		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to create promo item")
-			return
-		}
-		row, err := q.GetHomepagePromoItemByID(ctx, id)
-		if err != nil {
-			utils.SuccessCreated(c, gin.H{"id": id.String()})
-			return
-		}
-		utils.SuccessCreated(c, toPromoItemResponse(row))
-	}
-}
-
-// UpdateAdminHomepagePromoItem godoc
-// @Summary Update promo strip item (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param itemID path string true "Promo item ID"
-// @Param item body models.UpdateHomepagePromoItemRequest true "Promo item updates"
-// @Success 200 {object} models.HomepagePromoItemResponse
-// @Router /admin/homepage/promo-items/{itemID} [put]
-func UpdateAdminHomepagePromoItem() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		itemID, ok := parsePathID(c, "itemID")
-		if !ok {
-			return
-		}
-		var req models.UpdateHomepagePromoItemRequest
-		if !bindJSON(c, &req) {
-			return
-		}
-		ctx := c.Request.Context()
-		q := getStore(c).Queries()
-		icon := strings.TrimSpace(req.Icon)
-		if icon == "" {
-			icon = "✓"
-		}
-		if err := q.UpdateHomepagePromoItem(ctx, sqlc.UpdateHomepagePromoItemParams{
-			ID:          itemID,
-			Title:       strings.TrimSpace(req.Title),
-			Description: strings.TrimSpace(req.Description),
-			Icon:        icon,
-			SortOrder:   int32(req.SortOrder),
-		}); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to update promo item")
-			return
-		}
-		row, err := q.GetHomepagePromoItemByID(ctx, itemID)
-		if handleNotFound(c, err, "Promo item not found", "Failed to load promo item") {
-			return
-		}
-		utils.Success(c, toPromoItemResponse(row))
-	}
-}
-
-// SetAdminHomepagePromoItemActive godoc
-// @Summary Enable or disable promo item (admin)
-// @Tags Admin
-// @Accept json
-// @Produce json
-// @Security Bearer
-// @Param itemID path string true "Promo item ID"
-// @Param active body models.SetActiveRequest true "Active flag"
-// @Success 200 {object} map[string]interface{}
-// @Router /admin/homepage/promo-items/{itemID}/active [put]
-func SetAdminHomepagePromoItemActive() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		setAdminActive(c, "itemID", "Failed to update promo item", func(ctx context.Context, id types.BinaryUUID, active int16) error {
-			return getStore(c).Queries().SetHomepagePromoItemActive(ctx, sqlc.SetHomepagePromoItemActiveParams{ID: id, Active: active})
-		})
-	}
-}
-
-// DeleteAdminHomepagePromoItem godoc
-// @Summary Delete promo item (admin)
-// @Tags Admin
-// @Security Bearer
-// @Param itemID path string true "Promo item ID"
-// @Success 204
-// @Router /admin/homepage/promo-items/{itemID} [delete]
-func DeleteAdminHomepagePromoItem() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		itemID, ok := parsePathID(c, "itemID")
-		if !ok {
-			return
-		}
-		if err := getStore(c).Queries().DeleteHomepagePromoItem(c.Request.Context(), itemID); err != nil {
-			utils.Error(c, http.StatusInternalServerError, "Failed to delete promo item")
 			return
 		}
 		c.Status(http.StatusNoContent)

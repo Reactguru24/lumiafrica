@@ -11,15 +11,6 @@ type HomepageHeroSlideResponse struct {
 	Active    bool   `json:"active"`
 }
 
-type HomepagePromoItemResponse struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-	SortOrder   int    `json:"sortOrder"`
-	Active      bool   `json:"active"`
-}
-
 type HomepageShowcaseResponse struct {
 	ID              string   `json:"id,omitempty"`
 	Overline        string   `json:"overline"`
@@ -34,7 +25,6 @@ type HomepageShowcaseResponse struct {
 
 type HomepageContentResponse struct {
 	HeroSlides []HomepageHeroSlideResponse `json:"heroSlides"`
-	PromoItems []HomepagePromoItemResponse `json:"promoItems"`
 	Showcase   *HomepageShowcaseResponse   `json:"showcase,omitempty"`
 }
 
@@ -54,20 +44,6 @@ type UpdateHomepageHeroSlideRequest struct {
 	Image     string `json:"image" binding:"required"`
 	Link      string `json:"link"`
 	SortOrder int    `json:"sortOrder"`
-}
-
-type CreateHomepagePromoItemRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-	SortOrder   int    `json:"sortOrder"`
-}
-
-type UpdateHomepagePromoItemRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
-	SortOrder   int    `json:"sortOrder"`
 }
 
 type UpsertHomepageShowcaseRequest struct {
