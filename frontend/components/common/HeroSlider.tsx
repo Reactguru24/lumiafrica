@@ -20,6 +20,8 @@ interface HeroSliderProps {
 export function HeroSlider({ slides }: HeroSliderProps) {
   const [active, setActive] = useState(0)
 
+  if (!slides.length) return null
+
   const goTo = useCallback((index: number) => {
     setActive((index + slides.length) % slides.length)
   }, [slides.length])
@@ -39,7 +41,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
           key={slide.label}
           className={`absolute inset-0 transition-opacity duration-700 ${i === active ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}
         >
-          {i === active && (
+          {i === active && slide.image && (
             <Image src={slide.image} alt={slide.title} fill className="object-cover" priority unoptimized />
           )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />

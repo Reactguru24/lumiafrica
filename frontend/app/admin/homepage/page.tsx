@@ -80,16 +80,14 @@ export default function AdminHomepagePage() {
   const [slideForm, setSlideForm] = useState(emptySlideForm)
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null)
   const [showcaseForm, setShowcaseForm] = useState(emptyShowcaseForm)
-  const [showcaseLoaded, setShowcaseLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [savingShowcase, setSavingShowcase] = useState(false)
 
   useEffect(() => {
-    if (!showcaseLoading && !showcaseLoaded) {
+    if (!showcaseLoading) {
       setShowcaseForm(showcaseToForm(showcaseData as Record<string, unknown> | null))
-      setShowcaseLoaded(true)
     }
-  }, [showcaseData, showcaseLoading, showcaseLoaded])
+  }, [showcaseData, showcaseLoading])
 
   function setShowcaseImage(index: number, url: string) {
     setShowcaseForm((prev) => {

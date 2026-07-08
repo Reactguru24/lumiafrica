@@ -625,7 +625,8 @@ func refundAfterFulfillmentFailure(ctx context.Context, st *store.Store, cfg *co
 			return buildRefundedPaymentResponse(fresh), nil
 		}
 		if fresh.Status == sqlc.PaymentTransactionsStatusSuccess {
-			return models.PaymentVerifyResponse{}, fmt.Errorf("payment already fulfilled")
+			// Another callback/workflow already completed the payment — treat as success.
+			return buildPaymentVerifyResponse(fresh), nil
 		}
 		payment = fresh
 	}
@@ -713,7 +714,13 @@ func fulfillPayment(ctx context.Context, st *store.Store, cfg *config.Config, pa
 					return outcome, nil
 				}
 			}
-			return models.PaymentVerifyResponse{}, fmt.Errorf("payment already processed")
+			// Concurrent callback: we couldn't transition from pending, so respond kindly.
+			return models.PaymentVerifyResponse{
+				Status:    models.PaymentStatusPending,
+				Type:      models.PaymentTypeOrder,
+				Reference: reference,
+				Message:   "This payment is already being processed. Please check your order status shortly.",
+			}, nil
 		}
 		logPayment("payment_fulfilled", map[string]interface{}{
 			"source":    source,
@@ -752,7 +759,13 @@ func fulfillPayment(ctx context.Context, st *store.Store, cfg *config.Config, pa
 					return outcome, nil
 				}
 			}
-			return models.PaymentVerifyResponse{}, fmt.Errorf("payment already processed")
+			// Concurrent callback: respond kindly instead of 500.
+			return models.PaymentVerifyResponse{
+				Status:    models.PaymentStatusPending,
+				Type:      models.PaymentTypeSubscription,
+				Reference: reference,
+				Message:   "This subscription payment is already being processed. We'll activate your store shortly.",
+			}, nil
 		}
 		logPayment("payment_fulfilled", map[string]interface{}{
 			"source":         source,

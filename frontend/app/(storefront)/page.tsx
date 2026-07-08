@@ -9,13 +9,31 @@ import { ProductCard } from '@/components/product/ProductCard'
 import { HeroSlider } from '@/components/common/HeroSlider'
 import { FeaturedVendorsCarousel, type FeaturedVendorSlide } from '@/components/common/FeaturedVendorsCarousel'
 import { HomepageShowcaseSection, type HomepageShowcaseData } from '@/components/homepage/HomepageShowcaseSection'
-import { heroImage, isExternalImageUrl } from '@/lib/utils/images'
+import { isExternalImageUrl } from '@/lib/utils/images'
 import { ChevronRightIcon } from '@heroicons/react/24/outline'
 
 const fallbackHeroSlides = [
-  { label: "Men's Collection", title: 'Sharp Style for Every Occasion', subtitle: 'From Nairobi boardrooms to weekend outings — discover premium menswear across East Africa.', image: heroImage('men'), link: '/products?category=men' },
-  { label: "Women's Fashion", title: 'Elegant Looks, African Spirit', subtitle: 'Dresses, kitenge-inspired pieces, and contemporary fashion curated for the modern woman.', image: heroImage('women'), link: '/products?category=women' },
-  { label: 'Kids & Teens', title: 'Growing Up in Style', subtitle: 'Comfortable, durable clothing for boys, girls, and teens — from playtime to school days.', image: heroImage('kids'), link: '/products?category=kids' },
+  {
+    label: "Men's Collection",
+    title: 'Sharp Style for Every Occasion',
+    subtitle: 'From Nairobi boardrooms to weekend outings — discover premium menswear across East Africa.',
+    image: '',
+    link: '/products?category=men',
+  },
+  {
+    label: "Women's Fashion",
+    title: 'Elegant Looks, African Spirit',
+    subtitle: 'Dresses, kitenge-inspired pieces, and contemporary fashion curated for the modern woman.',
+    image: '',
+    link: '/products?category=women',
+  },
+  {
+    label: 'Kids & Teens',
+    title: 'Growing Up in Style',
+    subtitle: 'Comfortable, durable clothing for boys, girls, and teens — from playtime to school days.',
+    image: '',
+    link: '/products?category=kids',
+  },
 ]
 
 const fallbackShowcase: HomepageShowcaseData = {
@@ -25,12 +43,7 @@ const fallbackShowcase: HomepageShowcaseData = {
   buttonText: 'Explore Trends',
   buttonLink: '/products?trending=true',
   backgroundColor: '#084c54',
-  images: [
-    'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&h=1000&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=1000&fit=crop&q=80',
-  ],
+  images: [],
   active: true,
 }
 
@@ -58,7 +71,7 @@ export default function HomePage() {
     label: slide.label,
     title: slide.title,
     subtitle: slide.subtitle || '',
-    image: slide.image || heroImage('men'),
+    image: slide.image || '',
     link: slide.link || '/products',
   }))
 

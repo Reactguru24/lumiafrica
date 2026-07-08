@@ -55,6 +55,7 @@ function PaymentCallbackContent() {
           if (intervalId) clearInterval(intervalId)
         } else {
           setStatus('pending')
+          if (result.message) toast.info(result.message)
         }
       } catch (e: unknown) {
         if (!cancelled) {

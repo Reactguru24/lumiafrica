@@ -36,6 +36,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
   const isApplicant = useAuthStore((s) => s.isApplicant)
   const logout = useAuthStore((s) => s.logout)
   const itemCount = useCartStore((s) => s.itemCount)
+  const wishlistCount = useCartStore((s) => s.wishlist.length)
   const showGuestLinks = hasHydrated && !isAuthenticated
   const showAuthLinks = hasHydrated && isAuthenticated
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -46,6 +47,10 @@ export function MainLayout({ children }: { children: ReactNode }) {
     router.prefetch('/auth/login')
     router.prefetch('/auth/register')
   }, [router])
+
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   function search() {
     if (searchQuery.trim()) {
@@ -144,7 +149,23 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-800 p-4 space-y-4 animate-slide-up">
+          <div
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            aria-hidden="true"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[min(18rem,85vw)] max-w-72 h-dvh flex flex-col bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-200 ease-out lg:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'}`}
+          aria-hidden={!mobileMenuOpen}
+        >
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
+            <AppLogo size="sm" />
+            <button type="button" className="p-2" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <form onSubmit={(e) => { e.preventDefault(); search() }} className="flex gap-2">
               <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} type="text" placeholder="Search..." className="input-field flex-1 py-2 text-sm" />
               <button type="submit" className="btn-primary py-2 px-4 text-sm">Go</button>
@@ -198,7 +219,7 @@ export function MainLayout({ children }: { children: ReactNode }) {
               </div>
             )}
           </div>
-        )}
+        </aside>
       </header>
 
       <main className="flex-1">{children}</main>
@@ -302,8 +323,14 @@ export function MainLayout({ children }: { children: ReactNode }) {
         <Link href="/products" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.shop)}`}>
           <Squares2X2Icon className={`w-5 h-5 ${activeNav.shop ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Shop
         </Link>
-        <Link href="/account/wishlist" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.wishlist)}`}>
-          <HeartIcon className={`w-5 h-5 ${activeNav.wishlist ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Wishlist
+        <Link href="/account/wishlist" className={`relative flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.wishlist)}`}>
+          <HeartIcon className={`w-5 h-5 ${activeNav.wishlist ? 'text-brand-teal dark:text-brand-orange' : ''}`} />
+          {wishlistCount > 0 && (
+            <span className="absolute top-0.5 right-1 min-w-[1rem] h-4 px-1 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center">
+              {wishlistCount > 99 ? '99+' : wishlistCount}
+            </span>
+          )}
+          Wishlist
         </Link>
         <Link href={accountHref(isAuthenticated, isCustomer, isVendor, isAdmin)} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.account)}`}>
           <UserIcon className={`w-5 h-5 ${activeNav.account ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Account

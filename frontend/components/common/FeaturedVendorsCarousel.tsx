@@ -20,7 +20,7 @@ function VendorSlideContent({ vendor }: { vendor: FeaturedVendorSlide }) {
   return (
     <>
       <MediaImage src={vendor.banner || vendor.logo} alt={vendor.storeName} fill transform={{ width: 1280 }} className="object-cover" sizes="(max-width: 768px) 100vw, 1280px" />
-      <div className="absolute inset-0 bg-black/40 flex flex-col justify-end p-6 sm:p-8">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/15 flex flex-col justify-end p-6 sm:p-8">
         <div className="flex items-start gap-4 mb-4">
           <MediaImage
             src={vendor.logo}
@@ -32,16 +32,16 @@ function VendorSlideContent({ vendor }: { vendor: FeaturedVendorSlide }) {
           />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-white font-display text-2xl sm:text-3xl font-semibold truncate">{vendor.storeName}</h3>
+              <h3 className="text-white font-display text-2xl sm:text-3xl font-semibold truncate drop-shadow-sm">{vendor.storeName}</h3>
               <VendorVerificationBadge badge={vendor.verificationBadge} rating={vendor.rating} className="w-5 h-5" showLabel />
             </div>
-            <p className="text-brand-100 text-sm mt-1">
+            <p className="text-brand-100 text-sm mt-1 drop-shadow-sm">
               Featured Collection{vendor.rating ? ` · ★ ${vendor.rating}` : ''}
             </p>
           </div>
         </div>
         {vendor.description && (
-          <p className="text-white text-sm sm:text-base max-w-2xl mb-4 line-clamp-2">{vendor.description}</p>
+          <p className="text-white text-sm sm:text-base max-w-2xl mb-4 line-clamp-2 drop-shadow-sm">{vendor.description}</p>
         )}
         <Link href={`/products?vendorId=${vendor.id}`} className="btn-primary bg-brand-orange border-brand-orange w-fit">
           Shop This Vendor
