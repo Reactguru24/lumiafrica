@@ -24,7 +24,7 @@ const fallbackShowcase: HomepageShowcaseData = {
   description: 'Shop local brands and international labels from verified vendors across Kenya, Uganda, Tanzania, Rwanda, and Ethiopia.',
   buttonText: 'Explore Trends',
   buttonLink: '/products?trending=true',
-  backgroundColor: '#084c54',
+  backgroundColor: '#f97316',
   images: [
     'https://images.unsplash.com/photo-1617137968427-85924c800a22?w=800&h=1000&fit=crop&q=80',
     'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&h=1000&fit=crop&q=80',

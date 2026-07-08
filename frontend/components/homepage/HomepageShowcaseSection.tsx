@@ -23,7 +23,7 @@ export function HomepageShowcaseSection({ showcase }: { showcase: HomepageShowca
   if (showcase.active === false) return null
   if (!showcase.headline && images.length === 0) return null
 
-  const bg = showcase.backgroundColor || '#084c54'
+  const bg = showcase.backgroundColor || '#f97316'
 
   return (
     <section className="py-12 sm:py-16" style={{ backgroundColor: bg }}>

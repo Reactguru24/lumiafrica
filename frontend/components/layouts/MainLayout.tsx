@@ -74,16 +74,12 @@ export function MainLayout({ children }: { children: ReactNode }) {
     account: pathname.startsWith('/account') || pathname.startsWith('/vendor/account') || pathname.startsWith('/vendor') || pathname.startsWith('/auth'),
   }), [pathname])
 
-  function navClass(active: boolean) {
-    return active ? 'text-brand-teal dark:text-brand-orange font-semibold' : 'text-gray-500 dark:text-gray-400'
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-b border-gray-200 dark:border-gray-800">
+      <header className="sticky top-0 z-50 bg-[#020233] dark:bg-[#020233] backdrop-blur border-b border-gray-800">
         <div className="page-width">
           <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-            <button className="lg:hidden p-2 shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="lg:hidden p-2 shrink-0 text-gray-300 hover:text-white">
               {mobileMenuOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
             </button>
 
@@ -91,16 +87,16 @@ export function MainLayout({ children }: { children: ReactNode }) {
 
             <nav className="hidden lg:flex items-center gap-8 flex-1">
               <div className="relative" onMouseEnter={() => setMegaMenuOpen(true)} onMouseLeave={() => setMegaMenuOpen(false)}>
-                <Link href="/products" className="text-sm font-medium tracking-wide hover:underline">SHOP</Link>
+                <Link href="/products" className="text-sm font-medium tracking-wide hover:underline text-gray-300 hover:text-white">SHOP</Link>
                 {megaMenuOpen && (
                   <div className="absolute top-full left-0 w-[640px] card p-6 shadow-xl mt-0 grid grid-cols-3 gap-6 z-50">
                     {Object.entries(SHOP_CATEGORIES).map(([cat, config]) => (
                       <div key={cat}>
-                        <button className="font-semibold text-sm mb-3 hover:underline text-left w-full" onClick={() => goToProducts(shopCategoryQuery(cat) as Record<string, string>)}>{cat}</button>
+                        <button className="font-semibold text-sm mb-3 hover:underline text-left w-full text-gray-300 hover:text-white" onClick={() => goToProducts(shopCategoryQuery(cat) as Record<string, string>)}>{cat}</button>
                         <ul className="space-y-1">
                           {config.items.map((item) => (
                             <li key={item}>
-                              <button className="text-sm text-gray-500 hover:text-brand-teal dark:hover:text-brand-orange text-left" onClick={() => goToProducts(shopSubcategoryQuery(cat, item) as Record<string, string>)}>{item}</button>
+                              <button className="text-sm text-gray-400 hover:text-white text-left" onClick={() => goToProducts(shopSubcategoryQuery(cat, item) as Record<string, string>)}>{item}</button>
                             </li>
                           ))}
                         </ul>
@@ -109,31 +105,33 @@ export function MainLayout({ children }: { children: ReactNode }) {
                   </div>
                 )}
               </div>
-              <Link href="/products" className="text-sm font-medium tracking-wide hover:underline">ALL PRODUCTS</Link>
-              <Link href="/products?newArrival=true&sort=newest" className="text-sm font-medium tracking-wide hover:underline">NEW IN</Link>
-              <Link href="/products?trending=true" className="text-sm font-medium tracking-wide hover:underline">TRENDING</Link>
+              <Link href="/products" className="text-sm font-medium tracking-wide hover:underline text-gray-300 hover:text-white">ALL PRODUCTS</Link>
+              <Link href="/products?newArrival=true&sort=newest" className="text-sm font-medium tracking-wide hover:underline text-gray-300 hover:text-white">NEW IN</Link>
+              <Link href="/products?trending=true" className="text-sm font-medium tracking-wide hover:underline text-gray-300 hover:text-white">TRENDING</Link>
               <Link href="/products?onSale=true" className="text-sm font-medium tracking-wide hover:underline text-brand-orange">SALE</Link>
             </nav>
 
-            <div className="hidden lg:flex items-center shrink-0">
+            <div className="hidden md:flex items-center shrink-0">
               {showAuthLinks && isVendor && <VendorModeToggle compact />}
             </div>
 
             <form className="hidden md:flex items-center flex-1 max-w-xs mx-4" onSubmit={(e) => { e.preventDefault(); search() }}>
               <div className="relative w-full">
                 <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} type="text" placeholder="Search fashion..." className="input-field pl-10 py-2 text-sm" />
+                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} type="text" placeholder="Search fashion..." className="input-field pl-10 py-2 text-sm bg-gray-900 border-gray-700 text-white placeholder-gray-400" />
               </div>
             </form>
 
             <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-              <AppearanceControls />
+              <div className="text-gray-300 hover:text-white">
+                <AppearanceControls />
+              </div>
               {showAuthLinks ? (
                 <UserMenu />
               ) : showGuestLinks ? (
-                <Link href="/auth/login" className="hidden md:block text-sm font-medium">Sign In</Link>
+                <Link href="/auth/login" className="hidden md:block text-sm font-medium text-gray-300 hover:text-white">Sign In</Link>
               ) : null}
-              <Link href="/cart" className="relative p-2">
+              <Link href="/cart" className="relative p-2 text-gray-300 hover:text-white">
                 <ShoppingBagIcon className="w-5 h-5" />
                 {itemCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] rounded-full flex items-center justify-center">{itemCount}</span>
@@ -144,57 +142,57 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 dark:border-gray-800 p-4 space-y-4 animate-slide-up">
+          <div className="lg:hidden border-t border-gray-700 bg-[#020233] p-4 space-y-4 animate-slide-up">
             <form onSubmit={(e) => { e.preventDefault(); search() }} className="flex gap-2">
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} type="text" placeholder="Search..." className="input-field flex-1 py-2 text-sm" />
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} type="text" placeholder="Search..." className="input-field flex-1 py-2 text-sm bg-gray-900 border-gray-700 text-white placeholder-gray-400" />
               <button type="submit" className="btn-primary py-2 px-4 text-sm">Go</button>
             </form>
-            <Link href="/products" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
-            <Link href="/products?newArrival=true&sort=newest" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>New In</Link>
-            <Link href="/products?trending=true" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Trending</Link>
+            <Link href="/products" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>All Products</Link>
+            <Link href="/products?newArrival=true&sort=newest" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>New In</Link>
+            <Link href="/products?trending=true" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Trending</Link>
             <Link href="/products?onSale=true" className="block text-sm font-medium text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Sale</Link>
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
+            <div className="border-t border-gray-700 pt-3">
               <p className="micro-label mb-2">Categories</p>
               {Object.keys(SHOP_CATEGORIES).map((cat) => (
-                <button key={cat} className="block text-sm py-1 hover:underline" onClick={() => goToProducts(shopCategoryQuery(cat) as Record<string, string>)}>{cat}</button>
+                <button key={cat} className="block text-sm py-1 hover:underline text-gray-400 hover:text-white" onClick={() => goToProducts(shopCategoryQuery(cat) as Record<string, string>)}>{cat}</button>
               ))}
             </div>
             {showGuestLinks && (
               <>
-                <Link href="/auth/login" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-                <Link href="/auth/register" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Register</Link>
+                <Link href="/auth/login" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+                <Link href="/auth/register" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Register</Link>
               </>
             )}
             {showAuthLinks && isVendor && (
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
+              <div className="border-t border-gray-700 pt-3">
                 <VendorModeToggle className="w-full justify-center" />
               </div>
             )}
             {showAuthLinks && user && (
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-3 space-y-2">
+              <div className="border-t border-gray-700 pt-3 space-y-2">
                 <div className="flex items-center gap-3">
                   <UserAvatar fullName={user.fullName} avatar={user.avatar} size="sm" className="w-9 h-9" />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{user.fullName?.trim() || user.email || 'User'}</p>
-                    <p className="text-xs text-green-600 dark:text-green-400">Signed in</p>
+                    <p className="text-sm font-medium truncate text-white">{user.fullName?.trim() || user.email || 'User'}</p>
+                    <p className="text-xs text-green-400">Signed in</p>
                   </div>
                 </div>
                 {isApplicant && (
-                  <Link href="/application-submitted" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>Application Status</Link>
+                  <Link href="/application-submitted" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Application Status</Link>
                 )}
                 {isCustomer && (
                   <>
-                    <Link href="/account" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-                    <Link href="/account/orders" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>My Orders</Link>
+                    <Link href="/account" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+                    <Link href="/account/orders" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>My Orders</Link>
                   </>
                 )}
                 {isVendor && (
-                  <Link href="/vendor/account" className="block text-sm font-medium" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+                  <Link href="/vendor/account" className="block text-sm font-medium text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
                 )}
                 {isAdmin && (
-                  <Link href="/admin" className="block text-sm font-medium text-brand-teal dark:text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>
+                  <Link href="/admin" className="block text-sm font-medium text-brand-orange" onClick={() => setMobileMenuOpen(false)}>Admin Panel</Link>
                 )}
-                <button className="block text-sm font-medium text-red-600" onClick={handleLogout}>Sign Out</button>
+                <button className="block text-sm font-medium text-red-400" onClick={handleLogout}>Sign Out</button>
               </div>
             )}
           </div>
@@ -247,18 +245,18 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </div>
       </footer>
 
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 flex justify-around py-1.5 safe-bottom">
-        <Link href="/" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.home)}`}>
-          <HomeIcon className={`w-5 h-5 ${activeNav.home ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Home
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020233] dark:bg-[#020233] border-t border-gray-800 flex justify-around py-1.5 safe-bottom">
+        <Link href="/" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] rounded-md text-gray-400 hover:text-white`}>
+          <HomeIcon className="w-5 h-5" />Home
         </Link>
-        <Link href="/products" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.shop)}`}>
-          <Squares2X2Icon className={`w-5 h-5 ${activeNav.shop ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Shop
+        <Link href="/products" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] rounded-md text-brand-orange`}>
+          <Squares2X2Icon className="w-5 h-5" />Shop
         </Link>
-        <Link href="/account/wishlist" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.wishlist)}`}>
-          <HeartIcon className={`w-5 h-5 ${activeNav.wishlist ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Wishlist
+        <Link href="/account/wishlist" className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] rounded-md text-gray-400 hover:text-white`}>
+          <HeartIcon className="w-5 h-5" />Wishlist
         </Link>
-        <Link href={accountHref(isAuthenticated, isCustomer, isVendor, isAdmin)} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] ${navClass(activeNav.account)}`}>
-          <UserIcon className={`w-5 h-5 ${activeNav.account ? 'text-brand-teal dark:text-brand-orange' : ''}`} />Account
+        <Link href={accountHref(isAuthenticated, isCustomer, isVendor, isAdmin)} className={`flex flex-col items-center p-2 text-[10px] gap-0.5 min-w-[3.5rem] rounded-md text-gray-400 hover:text-white`}>
+          <UserIcon className="w-5 h-5" />Account
         </Link>
       </nav>
       <div className="h-16 md:hidden" />
