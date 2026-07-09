@@ -68,7 +68,7 @@ SELECT p.* FROM products p
 LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'active'
   AND p.total_stock > 0
-  AND (sqlc.narg('q') IS NULL OR p.name LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.description LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.brand LIKE CONCAT('%', sqlc.narg('q'), '%'))
+  AND (sqlc.narg('q') IS NULL OR p.name LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.description LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.brand LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.sku LIKE CONCAT('%', sqlc.narg('q'), '%'))
   AND (sqlc.narg('category') IS NULL OR c.slug = sqlc.narg('category') OR c.name = sqlc.narg('category'))
   AND (sqlc.narg('subcategory') IS NULL OR EXISTS (
     SELECT 1 FROM categories child
@@ -116,7 +116,7 @@ SELECT COUNT(*) FROM products p
 LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'active'
   AND p.total_stock > 0
-  AND (sqlc.narg('q') IS NULL OR p.name LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.description LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.brand LIKE CONCAT('%', sqlc.narg('q'), '%'))
+  AND (sqlc.narg('q') IS NULL OR p.name LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.description LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.brand LIKE CONCAT('%', sqlc.narg('q'), '%') OR p.sku LIKE CONCAT('%', sqlc.narg('q'), '%'))
   AND (sqlc.narg('category') IS NULL OR c.slug = sqlc.narg('category') OR c.name = sqlc.narg('category'))
   AND (sqlc.narg('subcategory') IS NULL OR EXISTS (
     SELECT 1 FROM categories child WHERE child.id = p.category_id AND child.slug = sqlc.narg('subcategory')

@@ -157,7 +157,7 @@ SELECT COUNT(*) FROM products p
 LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'active'
   AND p.total_stock > 0
-  AND (? IS NULL OR p.name LIKE CONCAT('%', ?, '%') OR p.description LIKE CONCAT('%', ?, '%') OR p.brand LIKE CONCAT('%', ?, '%'))
+  AND (? IS NULL OR p.name LIKE CONCAT('%', ?, '%') OR p.description LIKE CONCAT('%', ?, '%') OR p.brand LIKE CONCAT('%', ?, '%') OR p.sku LIKE CONCAT('%', ?, '%'))
   AND (? IS NULL OR c.slug = ? OR c.name = ?)
   AND (? IS NULL OR EXISTS (
     SELECT 1 FROM categories child WHERE child.id = p.category_id AND child.slug = ?
@@ -208,6 +208,7 @@ type CountSearchProductsParams struct {
 
 func (q *Queries) CountSearchProducts(ctx context.Context, arg CountSearchProductsParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countSearchProducts,
+		arg.Q,
 		arg.Q,
 		arg.Q,
 		arg.Q,
@@ -1660,7 +1661,7 @@ SELECT p.id, p.vendor_id, p.category_id, p.name, p.description, p.brand, p.gende
 LEFT JOIN categories c ON c.id = p.category_id
 WHERE p.status = 'active'
   AND p.total_stock > 0
-  AND (? IS NULL OR p.name LIKE CONCAT('%', ?, '%') OR p.description LIKE CONCAT('%', ?, '%') OR p.brand LIKE CONCAT('%', ?, '%'))
+  AND (? IS NULL OR p.name LIKE CONCAT('%', ?, '%') OR p.description LIKE CONCAT('%', ?, '%') OR p.brand LIKE CONCAT('%', ?, '%') OR p.sku LIKE CONCAT('%', ?, '%'))
   AND (? IS NULL OR c.slug = ? OR c.name = ?)
   AND (? IS NULL OR EXISTS (
     SELECT 1 FROM categories child
@@ -1728,6 +1729,7 @@ type SearchProductsParams struct {
 
 func (q *Queries) SearchProducts(ctx context.Context, arg SearchProductsParams) ([]Product, error) {
 	rows, err := q.db.QueryContext(ctx, searchProducts,
+		arg.Q,
 		arg.Q,
 		arg.Q,
 		arg.Q,
