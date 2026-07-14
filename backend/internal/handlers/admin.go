@@ -432,7 +432,7 @@ func ApproveVendor(cfg *config.Config) gin.HandlerFunc {
 		response := vendorActivationResponse(
 			cfg,
 			activation,
-			"Vendor approved. An activation email was sent to the business email address.",
+			"Vendor approved. "+vendorActivationSentMessage(activation.RecipientEmail),
 			"Vendor approved. SMTP is not configured — see server logs for the activation link.",
 		)
 		response["vendor"] = store.ToVendor(vendor)
@@ -542,7 +542,7 @@ func ResendVendorActivationByApplication(cfg *config.Config) gin.HandlerFunc {
 		utils.Success(c, vendorActivationResponse(
 			cfg,
 			activation,
-			"Activation email resent to the business email address.",
+			vendorActivationSentMessage(activation.RecipientEmail),
 			"SMTP is not configured — see server logs for the activation link.",
 		))
 	}
@@ -599,7 +599,7 @@ func ResendVendorActivationByVendor(cfg *config.Config) gin.HandlerFunc {
 		utils.Success(c, vendorActivationResponse(
 			cfg,
 			activation,
-			"Activation email resent to "+vendor.BusinessEmail+".",
+			vendorActivationSentMessage(activation.RecipientEmail),
 			"SMTP is not configured — see server logs for the activation link.",
 		))
 	}

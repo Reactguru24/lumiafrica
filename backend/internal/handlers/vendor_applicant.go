@@ -182,10 +182,11 @@ func resolveVendorAccountUser(ctx context.Context, q *sqlc.Queries, app sqlc.Ven
 }
 
 type vendorActivationResult struct {
-	Token    string
-	ResetURL string
-	Mailer   *email.Mailer
-	SendErr  error
+	Token          string
+	ResetURL       string
+	RecipientEmail string
+	Mailer         *email.Mailer
+	SendErr        error
 }
 
 func sendVendorActivationEmail(
@@ -209,25 +210,36 @@ func sendVendorActivationEmail(
 		return nil, err
 	}
 
+	vendorUser, err := q.GetUserByID(ctx, vendorUserID)
+	if err != nil {
+		return nil, err
+	}
+
+	recipient := normalizeEmail(vendorUser.Email)
+	if recipient == "" {
+		recipient = normalizeEmail(businessEmail)
+	}
+
 	resetURL := email.BuildResetURL(cfg, token, true)
 	mailer := email.NewMailer(cfg)
-	sendErr := mailer.SendVendorApproved(businessEmail, email.VendorApprovedEmailData{
+	sendErr := mailer.SendVendorApproved(recipient, email.VendorApprovedEmailData{
 		StoreName:        storeName,
 		ApplicantEmail:   applicantEmail,
-		VendorLoginEmail: normalizeEmail(businessEmail),
+		VendorLoginEmail: recipient,
 		ResetURL:         resetURL,
 	})
 
 	if sendErr != nil {
-		log.Printf("vendor activation email failed for %s: %v", businessEmail, sendErr)
-		log.Printf("[EMAIL] Vendor activation link for %s: %s", businessEmail, resetURL)
+		log.Printf("vendor activation email failed for %s: %v", recipient, sendErr)
+		log.Printf("[EMAIL] Vendor activation link for %s: %s", recipient, resetURL)
 	}
 
 	return &vendorActivationResult{
-		Token:    token,
-		ResetURL: resetURL,
-		Mailer:   mailer,
-		SendErr:  sendErr,
+		Token:          token,
+		ResetURL:       resetURL,
+		RecipientEmail: recipient,
+		Mailer:         mailer,
+		SendErr:        sendErr,
 	}, nil
 }
 
@@ -235,11 +247,26 @@ func vendorAccountActivated(ctx context.Context, q *sqlc.Queries, user sqlc.User
 	return user.PasswordSetAt.Valid
 }
 
+func vendorActivationSentMessage(recipient string) string {
+	if recipient == "" {
+		return "Activation email sent."
+	}
+	return "Activation email sent to " + recipient + "."
+}
+
 func vendorActivationResponse(cfg *config.Config, result *vendorActivationResult, sentMessage, skippedMessage string) gin.H {
 	response := gin.H{"message": sentMessage}
+	if result != nil {
+		emailSent := result.Mailer != nil && result.Mailer.Enabled() && result.SendErr == nil
+		response["emailSent"] = emailSent
+		if result.RecipientEmail != "" {
+			response["recipientEmail"] = result.RecipientEmail
+		}
+	}
 	if cfg.ServerEnv == "development" && result != nil && result.ResetURL != "" && (result.Mailer == nil || !result.Mailer.Enabled() || result.SendErr != nil) {
 		response["message"] = skippedMessage
 		response["activationUrl"] = result.ResetURL
+		response["emailSent"] = false
 	}
 	return response
 }
