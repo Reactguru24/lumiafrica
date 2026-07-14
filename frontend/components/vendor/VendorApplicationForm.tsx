@@ -204,7 +204,7 @@ export function VendorApplicationForm() {
                     <option value="">Select a category…</option>
                     {categories.map((cat) => (
                       <option key={cat} value={cat} disabled={form.categories.includes(cat)}>
-                        {cat}{form.categories.includes(cat) ? ' (added)' : ''}
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}{form.categories.includes(cat) ? ' (added)' : ''}
                       </option>
                     ))}
                   </select>
@@ -227,7 +227,7 @@ export function VendorApplicationForm() {
                         onClick={() => removeCategory(cat)}
                         title="Remove"
                       >
-                        {cat} <span className="ml-1 text-gray-400">×</span>
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)} <span className="ml-1 text-gray-400">×</span>
                       </button>
                     ))}
                   </div>
