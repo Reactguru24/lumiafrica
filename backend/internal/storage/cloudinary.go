@@ -189,23 +189,15 @@ func (s *Service) uploadFile(ctx context.Context, src io.Reader, filename, mimeT
 		return nil, fmt.Errorf("empty file")
 	}
 
-	if s.cfg.CloudinaryCloudName != "" && s.cfg.CloudinaryAPIKey != "" && s.cfg.CloudinaryAPISecret != "" {
-		result, err := s.uploadCloudinary(ctx, data, filename, mimeType, ext)
-		if err == nil {
-			return result, nil
-		}
-		if s.cfg.ServerEnv == "production" {
-			return nil, fmt.Errorf("cloudinary upload: %w", err)
-		}
-		if strings.Contains(strings.ToLower(err.Error()), "unsupported file type") {
-			return s.uploadLocal(data, filename, mimeType, ext)
-		}
-		return nil, err
-	}
-	if s.cfg.ServerEnv == "production" {
+	if s.cfg.CloudinaryCloudName == "" || s.cfg.CloudinaryAPIKey == "" || s.cfg.CloudinaryAPISecret == "" {
 		return nil, fmt.Errorf("cloudinary is not configured")
 	}
-	return s.uploadLocal(data, filename, mimeType, ext)
+
+	result, err := s.uploadCloudinary(ctx, data, filename, mimeType, ext)
+	if err != nil {
+		return nil, fmt.Errorf("cloudinary upload: %w", err)
+	}
+	return result, nil
 }
 
 func (s *Service) uploadCloudinary(ctx context.Context, data []byte, filename, mimeType, ext string) (*UploadResult, error) {

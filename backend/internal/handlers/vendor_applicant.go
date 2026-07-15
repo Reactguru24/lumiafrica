@@ -262,10 +262,13 @@ func vendorActivationResponse(cfg *config.Config, result *vendorActivationResult
 		if result.RecipientEmail != "" {
 			response["recipientEmail"] = result.RecipientEmail
 		}
+		if result.ResetURL != "" {
+			response["activationUrl"] = result.ResetURL
+			response["resetUrl"] = result.ResetURL
+		}
 	}
 	if cfg.ServerEnv == "development" && result != nil && result.ResetURL != "" && (result.Mailer == nil || !result.Mailer.Enabled() || result.SendErr != nil) {
 		response["message"] = skippedMessage
-		response["activationUrl"] = result.ResetURL
 		response["emailSent"] = false
 	}
 	return response

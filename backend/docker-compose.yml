@@ -10,7 +10,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: lumi_marketplace
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -57,6 +57,7 @@ services:
       dockerfile: Dockerfile
     container_name: lumi_api
     restart: unless-stopped
+    user: "root"
     env_file:
       - .env.docker.example
     environment:
@@ -72,6 +73,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: >
+      sh -c "mkdir -p /app/uploads && chown -R app:app /app/uploads && chmod 775 /app/uploads && exec su -s /bin/sh app -c '/app/lumi-backend'"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 15s

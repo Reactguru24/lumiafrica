@@ -10,7 +10,7 @@ import (
 
 // UploadImage godoc
 // @Summary Upload image
-// @Description Upload an image to Cloudinary when configured, otherwise local disk
+// @Description Upload an image to Cloudinary
 // @Tags Upload
 // @Accept multipart/form-data
 // @Param file formData file true "Image file"
