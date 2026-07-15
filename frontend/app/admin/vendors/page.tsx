@@ -65,11 +65,13 @@ export default function AdminVendorsPage() {
     try {
       const result = await approveVendor({ id, reviewNote }) as {
         message?: string
+        activationUrl?: string
         resetUrl?: string
         emailSent?: boolean
       }
-      if (result?.resetUrl) {
-        console.info('Vendor activation link:', result.resetUrl)
+      const activationUrl = result?.activationUrl || result?.resetUrl
+      if (activationUrl) {
+        console.info('Vendor activation link:', activationUrl)
       }
       toast.success(result?.message || (result?.emailSent === false
         ? 'Vendor approved. Check server logs for the activation link.'
@@ -110,13 +112,15 @@ export default function AdminVendorsPage() {
     try {
       const result = await resendVendorActivation({ vendorId }) as {
         message?: string
+        activationUrl?: string
         resetUrl?: string
         emailSent?: boolean
       }
-      if (result?.resetUrl) {
-        console.info('Vendor activation link:', result.resetUrl)
+      const activationUrl = result?.activationUrl || result?.resetUrl
+      if (activationUrl) {
+        console.info('Vendor activation link:', activationUrl)
       }
-      if (result?.emailSent === false && result?.resetUrl) {
+      if (result?.emailSent === false && activationUrl) {
         toast.warning(result.message || 'Email could not be sent. Activation link logged to browser console.')
       } else {
         toast.success(result?.message || 'Activation email resent.')
