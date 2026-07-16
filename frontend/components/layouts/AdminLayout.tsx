@@ -31,7 +31,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const auth = useAuthStore()
+  // On mobile: controlled by sidebarOpen. On desktop: controlled by desktopCollapsed.
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
 
   async function logout() {
     await auth.logout()
@@ -43,42 +45,110 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <RouteGuard requiresAuth roles={['ADMIN']}>
       <div className="dashboard-shell">
-        <aside className={`fixed inset-y-0 left-0 z-50 w-[min(16rem,85vw)] max-w-64 h-dvh flex flex-col bg-gray-900 text-white transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="shrink-0 flex items-center justify-between p-4 sm:p-6 border-b border-gray-800">
-            <span className="font-display text-lg font-bold tracking-tight">Lumi Admin</span>
-            <button className="lg:hidden p-1" onClick={() => setSidebarOpen(false)} aria-label="Close menu"><XMarkIcon className="w-5 h-5" /></button>
+        {/* Sidebar */}
+        <aside className={`
+          fixed inset-y-0 left-0 z-50 h-dvh flex flex-col
+          bg-white dark:bg-gray-900
+          border-r border-gray-200 dark:border-gray-800
+          text-gray-900 dark:text-white
+          transform transition-all duration-200
+          ${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
+          ${desktopCollapsed ? 'lg:w-16' : 'lg:w-64'}
+        `}>
+          {/* Sidebar header */}
+          <div className="shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+            {!desktopCollapsed && (
+              <span className="font-display text-lg font-bold tracking-tight truncate">Lumi Admin</span>
+            )}
+            {/* Mobile close */}
+            <button
+              className="lg:hidden p-1 ml-auto text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close menu"
+            >
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+            {/* Desktop collapse toggle */}
+            <button
+              className="hidden lg:flex p-1 ml-auto text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              onClick={() => setDesktopCollapsed((v) => !v)}
+              aria-label={desktopCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {desktopCollapsed ? <Bars3Icon className="w-5 h-5" /> : <XMarkIcon className="w-5 h-5" />}
+            </button>
           </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
-              <Link
-                key={item.to}
-                href={item.to}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === item.to || (item.to !== '/admin' && pathname.startsWith(item.to + '/')) ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="w-5 h-5 shrink-0" />{item.name}
-              </Link>
-            ))}
+
+          {/* Nav links */}
+          <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
+            {navItems.map((item) => {
+              const active = pathname === item.to || (item.to !== '/admin' && pathname.startsWith(item.to + '/'))
+              return (
+                <Link
+                  key={item.to}
+                  href={item.to}
+                  title={desktopCollapsed ? item.name : undefined}
+                  className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
+                    ${active
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                    }
+                    ${desktopCollapsed ? 'lg:justify-center' : ''}
+                  `}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon className="w-5 h-5 shrink-0" />
+                  {!desktopCollapsed && <span className="truncate">{item.name}</span>}
+                </Link>
+              )
+            })}
             <Link
               href="/admin/account"
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${pathname === '/admin/account' ? 'bg-white text-gray-900' : 'text-gray-400 hover:bg-gray-800 hover:text-white'}`}
+              title={desktopCollapsed ? 'My Account' : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
+                ${pathname === '/admin/account'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                }
+                ${desktopCollapsed ? 'lg:justify-center' : ''}
+              `}
               onClick={() => setSidebarOpen(false)}
             >
-              <UsersIcon className="w-5 h-5 shrink-0" />My Account
+              <UsersIcon className="w-5 h-5 shrink-0" />
+              {!desktopCollapsed && <span>My Account</span>}
             </Link>
           </nav>
-          <div className="shrink-0 p-4 border-t border-gray-800">
-            <button className="flex items-center gap-3 px-3 py-2.5 text-sm text-red-400 w-full" onClick={logout}>
-              <ArrowLeftOnRectangleIcon className="w-5 h-5 shrink-0" /> Sign Out
+
+          {/* Sign out */}
+          <div className="shrink-0 p-2 border-t border-gray-200 dark:border-gray-800">
+            <button
+              title={desktopCollapsed ? 'Sign Out' : undefined}
+              className={`flex items-center gap-3 px-3 py-2.5 text-sm text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg w-full transition-colors
+                ${desktopCollapsed ? 'lg:justify-center' : ''}
+              `}
+              onClick={logout}
+            >
+              <ArrowLeftOnRectangleIcon className="w-5 h-5 shrink-0" />
+              {!desktopCollapsed && <span>Sign Out</span>}
             </button>
           </div>
         </aside>
 
-        {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-        <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        {/* Main content — offset by sidebar width */}
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${desktopCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
           <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 min-w-0">
-            <button className="lg:hidden p-2 shrink-0 -ml-1" onClick={() => setSidebarOpen(true)} aria-label="Open menu"><Bars3Icon className="w-6 h-6" /></button>
+            {/* Mobile open button */}
+            <button
+              className="lg:hidden p-2 shrink-0 -ml-1 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
             <h1 className="flex-1 text-sm sm:text-lg font-semibold truncate">
               {activeNav?.name ?? 'Platform Administration'}
             </h1>
