@@ -41,11 +41,11 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 
 	// ── Guest (public) ───────────────────────────────────────────────────
 	// Auth entry and marketplace browsing — no login required.
-	router.POST("/auth/login", handlers.Login(cfg))
-	router.POST("/auth/check-credentials", handlers.CheckCredentials())
-	router.POST("/auth/register", handlers.Register(cfg))
-	router.POST("/auth/forgot-password", handlers.ForgotPassword(cfg))
-	router.POST("/auth/reset-password", handlers.ResetPassword())
+	router.POST("/auth/login", middleware.RateLimit("login"), handlers.Login(cfg))
+	router.POST("/auth/check-credentials", middleware.RateLimit("check-credentials"), handlers.CheckCredentials())
+	router.POST("/auth/register", middleware.RateLimit("register"), handlers.Register(cfg))
+	router.POST("/auth/forgot-password", middleware.RateLimit("forgot-password"), handlers.ForgotPassword(cfg))
+	router.POST("/auth/reset-password", middleware.RateLimit("reset-password"), handlers.ResetPassword())
 
 	router.GET("/products/filters", handlers.GetProductFilters())
 	router.GET("/products/homepage", handlers.GetHomepageProducts())
@@ -55,9 +55,9 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/vendors", handlers.ListVendors())
 	router.GET("/vendors/featured", handlers.GetFeaturedVendors())
 	router.GET("/vendors/:vendorID", handlers.GetVendor())
-	router.POST("/vendors/applications", handlers.ApplyVendor())
+	router.POST("/vendors/applications", middleware.RateLimit("vendor-application"), handlers.ApplyVendor())
 	router.GET("/vendors/applications/status", handlers.GetVendorApplicationStatus())
-	router.POST("/uploads/documents", handlers.UploadDocument(cfg))
+	router.POST("/uploads/documents", middleware.RateLimit("upload-document"), handlers.UploadDocument(cfg))
 
 	router.GET("/reviews/product/:productID", handlers.GetProductReviews())
 	router.GET("/subscriptions/plans", handlers.GetSubscriptionPlans(cfg))

@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -72,4 +73,18 @@ func (c *Client) Close() error {
 		return nil
 	}
 	return c.rdb.Close()
+}
+
+func (c *Client) Incr(ctx context.Context, key string) (int64, error) {
+	if !c.Enabled() {
+		return 0, fmt.Errorf("redis not enabled")
+	}
+	return c.rdb.Incr(ctx, key).Result()
+}
+
+func (c *Client) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	if !c.Enabled() {
+		return nil
+	}
+	return c.rdb.Expire(ctx, key, ttl).Err()
 }
