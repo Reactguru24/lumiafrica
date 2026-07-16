@@ -26,7 +26,7 @@ import (
 )
 
 func paystackClient(cfg *config.Config) *paystack.Client {
-	return paystack.NewClient(cfg.PaystackSecretKey)
+	return paystack.NewClient(cfg.PaystackSecretKey, cfg.PaystackTimeout)
 }
 
 func validatePaystackAmount(payment sqlc.PaymentTransaction, verified *paystack.VerifyData) error {
