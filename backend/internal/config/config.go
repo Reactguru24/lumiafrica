@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -27,6 +28,7 @@ type Config struct {
 	PaystackSecretKey   string
 	PaystackPublicKey   string
 	PaystackCallbackURL string
+	PaystackTimeout     time.Duration
 	FrontendURL         string
 	SMTPHost            string
 	SMTPPort            int
@@ -70,6 +72,7 @@ func LoadConfig() (*Config, error) {
 		PaystackSecretKey:   getEnv("PAYSTACK_SECRET_KEY", ""),
 		PaystackPublicKey:   getEnv("PAYSTACK_PUBLIC_KEY", ""),
 		PaystackCallbackURL: getEnv("PAYSTACK_CALLBACK_URL", "http://localhost:3000/payment/callback"),
+		PaystackTimeout:     parsePaystackTimeout(getEnv("PAYSTACK_TIMEOUT", "30s")),
 		FrontendURL:         getEnv("FRONTEND_URL", "http://localhost:3000"),
 		SMTPHost:            getEnv("SMTP_HOST", ""),
 		SMTPPort:            smtpPort(getEnv("SMTP_PORT", "587")),
@@ -191,4 +194,19 @@ func parseCORSOrigins(raw, frontendURL string) []string {
 		return []string{frontendURL}
 	}
 	return out
+}
+
+func parsePaystackTimeout(raw string) time.Duration {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 30 * time.Second
+	}
+	d, err := time.ParseDuration(raw)
+	if err != nil {
+		return 30 * time.Second
+	}
+	if d <= 0 {
+		return 30 * time.Second
+	}
+	return d
 }

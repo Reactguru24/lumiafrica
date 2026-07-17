@@ -38,7 +38,7 @@ func ListFromPaystack(cfg *config.Config) (map[string]models.SubscriptionPlanCon
 		return legacyPlansMap(), nil
 	}
 
-	rows, err := paystack.NewClient(cfg.PaystackSecretKey).ListPlans()
+	rows, err := paystack.NewClient(cfg.PaystackSecretKey, cfg.PaystackTimeout).ListPlans()
 	if err != nil {
 		return nil, err
 	}

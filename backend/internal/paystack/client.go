@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 const apiBase = "https://api.paystack.co"
@@ -19,10 +20,10 @@ type Client struct {
 	http      *http.Client
 }
 
-func NewClient(secretKey string) *Client {
+func NewClient(secretKey string, timeout time.Duration) *Client {
 	return &Client{
 		secretKey: secretKey,
-		http:      &http.Client{},
+		http:      &http.Client{Timeout: timeout},
 	}
 }
 
