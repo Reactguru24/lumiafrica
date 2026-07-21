@@ -55,7 +55,7 @@ export default function RegisterPage() {
       await useCartStore.getState().pushLocalToGuestCart()
       await auth.register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password })
       toast.success('Account created successfully!')
-      router.push(getAuthRedirectTarget('/account'))
+      router.push(getAuthRedirectTarget('/products'))
     } catch (e: unknown) {
       const fieldErrors = credentialErrorsFromApiError(e)
       if (Object.keys(fieldErrors).length > 0) {

@@ -352,7 +352,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     switch (currentRole) {
       case 'ADMIN': return '/admin'
       case 'VENDOR': return '/vendor'
-      case 'CUSTOMER': return '/'
+      case 'CUSTOMER': return '/products'
       default: return '/'
     }
   },
