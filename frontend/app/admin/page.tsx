@@ -99,16 +99,16 @@ export default function AdminDashboardPage() {
           </label>
           <div className="flex items-center gap-3 mb-4">
             <input
-              type="range"
+              type="number"
               min={0}
               max={30}
               step={0.5}
               value={displayRate}
               disabled={!displayEnabled}
               onChange={(e) => setCommissionRate(Number(e.target.value))}
-              className="flex-1"
+              className="input-field w-28"
             />
-            <span className="text-lg font-semibold w-16 text-right">{displayRate}%</span>
+            <span className="text-sm text-gray-500">%</span>
           </div>
           <button type="submit" className="btn-primary text-sm" disabled={savingCommission}>
             {savingCommission ? 'Saving…' : 'Save commission'}
