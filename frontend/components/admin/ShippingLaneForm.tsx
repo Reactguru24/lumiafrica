@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { MapPinIcon, ClockIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 
 import { DEFAULT_DELIVERY_CITIES } from '@/lib/constants/delivery'
@@ -34,6 +34,27 @@ export function ShippingLaneForm({ saving, initial, onSubmit }: Props) {
   const [daysPreset, setDaysPreset] = useState<string>(DELIVERY_PRESETS[1].value)
   const [customDays, setCustomDays] = useState('')
   const [fee, setFee] = useState(String(initial?.fee ?? '350'))
+
+  useEffect(() => {
+    if (!initial) return
+    setOriginCity(initial.originCity ?? '')
+    setDestinationCity(initial.destinationCity ?? '')
+    setFee(String(initial.fee ?? '350'))
+    const days = initial.estimatedDays ?? ''
+    const matched = DELIVERY_PRESETS.find((p) => p.value === days)
+    if (matched) {
+      setDaysMode('preset')
+      setDaysPreset(matched.value)
+      setCustomDays('')
+    } else if (days) {
+      setDaysMode('other')
+      setCustomDays(days)
+    } else {
+      setDaysMode('preset')
+      setDaysPreset(DELIVERY_PRESETS[1].value)
+      setCustomDays('')
+    }
+  }, [initial?.originCity, initial?.destinationCity, initial?.fee, initial?.estimatedDays])
 
   const resolvedDays = useMemo(() => {
     if (daysMode === 'preset') return daysPreset
