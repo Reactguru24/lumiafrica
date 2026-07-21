@@ -7,13 +7,14 @@ import { useFormatCurrency } from '@/lib/stores/currency'
 import { unwrapPaginated } from '@/lib/utils/api'
 import { analyticsField } from '@/lib/utils/admin'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { confirmAction } from '@/lib/utils/swal'
 import { StatCard } from '@/components/common/StatCard'
 import { LineChart } from '@/components/charts/LineChart'
 import { BarChart } from '@/components/charts/BarChart'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import {
   UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
-  CurrencyDollarIcon, ExclamationTriangleIcon, PhotoIcon,
+  CurrencyDollarIcon, ExclamationTriangleIcon, PhotoIcon, PencilIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { useMemo } from 'react'
@@ -27,6 +28,7 @@ export default function AdminDashboardPage() {
   const [commissionRate, setCommissionRate] = useState<number | null>(null)
   const [commissionEnabled, setCommissionEnabled] = useState<boolean | null>(null)
   const [savingCommission, setSavingCommission] = useState(false)
+  const [isEditingCommission, setIsEditingCommission] = useState(false)
 
   const settings = platformSettings as { commissionRate?: number; commissionEnabled?: boolean } | null
   const displayRate = commissionRate ?? settings?.commissionRate ?? 10
@@ -64,10 +66,18 @@ export default function AdminDashboardPage() {
 
   async function saveCommission(e: React.FormEvent) {
     e.preventDefault()
+    const confirmed = await confirmAction({
+      title: 'Save commission settings?',
+      text: `This will set the platform commission to ${displayRate}% and apply to all vendor sales immediately.`,
+      confirmText: 'Yes, save',
+      icon: 'question',
+    })
+    if (!confirmed) return
     setSavingCommission(true)
     try {
       await updateSettings({ commissionRate: displayRate, commissionEnabled: displayEnabled })
       await refetchSettings()
+      setIsEditingCommission(false)
       toast.success('Commission settings updated')
     } catch (err: unknown) {
       toast.error(getFriendlyErrorMessage(err, 'Unable to update commission settings.'))
@@ -84,36 +94,93 @@ export default function AdminDashboardPage() {
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-8">
-        <form className="card p-5" onSubmit={saveCommission}>
-          <h3 className="font-semibold mb-1">Platform commission</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Revenue share taken from vendor sales. Applies to all vendors.
-          </p>
-          <label className="flex items-center gap-2 text-sm mb-4">
-            <input
-              type="checkbox"
-              checked={displayEnabled}
-              onChange={(e) => setCommissionEnabled(e.target.checked)}
-            />
-            Commission enabled
-          </label>
-          <div className="flex items-center gap-3 mb-4">
-            <input
-              type="number"
-              min={0}
-              max={30}
-              step={0.5}
-              value={displayRate}
-              disabled={!displayEnabled}
-              onChange={(e) => setCommissionRate(Number(e.target.value))}
-              className="input-field w-28"
-            />
-            <span className="text-sm text-gray-500">%</span>
+        {isEditingCommission ? (
+          <form className="card p-5" onSubmit={saveCommission}>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold">Edit commission rate</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Set the percentage deducted from each vendor sale.
+            </p>
+            <div className="flex items-center gap-3 mb-4">
+              <input
+                type="number"
+                min={0}
+                max={30}
+                step={0.5}
+                value={displayRate}
+                onChange={(e) => setCommissionRate(Number(e.target.value))}
+                className="input-field w-28"
+              />
+              <span className="text-sm text-gray-500">%</span>
+            </div>
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary text-sm" disabled={savingCommission}>
+                {savingCommission ? 'Saving…' : 'Save commission'}
+              </button>
+              <button
+                type="button"
+                className="btn-secondary text-sm"
+                onClick={() => {
+                  setCommissionRate(null)
+                  setIsEditingCommission(false)
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="card p-5">
+            <div className="flex items-start justify-between mb-1">
+              <h3 className="font-semibold">Platform commission</h3>
+              {displayEnabled && (
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-xs btn-secondary py-1 px-2"
+                  onClick={() => setIsEditingCommission(true)}
+                >
+                  <PencilIcon className="w-3.5 h-3.5" />
+                  Edit rate
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Revenue share taken from vendor sales. Applies to all vendors.
+            </p>
+            {displayEnabled && (
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="text-3xl font-bold">{displayRate}%</span>
+                <span className="text-sm text-gray-500">commission rate</span>
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={displayEnabled}
+                onChange={async (e) => {
+                  const enabling = e.target.checked
+                  if (!enabling) {
+                    const confirmed = await confirmAction({
+                      title: 'Disable commission?',
+                      text: 'Vendors will receive the full sale amount with no platform fee deducted.',
+                      confirmText: 'Yes, disable',
+                      icon: 'warning',
+                    })
+                    if (!confirmed) return
+                  }
+                  setCommissionEnabled(enabling)
+                  await updateSettings({ commissionRate: displayRate, commissionEnabled: enabling })
+                  await refetchSettings()
+                  toast.success(enabling ? 'Commission enabled' : 'Commission disabled')
+                }}
+              />
+              <span className={displayEnabled ? 'text-green-700 dark:text-green-400 font-medium' : 'text-gray-500'}>
+                {displayEnabled ? 'Commission active' : 'Commission disabled'}
+              </span>
+            </label>
           </div>
-          <button type="submit" className="btn-primary text-sm" disabled={savingCommission}>
-            {savingCommission ? 'Saving…' : 'Save commission'}
-          </button>
-        </form>
+        )}
 
         <div className="card p-5 flex flex-col justify-between">
           <div>
