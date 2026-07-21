@@ -55,7 +55,7 @@ export function AdminRowActions({ options, onSelect, disabled, ariaLabel = 'Row 
       <button
         ref={buttonRef}
         type="button"
-        className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+        className="p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange"
         onClick={toggleMenu}
         disabled={disabled}
         aria-label={ariaLabel}
@@ -66,7 +66,7 @@ export function AdminRowActions({ options, onSelect, disabled, ariaLabel = 'Row 
       {open && menuPos && typeof document !== 'undefined' && createPortal(
         <div
           id="admin-row-actions-menu"
-          className="fixed z-[100] min-w-[9rem] rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-1"
+          className="fixed z-[100] min-w-[9rem] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-1"
           style={{ top: menuPos.top, left: menuPos.left }}
         >
           {visible.map((opt) => (
@@ -74,7 +74,7 @@ export function AdminRowActions({ options, onSelect, disabled, ariaLabel = 'Row 
               key={opt.id}
               type="button"
               disabled={opt.disabled}
-              className={`block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 ${
+              className={`block w-full text-left px-3 py-2 text-sm rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors ${
                 opt.variant === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-200'
               }`}
               onClick={() => {

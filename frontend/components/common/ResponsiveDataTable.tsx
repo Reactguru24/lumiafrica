@@ -75,14 +75,14 @@ export function ResponsiveDataTable({ columns, rows, renderCell, renderActions }
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <tr key={row.id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors duration-150">
                 {columns.map((column) => (
-                  <td key={column.key} className="p-4 text-sm" style={{ width: column.width }}>
+                  <td key={column.key} className="p-4 text-sm align-top" style={{ width: column.width }}>
                     {renderCell?.(column.key, row, column) ?? getCellValue(row, column)}
                   </td>
                 ))}
                 {renderActions && (
-                  <td className="p-4 text-right">
+                  <td className="p-4 text-right align-top">
                     <div className="flex gap-1 justify-end">{renderActions(row)}</div>
                   </td>
                 )}

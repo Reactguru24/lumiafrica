@@ -119,10 +119,10 @@ export default function AdminUsersPage() {
             key={role}
             type="button"
             onClick={() => { setRoleFilter(role); setPage(1) }}
-            className={`px-3 py-1.5 text-sm rounded-lg capitalize transition-colors ${
+            className={`px-3 py-1.5 text-sm rounded-xl capitalize transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange ${
               roleFilter === role
-                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                ? 'bg-brand-teal text-white'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
             {role === 'ALL' ? 'All roles' : role.toLowerCase()}
@@ -131,13 +131,13 @@ export default function AdminUsersPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading users...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading users...</div>
       ) : filtered.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500">No users found for this filter.</p>
+          <p className="text-gray-500 dark:text-gray-400">No users found for this filter.</p>
         </div>
       ) : (
-        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl">
           <ResponsiveDataTable
             columns={[
               { key: 'name', label: 'Name', width: '22%' },
@@ -148,23 +148,23 @@ export default function AdminUsersPage() {
             ]}
             rows={tableData}
             renderCell={(key, row) => {
-              if (key === 'role') return <span className="capitalize text-xs font-medium">{row.role as string}</span>
+              if (key === 'role') return <span className="capitalize text-xs font-medium text-gray-700 dark:text-gray-300">{row.role as string}</span>
               if (key === 'disabled') {
                 return row.disabled
-                  ? <span className="text-red-600 text-xs font-medium">Disabled</span>
-                  : <span className="text-green-600 text-xs font-medium">Active</span>
+                  ? <span className="text-xs font-medium text-red-600 dark:text-red-400">Disabled</span>
+                  : <span className="text-xs font-medium text-green-600 dark:text-green-400">Active</span>
               }
               return undefined
             }}
             renderActions={(row) => {
               if (!canModifyUser(row)) {
-                return <span className="text-xs text-gray-400">Protected</span>
+                return <span className="text-xs text-gray-500 dark:text-gray-400">Protected</span>
               }
               if (row.disabled) {
                 return (
                   <button
                     type="button"
-                    className="text-xs text-green-700 hover:text-green-800 font-medium"
+                    className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 rounded px-1"
                     onClick={() => handleEnable(row.id, row.name as string)}
                   >
                     Activate
@@ -174,7 +174,7 @@ export default function AdminUsersPage() {
               return (
                 <button
                   type="button"
-                  className="text-xs text-red-600 hover:text-red-700 font-medium"
+                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 dark:focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 rounded px-1"
                   onClick={() => handleDisable(row.id, row.name as string)}
                 >
                   Disable
