@@ -13,6 +13,7 @@ import { ResponsiveDataTable } from '@/components/common/ResponsiveDataTable'
 import { Pagination } from '@/components/common/Pagination'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { AdminRowActions } from '@/components/admin/AdminRowActions'
+import { EmptyState } from '@/components/common/EmptyState'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 import type { Product } from '@/lib/types'
 
@@ -97,7 +98,7 @@ export default function AdminProductsPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageLimit))
 
   return (
-    <div>
+    <div className="space-y-6">
       <AdminPageHeader
         title="Product Management"
         subtitle="Search listings and manage product visibility."
@@ -111,7 +112,7 @@ export default function AdminProductsPage() {
         }}
       >
         <div className="relative flex-1">
-          <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
           <input
             type="search"
             value={searchInput}
@@ -131,21 +132,20 @@ export default function AdminProductsPage() {
       </form>
 
       {search && (
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Showing results for &ldquo;{search}&rdquo;
         </p>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading products...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading products...</div>
       ) : products.length === 0 ? (
-        <div className="card p-12 text-center">
-          <p className="text-gray-500">
-            {search ? 'No products match your search.' : 'No products found.'}
-          </p>
-        </div>
+        <EmptyState
+          title="No products found"
+          description={search ? 'No products match your search.' : 'There are no products available yet.'}
+        />
       ) : (
-        <>
+        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl">
           <ResponsiveDataTable
             columns={[
               { key: 'name', label: 'Product', width: '40%' },
@@ -163,9 +163,9 @@ export default function AdminProductsPage() {
                       alt={row.name as string}
                       width={40}
                       height={48}
-                      className="w-10 h-12 object-cover rounded shrink-0"
+                      className="w-10 h-12 object-cover rounded-lg shrink-0"
                     />
-                    <span className="font-medium">{row.name as string}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{row.name as string}</span>
                   </div>
                 )
               }
@@ -181,8 +181,10 @@ export default function AdminProductsPage() {
               />
             )}
           />
-          <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageLimit} onPageChange={setPage} />
-        </>
+          <div className="px-4 pb-4">
+            <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageLimit} onPageChange={setPage} />
+          </div>
+        </div>
       )}
     </div>
   )
