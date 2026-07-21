@@ -7,6 +7,7 @@ import { CouponModal, couponFormToPayload, couponToFormValues, emptyCouponForm }
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { confirmAction } from '@/lib/utils/swal'
 import {
   useAdminCoupons,
   useAdminPromotions,
@@ -223,7 +224,13 @@ export default function AdminCommercePage() {
   }
 
   async function removePromo(id: string, name: string) {
-    if (!window.confirm(`Delete "${name}"? This removes the campaign from admin and the storefront.`)) return
+    const confirmed = await confirmAction({
+      title: 'Delete this promotion?',
+      text: `"${name}" will be removed from admin and the storefront.`,
+      confirmText: 'Delete',
+      icon: 'warning',
+    })
+    if (!confirmed) return
     try {
       await deletePromotion({ id })
       if (editingPromoId === id) closePromoForm()
