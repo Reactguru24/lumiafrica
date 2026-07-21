@@ -6,7 +6,9 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { ImageFieldUpload } from '@/components/common/ImageFieldUpload'
 import { HOMEPAGE_HERO_CAROUSEL_GUIDE, HOMEPAGE_SHOWCASE_GUIDE } from '@/lib/constants/imageUpload'
 import { StatusBadge } from '@/components/common/StatusBadge'
+import { EmptyState } from '@/components/common/EmptyState'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { confirmAction } from '@/lib/utils/swal'
 import {
   useAdminHomepageHeroSlides,
   useAdminHomepageShowcase,
@@ -144,23 +146,32 @@ export default function AdminHomepagePage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 max-w-5xl">
       <AdminPageHeader
         title="Homepage"
         subtitle="Manage the hero carousel and feature showcase on the storefront. The promo strip (shipping, M-Pesa, etc.) is fixed in the app."
       />
 
-      <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
-        <div>
-          <h2 className="font-semibold text-lg">Hero carousel</h2>
-          <div className="mt-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <p className="font-medium text-gray-800 dark:text-gray-200">{HOMEPAGE_HERO_CAROUSEL_GUIDE.title}</p>
-            <p><span className="font-medium">Size:</span> {HOMEPAGE_HERO_CAROUSEL_GUIDE.dimensions}</p>
-            <p><span className="font-medium">Minimum:</span> {HOMEPAGE_HERO_CAROUSEL_GUIDE.minimum}</p>
-            <p className="text-xs">{HOMEPAGE_HERO_CAROUSEL_GUIDE.note}</p>
+      <section className="card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-semibold">Hero carousel</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+              Manage slides shown on the storefront hero carousel.
+            </p>
           </div>
         </div>
-        <form onSubmit={handleSlideSubmit} className="grid md:grid-cols-2 gap-4">
+
+        <div className="mb-6 rounded-xl border border-brand-teal/30 bg-brand-teal/5 dark:bg-brand-teal/10 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+          <p className="font-medium text-gray-900 dark:text-white mb-1">{HOMEPAGE_HERO_CAROUSEL_GUIDE.title}</p>
+          <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+            <li><span className="font-medium">Size:</span> {HOMEPAGE_HERO_CAROUSEL_GUIDE.dimensions}</li>
+            <li><span className="font-medium">Minimum:</span> {HOMEPAGE_HERO_CAROUSEL_GUIDE.minimum}</li>
+            <li className="text-xs">{HOMEPAGE_HERO_CAROUSEL_GUIDE.note}</li>
+          </ul>
+        </div>
+
+        <form onSubmit={handleSlideSubmit} className="grid md:grid-cols-2 gap-4 mb-6">
           <label className="block">
             <span className="text-sm font-medium">Label</span>
             <input className="input-field mt-1" value={slideForm.label} onChange={(e) => setSlideForm({ ...slideForm, label: e.target.value })} />
@@ -192,41 +203,78 @@ export default function AdminHomepagePage() {
             )}
           </div>
         </form>
-        <div className="divide-y divide-gray-200 dark:divide-gray-800">
-          {slides.map((slide) => (
-            <div key={slide.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium">{slide.title}</p>
-                <p className="text-xs text-gray-500 truncate">{slide.link}</p>
+
+        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-700">
+                  <th className="pb-2 pr-4 font-medium">Label</th>
+                  <th className="pb-2 pr-4 font-medium">Title</th>
+                  <th className="pb-2 pr-4 font-medium">Link</th>
+                  <th className="pb-2 pr-4 font-medium">Status</th>
+                  <th className="pb-2 font-medium text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {slides.map((slide) => (
+                  <tr key={slide.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-200">
+                    <td className="py-3 pr-4 text-xs text-gray-500">{slide.label || '—'}</td>
+                    <td className="py-3 pr-4 font-medium">{slide.title}</td>
+                    <td className="py-3 pr-4 text-xs text-gray-500 truncate max-w-[200px]">{slide.link}</td>
+                    <td className="py-3 pr-4"><StatusBadge status={slide.active ? 'active' : 'hidden'} /></td>
+                    <td className="py-3 text-right">
+                      <div className="flex justify-end gap-2 flex-wrap">
+                        <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => { setEditingSlideId(slide.id); setSlideForm({ label: slide.label || '', title: slide.title, subtitle: slide.subtitle || '', image: slide.image, link: slide.link || '/products', sortOrder: slide.sortOrder || 0 }) }}>Edit</button>
+                        <button type="button" className="text-xs btn-secondary py-1 px-2" onClick={() => void runAdminAction(async () => { await setSlideActive({ id: slide.id, active: !slide.active }); await refetchSlides(); invalidateHomepageContentCache() }, slide.active ? 'Slide hidden' : 'Slide visible', 'Failed to update slide')}>{slide.active ? 'Hide' : 'Show'}</button>
+                        <button type="button" className="text-xs text-red-600 hover:underline py-1 px-2" onClick={() => {
+                          const confirmed = confirmAction({
+                            title: 'Delete this slide?',
+                            text: 'This slide will be removed from the hero carousel.',
+                            confirmText: 'Delete',
+                            icon: 'warning',
+                          })
+                          if (!confirmed) return
+                          void runAdminAction(async () => { await deleteSlide({ id: slide.id }); await refetchSlides(); invalidateHomepageContentCache() }, 'Slide deleted', 'Failed to delete slide')
+                        }}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {slides.length === 0 && (
+              <div className="py-8">
+                <EmptyState title="No hero slides" description="Add a slide to display on the storefront hero carousel." />
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <StatusBadge status={slide.active ? 'active' : 'hidden'} />
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => { setEditingSlideId(slide.id); setSlideForm({ label: slide.label || '', title: slide.title, subtitle: slide.subtitle || '', image: slide.image, link: slide.link || '/products', sortOrder: slide.sortOrder || 0 }) }}>Edit</button>
-                <button type="button" className="btn-secondary text-xs py-1 px-2" onClick={() => void runAdminAction(async () => { await setSlideActive({ id: slide.id, active: !slide.active }); await refetchSlides(); invalidateHomepageContentCache() }, slide.active ? 'Slide hidden' : 'Slide visible', 'Failed to update slide')}>{slide.active ? 'Hide' : 'Show'}</button>
-                <button type="button" className="text-xs text-red-600" onClick={() => { if (!confirm('Delete this slide?')) return; void runAdminAction(async () => { await deleteSlide({ id: slide.id }); await refetchSlides(); invalidateHomepageContentCache() }, 'Slide deleted', 'Failed to delete slide') }}>Delete</button>
-              </div>
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       </section>
 
-      <section className="card p-5 border border-gray-200 dark:border-gray-700 space-y-4">
-        <div>
-          <h2 className="font-semibold text-lg">Feature showcase</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Full-width feature block below featured products — text on the left, four portrait images on the right.
-          </p>
-          <div className="mt-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-            <p className="font-medium text-gray-800 dark:text-gray-200">{HOMEPAGE_SHOWCASE_GUIDE.title}</p>
-            <p><span className="font-medium">Size:</span> {HOMEPAGE_SHOWCASE_GUIDE.dimensions}</p>
-            <p><span className="font-medium">Minimum:</span> {HOMEPAGE_SHOWCASE_GUIDE.minimum}</p>
-            <p className="text-xs">{HOMEPAGE_SHOWCASE_GUIDE.note}</p>
+      <section className="card p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="font-semibold">Feature showcase</h2>
+            <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+              Full-width feature block below featured products — text on the left, four portrait images on the right.
+            </p>
           </div>
         </div>
+
+        <div className="mb-6 rounded-xl border border-brand-teal/30 bg-brand-teal/5 dark:bg-brand-teal/10 px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+          <p className="font-medium text-gray-900 dark:text-white mb-1">{HOMEPAGE_SHOWCASE_GUIDE.title}</p>
+          <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+            <li><span className="font-medium">Size:</span> {HOMEPAGE_SHOWCASE_GUIDE.dimensions}</li>
+            <li><span className="font-medium">Minimum:</span> {HOMEPAGE_SHOWCASE_GUIDE.minimum}</li>
+            <li className="text-xs">{HOMEPAGE_SHOWCASE_GUIDE.note}</li>
+          </ul>
+        </div>
+
         {showcaseLoading ? (
           <p className="text-sm text-gray-500">Loading showcase…</p>
         ) : (
-          <form onSubmit={handleShowcaseSubmit} className="grid md:grid-cols-2 gap-4">
+          <form onSubmit={handleShowcaseSubmit} className="grid md:grid-cols-2 gap-4 mb-6">
             <label className="block">
               <span className="text-sm font-medium">Overline</span>
               <input className="input-field mt-1" value={showcaseForm.overline} onChange={(e) => setShowcaseForm({ ...showcaseForm, overline: e.target.value })} placeholder="Made for East Africa" />
@@ -234,7 +282,7 @@ export default function AdminHomepagePage() {
             <label className="block">
               <span className="text-sm font-medium">Background color</span>
               <div className="flex items-center gap-2 mt-1">
-                <input type="color" value={showcaseForm.backgroundColor} onChange={(e) => setShowcaseForm({ ...showcaseForm, backgroundColor: e.target.value })} className="h-10 w-14 rounded border border-gray-200 dark:border-gray-700 cursor-pointer" />
+                <input type="color" value={showcaseForm.backgroundColor} onChange={(e) => setShowcaseForm({ ...showcaseForm, backgroundColor: e.target.value })} className="h-10 w-14 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer" />
                 <input className="input-field flex-1" value={showcaseForm.backgroundColor} onChange={(e) => setShowcaseForm({ ...showcaseForm, backgroundColor: e.target.value })} />
               </div>
             </label>
