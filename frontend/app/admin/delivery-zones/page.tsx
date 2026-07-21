@@ -12,6 +12,7 @@ import {
 } from '@/lib/stores/api'
 import { useFormatCurrency } from '@/lib/stores/currency'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { confirmAction } from '@/lib/utils/swal'
 import { unwrapItems } from '@/lib/utils/api'
 
 type Lane = {
@@ -63,7 +64,16 @@ export default function AdminDeliveryZonesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Deactivate this shipping lane?')) return
+    const lane = lanes.find((l) => l.id === id)
+    const confirmed = await confirmAction({
+      title: 'Remove this shipping lane?',
+      text: lane
+        ? `${lane.originCity} → ${lane.destinationCity} will be deactivated and no longer used at checkout.`
+        : 'This lane will be deactivated and no longer used at checkout.',
+      confirmText: 'Yes, remove',
+      icon: 'warning',
+    })
+    if (!confirmed) return
     try {
       await deleteLane({ id })
       toast.success('Lane removed')
