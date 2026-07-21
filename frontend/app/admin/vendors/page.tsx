@@ -203,8 +203,8 @@ export default function AdminVendorsPage() {
   }
 
   const tabClass = (t: Tab) =>
-    `px-4 py-2 text-sm capitalize whitespace-nowrap rounded-full transition-colors ${
-      tab === t ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800'
+    `px-4 py-2 text-sm capitalize whitespace-nowrap rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange ${
+      tab === t ? 'bg-brand-teal text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
     }`
 
   const vendorTableData = vendors.map((v: any) => ({
