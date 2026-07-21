@@ -248,10 +248,10 @@ export default function AdminVendorsPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6">
       <AdminPageHeader title="Vendor Management" subtitle="Review applications, manage active vendors, and curate featured listings." />
 
-      <div className="flex gap-2 mb-6 flex-wrap overflow-x-auto">
+      <div className="flex flex-wrap gap-2">
         <button type="button" className={tabClass('applications')} onClick={() => setTab('applications')}>
           Applications ({appsPaginated.total || '…'})
         </button>
@@ -271,29 +271,29 @@ export default function AdminVendorsPage() {
             const checklist = buildVendorApplicationChecklist(app)
             const criticalFailed = checklist.filter((c) => c.critical && !c.passed).length
             return (
-              <div key={app.id} className="card p-6">
+              <div key={app.id} className="card p-6 hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-200 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <MediaImage src={app.logo} alt={app.storeName} width={48} height={48} className="w-12 h-12 rounded-full object-cover shrink-0" />
                     <div className="min-w-0">
                       <h3 className="font-semibold truncate">{app.storeName}</h3>
-                      <p className="text-sm text-gray-500 truncate">{app.businessEmail} · {app.city}, {app.country}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{app.businessEmail} · {app.city}, {app.country}</p>
                     </div>
                   </div>
                   <StatusBadge status={app.status} />
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{app.businessDescription}</p>
-                <div className="flex flex-wrap gap-3 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{app.businessDescription}</p>
+                <div className="flex flex-wrap gap-3">
                   {app.vendorPhoto && (
                     <div className="flex items-center gap-2">
                       <MediaImage src={app.vendorPhoto} alt="Vendor photo" width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
-                      <span className="text-xs text-gray-500">Vendor photo</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Vendor photo</span>
                     </div>
                   )}
                   {app.businessPhoto && (
                     <div className="flex items-center gap-2">
                       <MediaImage src={app.businessPhoto} alt="Business photo" width={64} height={40} className="w-16 h-10 rounded object-cover" />
-                      <span className="text-xs text-gray-500">Business photo</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Business photo</span>
                     </div>
                   )}
                   {app.businessCertificate && (
@@ -307,18 +307,18 @@ export default function AdminVendorsPage() {
                     </a>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-wrap gap-2">
                   {app.categories?.map((cat: string) => (
                     <span key={cat} className="badge bg-gray-100 dark:bg-gray-800">{cat}</span>
                   ))}
                 </div>
-                <div className="text-xs text-gray-500 space-y-1 mb-4">
+                <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                   <p>Registration: {app.registrationNumber || '—'}</p>
                   <p>Risk status: <span className="capitalize font-medium">{app.riskStatus || '—'}</span></p>
                   <p>Submitted: {app.submittedAt ? formatDate(app.submittedAt) : '—'}</p>
                 </div>
 
-                <div className="mb-4 border-t pt-4">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
                   <button
                     type="button"
                     onClick={() => setExpandedVerification(expandedVerification === app.id ? null : app.id)}
@@ -367,7 +367,7 @@ export default function AdminVendorsPage() {
                 </div>
 
                 {app.status === 'pending' && (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
                     <input
                       value={reviewNote}
                       onChange={(e) => setReviewNote(e.target.value)}
@@ -394,7 +394,7 @@ export default function AdminVendorsPage() {
       )}
 
       {tab === 'vendors' && (
-        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl">
           {vendors.length === 0 ? (
             <EmptyState title="No vendors" description="Approved vendors will appear here." />
           ) : (
@@ -420,13 +420,13 @@ export default function AdminVendorsPage() {
                 }
                 if (key === 'activationPending') {
                   return row.activationPending
-                    ? <span className="text-xs text-amber-600 font-medium">Pending</span>
-                    : <span className="text-xs text-green-600 font-medium">Active</span>
+                    ? <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Pending</span>
+                    : <span className="text-xs text-green-600 dark:text-green-400 font-medium">Active</span>
                 }
                 if (key === 'isFeatured') {
                   return row.isFeatured
-                    ? <span className="text-xs text-green-600 font-medium">Yes</span>
-                    : <span className="text-xs text-gray-400">No</span>
+                    ? <span className="text-xs text-green-600 dark:text-green-400 font-medium">Yes</span>
+                    : <span className="text-xs text-gray-400 dark:text-gray-500">No</span>
                 }
                 if (key === 'rating') return <span>★ {row.rating as string}</span>
                 return undefined
@@ -454,13 +454,13 @@ export default function AdminVendorsPage() {
       {tab === 'carousels' && (
         <div className="space-y-8">
           <section>
-            <h2 className="font-semibold mb-4">Featured Vendors (Homepage Carousel)</h2>
+            <h2 className="font-semibold mb-4 text-gray-900 dark:text-white">Featured Vendors (Homepage Carousel)</h2>
             {featuredVendors.length === 0 ? (
               <EmptyState title="No featured vendors" description="Feature vendors from the Active Vendors tab." />
             ) : (
               <div className="space-y-3">
                 {featuredVendors.map((vendor: any) => (
-                  <div key={vendor.id} className="card p-4 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                  <div key={vendor.id} className="card p-4 flex flex-col sm:flex-row sm:items-center gap-4 justify-between hover:shadow-md dark:hover:shadow-gray-900/50 transition-all duration-200">
                     <div className="flex items-center gap-3 min-w-0">
                       <MediaImage src={vendor.logo} alt={vendor.storeName} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                       <div className="min-w-0">
@@ -470,7 +470,7 @@ export default function AdminVendorsPage() {
                     </div>
                     <button
                       type="button"
-                      className="btn-secondary text-sm py-2 shrink-0"
+                      className="btn-secondary text-sm py-2 text-red-600 border-red-600 shrink-0"
                       onClick={() => handleToggleVendorFeatured(vendor.id, false, vendor.storeName)}
                     >
                       Remove from carousel
@@ -482,7 +482,7 @@ export default function AdminVendorsPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold mb-4">Featured Products</h2>
+            <h2 className="font-semibold mb-4 text-gray-900 dark:text-white">Featured Products</h2>
             {featuredProducts.length === 0 ? (
               <EmptyState title="No featured products" description="Featured products from vendor subscriptions will appear here." />
             ) : (

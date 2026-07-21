@@ -89,7 +89,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                   title={desktopCollapsed ? item.name : undefined}
                   className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
                     ${active
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      ? 'bg-brand-teal text-white dark:text-white'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                     }
                     ${desktopCollapsed ? 'lg:justify-center' : ''}
@@ -106,7 +106,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               title={desktopCollapsed ? 'My Account' : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
                 ${pathname === '/admin/account'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  ? 'bg-brand-teal text-white dark:text-white'
                   : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                 }
                 ${desktopCollapsed ? 'lg:justify-center' : ''}
