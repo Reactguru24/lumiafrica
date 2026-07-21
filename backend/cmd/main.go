@@ -31,6 +31,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Reactguru24/lumiafrica/internal/catalog"
 	"github.com/Reactguru24/lumiafrica/internal/config"
@@ -57,9 +62,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.SQL.Close()
-	defer cancel()
-
 	if err := database.Migrate(db); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
@@ -69,7 +71,6 @@ func main() {
 
 	st := store.New(db)
 	redisClient := redis.New(cfg)
-	defer redisClient.Close()
 
 	cron.StartProductFlagRefresh(ctx, st.Queries())
 	cron.StartSubscriptionExpiry(ctx, st.Queries())
@@ -77,8 +78,32 @@ func main() {
 	routes.SetupRoutes(srv.Engine, st, cfg, redisClient)
 
 	addr := fmt.Sprintf(":%s", cfg.ServerPort)
-	log.Printf("Starting server on %s", addr)
-	if err := srv.Engine.Run(addr); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	httpServer := &http.Server{
+		Addr:    addr,
+		Handler: srv.Engine,
 	}
+
+	go func() {
+		log.Printf("Starting server on %s", addr)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server exited")
+
+	redisClient.Close()
+	db.SQL.Close()
+	cancel()
 }

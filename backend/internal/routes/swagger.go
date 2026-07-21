@@ -96,13 +96,13 @@ const swaggerUIHTML = `
       <option value="admin">Admin</option>
     </select>
     <label>Email</label>
-    <input id="email" type="email" placeholder="customer@lumiafrica.com" value=""/>
+    <input id="email" type="email" placeholder="you@example.com" value=""/>
     <label>Password</label>
-    <input id="password" type="password" placeholder="password" value=""/>
+    <input id="password" type="password" placeholder="••••••••" value=""/>
     <button id="btn-login" type="button">Sign in</button>
     <button id="btn-logout" type="button">Sign out</button>
     <span id="auth-status"></span>
-    <span id="auth-hint">Guest — browse freely. Sign in as Customer, Vendor, or Admin. Payment and Subscription sections group Paystack checkout APIs.</span>
+    <span id="auth-hint">Guest — browse freely. Select a role and enter your own credentials to sign in. Payment and Subscription sections group Paystack checkout APIs.</span>
   </div>
   <div id="swagger-ui"></div>
   <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
@@ -114,10 +114,7 @@ const swaggerUIHTML = `
       'Authentication', 'Users', 'Upload'
     ];
     const ACCOUNTS = {
-      guest:    { email: '', password: '' },
-      customer: { email: 'customer@lumiafrica.com', password: 'customer123' },
-      vendor:   { email: 'vendor@lumiafrica.com', password: 'vendor123' },
-      admin:    { email: 'admin@lumiafrica.com', password: 'Admin123' },
+      guest: { email: '', password: '' },
     };
 
     function applyRolePreset(role) {
@@ -129,6 +126,7 @@ const swaggerUIHTML = `
         setStatus('Guest mode — browse public endpoints without a token', true);
         return;
       }
+      setStatus('Enter your own credentials for the ' + role + ' role', true);
     }
 
     applyRolePreset('guest');
