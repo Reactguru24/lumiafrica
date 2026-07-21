@@ -37,7 +37,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }: 
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Showing {rangeStart}–{rangeEnd} of {total}
       </p>
       <nav className="flex items-center gap-1" aria-label="Pagination">
@@ -51,12 +51,12 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }: 
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`ellipsis-${i}`} className="px-2 text-gray-400">…</span>
+            <span key={`ellipsis-${i}`} className="px-2 text-gray-400 dark:text-gray-500">…</span>
           ) : (
             <button
               key={p}
-              className={`min-w-[2rem] h-8 text-sm font-medium rounded-sm transition-colors ${
-                p === page ? 'bg-brand-teal text-white dark:bg-brand-orange' : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+              className={`min-w-[2rem] h-8 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange ${
+                p === page ? 'bg-brand-teal text-white dark:bg-brand-teal' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
               }`}
               onClick={() => go(p)}
             >
