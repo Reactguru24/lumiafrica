@@ -31,7 +31,7 @@ export default function AccountOrdersPage() {
           <button
             key={f}
             type="button"
-            className={`px-4 py-2 text-sm capitalize whitespace-nowrap rounded-full transition-colors ${filter === f ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800'}`}
+            className={`px-4 py-2 text-sm capitalize whitespace-nowrap rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange ${filter === f ? 'bg-brand-teal text-white dark:bg-brand-orange' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             onClick={() => { setFilter(f); reset() }}
           >
             {f}
@@ -40,7 +40,7 @@ export default function AccountOrdersPage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Loading orders...</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Loading orders...</div>
       ) : !filtered.length ? (
         <EmptyState title="No orders yet" description="Your order history will appear here." />
       ) : (
@@ -49,19 +49,19 @@ export default function AccountOrdersPage() {
             {paginated.map((order) => {
               const items = parseOrderItems(order.items)
               return (
-                <div key={order.id} className="card p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <div key={order.id} className="order-card">
+                  <div className="order-card-header">
                     <div>
-                      <p className="font-medium text-sm">Order #{formatOrderShortId(order.id)}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">Order #{formatOrderShortId(order.id)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         Placed: {order.createdAt ? formatDateTime(order.createdAt) : 'Not set'}
                         {order.updatedAt ? ` · Updated: ${formatDateTime(order.updatedAt)}` : ''}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <span className="font-semibold text-sm">{formatPrice(order.total || 0)}</span>
+                      <span className="font-semibold text-sm text-gray-900 dark:text-white">{formatPrice(order.total || 0)}</span>
                       {(order.discount ?? 0) > 0 && (
-                        <span className="text-xs text-green-600">−{formatPrice(order.discount ?? 0)}{order.couponCode ? ` ${order.couponCode}` : ''}</span>
+                        <span className="text-xs text-green-600 dark:text-green-400">−{formatPrice(order.discount ?? 0)}{order.couponCode ? ` ${order.couponCode}` : ''}</span>
                       )}
                       <StatusBadge status={order.status} />
                       <button

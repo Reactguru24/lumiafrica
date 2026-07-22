@@ -51,7 +51,7 @@ export function ProfileAvatarUpload({
   return (
     <>
       <ImageUploadCropHost cropSession={cropSession} onConfirm={confirmCrop} onCancel={cancelCrop} />
-      <div className="flex items-center gap-4">
+      <div className="avatar-container">
         <UserAvatar fullName={fullName} avatar={avatar} size="lg" />
         <div>
           <input
@@ -74,8 +74,8 @@ export function ProfileAvatarUpload({
           >
             Upload photo
           </button>
-          <p className="text-xs text-gray-500 mt-1">{imageSizeHint(preset)}</p>
-          <p className="text-xs text-gray-500">Larger images can be cropped in the editor.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{imageSizeHint(preset)}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Larger images can be cropped in the editor.</p>
         </div>
       </div>
     </>

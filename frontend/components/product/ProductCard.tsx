@@ -78,7 +78,7 @@ export function ProductCard({ product, listView = false, compact = false }: Prod
             <span className={`text-gray-400 line-through ${compact ? 'text-[10px]' : 'text-sm'}`}>{formatPrice(price)}</span>
           )}
         </div>
-        {listView && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{product.description}</p>}
+        {listView && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">{product.description}</p>}
       </div>
 
       <button

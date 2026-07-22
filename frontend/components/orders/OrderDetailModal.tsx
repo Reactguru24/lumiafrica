@@ -41,26 +41,26 @@ export function OrderDetailModal({
         <div className="space-y-5">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={order.status} />
-            <span className="text-sm text-gray-500">{order.paymentMethod}</span>
-            <span className="text-sm font-semibold ml-auto">{formatPrice(order.total)}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{order.paymentMethod}</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white ml-auto">{formatPrice(order.total)}</span>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Placed</p>
-              <p>{order.createdAt ? formatDateTime(order.createdAt) : '—'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Placed</p>
+              <p className="text-gray-900 dark:text-white">{order.createdAt ? formatDateTime(order.createdAt) : '—'}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Last updated</p>
-              <p>{order.updatedAt ? formatDateTime(order.updatedAt) : '—'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Last updated</p>
+              <p className="text-gray-900 dark:text-white">{order.updatedAt ? formatDateTime(order.updatedAt) : '—'}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Items ({detailItems.length})</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Items ({detailItems.length})</p>
             <div className="space-y-3">
               {detailItems.map((item, idx) => (
-                <div key={`${item.productId}-${idx}`} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div key={`${item.productId}-${idx}`} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
                   <MediaImage
                     src={item.productImage}
                     alt={item.productName}
@@ -70,39 +70,39 @@ export function OrderDetailModal({
                     className="w-12 h-14 object-cover rounded shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{item.productName}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">{item.productName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       Qty: {item.quantity} · {item.size}{item.color ? ` · ${item.color}` : ''}
                     </p>
                   </div>
-                  <p className="text-sm font-medium shrink-0">{formatPrice(item.price * item.quantity)}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white shrink-0">{formatPrice(item.price * item.quantity)}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Delivery address</p>
-            <p className="text-sm">{formatShippingAddress(order.shippingAddress) || order.deliveryAddress || '—'}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Delivery address</p>
+            <p className="text-sm text-gray-900 dark:text-white">{formatShippingAddress(order.shippingAddress) || order.deliveryAddress || '—'}</p>
             {order.deliveryZoneName && (
-              <p className="text-xs text-gray-500 mt-1">Zone: {order.deliveryZoneName}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Zone: {order.deliveryZoneName}</p>
             )}
           </div>
 
           <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(order.subtotal ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Subtotal</span><span className="text-gray-900 dark:text-white">{formatPrice(order.subtotal ?? 0)}</span></div>
             {(order.discount ?? 0) > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-green-600 dark:text-green-400">
                 <span>Discount{order.couponCode ? ` (${order.couponCode})` : ''}</span>
                 <span>−{formatPrice(order.discount ?? 0)}</span>
               </div>
             )}
-            <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span>{formatPrice(order.shipping ?? 0)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Shipping</span><span className="text-gray-900 dark:text-white">{formatPrice(order.shipping ?? 0)}</span></div>
             {(order.tax ?? 0) > 0 && (
-              <div className="flex justify-between"><span className="text-gray-500">Tax</span><span>{formatPrice(order.tax ?? 0)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500 dark:text-gray-400">Tax</span><span className="text-gray-900 dark:text-white">{formatPrice(order.tax ?? 0)}</span></div>
             )}
             <div className="flex justify-between font-semibold pt-1 border-t border-gray-100 dark:border-gray-800">
-              <span>Total</span><span>{formatPrice(order.total)}</span>
+              <span className="text-gray-900 dark:text-white">Total</span><span className="text-gray-900 dark:text-white">{formatPrice(order.total)}</span>
             </div>
           </div>
 
