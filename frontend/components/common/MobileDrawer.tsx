@@ -24,13 +24,13 @@ export function MobileDrawer({ open, onOpenChange, title, children, footer }: Mo
     <div className="fixed inset-0 z-[70] md:hidden animate-fade-in">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" onClick={() => onOpenChange(false)} />
       <aside
-        className="absolute inset-y-0 right-0 w-[min(100%,20rem)] sm:w-full max-w-sm bg-white dark:bg-gray-950 shadow-2xl flex flex-col animate-slide-up"
+        className="absolute inset-y-0 right-0 w-[min(100%,20rem)] sm:w-full max-w-sm bg-white dark:bg-gray-950 shadow-2xl flex flex-col animate-slide-up rounded-l-2xl"
         role="dialog"
         aria-modal="true"
         aria-label={title || 'Panel'}
       >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-800 shrink-0">
-          <h2 className="font-semibold text-lg">{title || 'Filters'}</h2>
+          <h2 className="font-semibold text-lg text-gray-900 dark:text-white">{title || 'Filters'}</h2>
           <button type="button" className="control-button" aria-label="Close" onClick={() => onOpenChange(false)}>
             <XMarkIcon className="w-5 h-5" />
           </button>

@@ -55,9 +55,7 @@ export function Pagination({ page, totalPages, total, pageSize, onPageChange }: 
           ) : (
             <button
               key={p}
-              className={`min-w-[2rem] h-8 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange ${
-                p === page ? 'bg-brand-teal text-white dark:bg-brand-teal' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-              }`}
+              className={`pagination-button ${p === page ? 'pagination-button-active' : 'pagination-button-inactive'}`}
               onClick={() => go(p)}
             >
               {p}

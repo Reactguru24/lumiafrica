@@ -70,10 +70,10 @@ export function FilterSelect({
         type="button"
         aria-label={ariaLabel}
         aria-expanded={open}
-        className={`filter-select flex items-center justify-between gap-2 text-left w-full ${allowEmpty && value ? 'pr-8' : ''}`}
+        className={`filter-select flex items-center justify-between gap-2 text-left w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm ${allowEmpty && value ? 'pr-8' : ''}`}
         onClick={toggleMenu}
       >
-        <span className="truncate">{label}</span>
+        <span className="truncate text-gray-900 dark:text-white">{label}</span>
         <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {allowEmpty && value && (
@@ -93,7 +93,7 @@ export function FilterSelect({
         <ul
           id={menuId}
           role="listbox"
-          className="fixed z-[100] max-h-36 overflow-y-auto rounded-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-0.5"
+          className="fixed z-[100] max-h-36 overflow-y-auto rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg py-0.5"
           style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
         >
           {allowEmpty && (

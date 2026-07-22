@@ -21,7 +21,7 @@ export function ActiveFilterChips({ filters, vendors, onClear, onClearAll }: Act
         <button
           key={tag.key}
           type="button"
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="filter-chip filter-chip-active"
           onClick={() => onClear(tag.key)}
         >
           <span>{tag.label}</span>
@@ -29,7 +29,7 @@ export function ActiveFilterChips({ filters, vendors, onClear, onClearAll }: Act
         </button>
       ))}
       {onClearAll && tags.length > 1 && (
-        <button type="button" className="text-xs text-gray-500 hover:underline" onClick={onClearAll}>
+        <button type="button" className="text-xs text-gray-500 hover:text-brand-teal dark:hover:text-brand-orange font-medium transition-colors" onClick={onClearAll}>
           Clear all
         </button>
       )}
