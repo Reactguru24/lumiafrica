@@ -46,7 +46,7 @@ export default function AccountWishlistPage() {
   }, [cart.wishlist])
 
   if (loading) {
-    return <div className="text-center py-6 text-sm text-gray-500">Loading wishlist...</div>
+    return <div className="text-center py-6 text-sm text-gray-500 dark:text-gray-400">Loading wishlist...</div>
   }
 
   return (
@@ -54,7 +54,7 @@ export default function AccountWishlistPage() {
       {!products.length ? (
         <EmptyState title="Your wishlist is empty" description="Save items you love by clicking the heart icon." actionLabel="Browse Products" onAction={() => router.push('/products')} />
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+        <div className="wishlist-grid">
           {products.map((p) => <ProductCard key={p.id} product={p} compact />)}
         </div>
       )}

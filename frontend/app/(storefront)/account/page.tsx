@@ -75,56 +75,57 @@ export default function AccountProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="card p-6">
-        <h2 className="font-semibold mb-4">Profile Photo</h2>
+    <div className="space-y-6 max-w-2xl">
+      <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">My Account</h1>
+      <div className="profile-form-section">
+        <h2 className="profile-form-title">Profile Photo</h2>
         <ProfileAvatarUpload
           fullName={form.fullName}
           avatar={form.avatar}
           onAvatarChange={handleAvatarChange}
         />
       </div>
-      <div className="card p-6">
-        <h2 className="font-semibold mb-4">Personal Information</h2>
+      <div className="profile-form-section">
+        <h2 className="profile-form-title">Personal Information</h2>
         <div className="grid md:grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">Full Name</label><input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="input-field mt-1" /></div>
-          <div><label className="text-sm font-medium">Email</label><input value={form.email} type="email" className="input-field mt-1" disabled /></div>
-          <div><label className="text-sm font-medium">Phone</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input-field mt-1" /></div>
+          <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label><input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="input-field mt-1" /></div>
+          <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label><input value={form.email} type="email" className="input-field mt-1" disabled /></div>
+          <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="input-field mt-1" /></div>
         </div>
         <button className="btn-primary mt-4" onClick={saveProfile}>Save Changes</button>
       </div>
-      <div className="card p-6">
-        <h2 className="font-semibold mb-4">Password Settings</h2>
+      <div className="profile-form-section">
+        <h2 className="profile-form-title">Password Settings</h2>
         <div className="space-y-4 max-w-md">
           <div>
-            <label className="text-sm font-medium">Current Password</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
             <div className="relative mt-1">
               <input value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} type={showCurrentPassword ? 'text' : 'password'} className="input-field pr-10" />
-              <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none">
+              <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange rounded-r-lg">
                 {showCurrentPassword ? <EyeSlashIcon className="h-5 w-5" aria-hidden="true" /> : <EyeIcon className="h-5 w-5" aria-hidden="true" />}
               </button>
             </div>
-            {passwordErrors.currentPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.currentPassword}</p>}
+            {passwordErrors.currentPassword && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{passwordErrors.currentPassword}</p>}
           </div>
           <div>
-            <label className="text-sm font-medium">New Password</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
             <div className="relative mt-1">
               <input value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} type={showNewPassword ? 'text' : 'password'} className="input-field pr-10" />
-              <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none">
+              <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange rounded-r-lg">
                 {showNewPassword ? <EyeSlashIcon className="h-5 w-5" aria-hidden="true" /> : <EyeIcon className="h-5 w-5" aria-hidden="true" />}
               </button>
             </div>
-            {passwordErrors.newPassword && <p className="text-red-500 text-xs mt-1">{passwordErrors.newPassword}</p>}
+            {passwordErrors.newPassword && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{passwordErrors.newPassword}</p>}
           </div>
           <div>
-            <label className="text-sm font-medium">Confirm Password</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
             <div className="relative mt-1">
               <input value={passwordForm.confirm} onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} type={showConfirmPassword ? 'text' : 'password'} className="input-field pr-10" />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none">
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-teal dark:focus:ring-brand-orange rounded-r-lg">
                 {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" aria-hidden="true" /> : <EyeIcon className="h-5 w-5" aria-hidden="true" />}
               </button>
             </div>
-            {passwordErrors.confirm && <p className="text-red-500 text-xs mt-1">{passwordErrors.confirm}</p>}
+            {passwordErrors.confirm && <p className="text-red-500 dark:text-red-400 text-xs mt-1">{passwordErrors.confirm}</p>}
           </div>
         </div>
         <button className="btn-primary mt-4" onClick={handleChangePassword} disabled={changingPassword}>
