@@ -266,7 +266,6 @@ export default function AdminDashboardPage() {
                     labels={vendorGrowth.map((v) => v.month)}
                     data={vendorGrowth.map((v) => v.count)}
                     label="Vendors"
-                    color="#a88b73"
                   />
                 </div>
               )}
