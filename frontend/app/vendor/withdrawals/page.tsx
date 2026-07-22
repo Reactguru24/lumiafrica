@@ -192,10 +192,76 @@ const tabs = [
 ]
 
 const tabPanel = () => {
+  if (isAddMode && showBankForm) {
+    return (
+      <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+        <h4 className="font-semibold text-gray-900 dark:text-white">Add Bank Account</h4>
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
+            <input
+              className="input-field mt-1 w-full"
+              value={bankAccountName}
+              onChange={(e) => setBankAccountName(e.target.value)}
+              placeholder="Name on the bank account"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
+            <input
+              className="input-field mt-1 w-full"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder="e.g. Equity Bank, KCB"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+            <input
+              className="input-field mt-1 w-full"
+              value={bankAccountNumber}
+              onChange={(e) => setBankAccountNumber(e.target.value)}
+              placeholder="Bank account number"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
+            <input
+              className="input-field mt-1 w-full"
+              value={bankRoutingNumber}
+              onChange={(e) => setBankRoutingNumber(e.target.value)}
+              placeholder="Bank code or SWIFT/IFSC"
+              required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+            <select
+              className="input-field mt-1 w-full"
+              value={bankCurrency}
+              onChange={(e) => setBankCurrency(e.target.value)}
+            >
+              <option value="KES">KES - Kenyan Shilling</option>
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button className="btn-primary text-sm" onClick={saveBankAccount}>Save Bank Account</button>
+            <button className="btn-secondary text-sm" onClick={() => { setShowBankForm(false); setEditingBankMethod(null) }}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (isAddMode) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6 space-y-4">
-        <p className="text-sm text-gray-500">Choose a payment method to add, or update the details below.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Choose a payment method to add, or update the details below.</p>
         <div className="grid sm:grid-cols-2 gap-3">
           <button
             className="btn-secondary text-sm"
@@ -224,12 +290,12 @@ const tabPanel = () => {
           </button>
         </div>
         <div>
-          <h4 className="text-sm font-semibold mb-2">M-Pesa details</h4>
+          <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">M-Pesa details</h4>
           <form onSubmit={saveMpesa} className="space-y-3">
             <div>
-              <label className="text-sm font-medium">Account name</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account name</label>
               <input
-                className="input mt-1 w-full"
+                className="input-field mt-1 w-full"
                 value={mpesaAccountName}
                 onChange={(e) => setMpesaAccountName(e.target.value)}
                 placeholder="Name on M-Pesa account"
@@ -237,15 +303,15 @@ const tabPanel = () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">M-Pesa phone number</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">M-Pesa phone number</label>
               <input
-                className="input mt-1 w-full"
+                className="input-field mt-1 w-full"
                 value={mpesaPhone}
                 onChange={(e) => setMpesaPhone(e.target.value)}
                 placeholder="0712345678"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">Safaricom or Airtel number registered on M-Pesa (07… or 01…).</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Safaricom or Airtel number registered on M-Pesa (07… or 01…).</p>
             </div>
             <button type="submit" className="btn-secondary text-sm" disabled={methodsLoading}>
               {methods.length ? 'Update M-Pesa details' : 'Save M-Pesa details'}
@@ -259,7 +325,7 @@ const tabPanel = () => {
   if (!activeMethod) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6">
-        <p className="text-sm text-gray-500">No payment method details found.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No payment method details found.</p>
       </div>
     )
   }
@@ -269,12 +335,12 @@ const tabPanel = () => {
   if (!activeMethod.isDefault && !isMpesa && editingBankMethod?.id === activeMethod.id && showBankForm) {
     return (
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-        <h4 className="font-semibold">Edit Bank Account</h4>
+        <h4 className="font-semibold text-gray-900 dark:text-white">Edit Bank Account</h4>
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium">Account Holder Name</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
             <input
-              className="input mt-1 w-full"
+              className="input-field mt-1 w-full"
               value={bankAccountName}
               onChange={(e) => setBankAccountName(e.target.value)}
               placeholder="Name on the bank account"
@@ -282,9 +348,9 @@ const tabPanel = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Bank Name</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
             <input
-              className="input mt-1 w-full"
+              className="input-field mt-1 w-full"
               value={bankName}
               onChange={(e) => setBankName(e.target.value)}
               placeholder="e.g. Equity Bank, KCB"
@@ -292,9 +358,9 @@ const tabPanel = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Account Number</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
             <input
-              className="input mt-1 w-full"
+              className="input-field mt-1 w-full"
               value={bankAccountNumber}
               onChange={(e) => setBankAccountNumber(e.target.value)}
               placeholder="Bank account number"
@@ -302,9 +368,9 @@ const tabPanel = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Routing Number / SWIFT / IFSC</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
             <input
-              className="input mt-1 w-full"
+              className="input-field mt-1 w-full"
               value={bankRoutingNumber}
               onChange={(e) => setBankRoutingNumber(e.target.value)}
               placeholder="Bank code or SWIFT/IFSC"
@@ -312,9 +378,9 @@ const tabPanel = () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Currency</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
             <select
-              className="input mt-1 w-full"
+              className="input-field mt-1 w-full"
               value={bankCurrency}
               onChange={(e) => setBankCurrency(e.target.value)}
             >
@@ -382,33 +448,33 @@ const tabPanel = () => {
     <div className="space-y-6">
       <div>
         <p className="micro-label mb-1">Earnings</p>
-        <h2 className="font-semibold text-lg">Withdraw Funds</h2>
-        <p className="text-sm text-gray-500 mt-1">Withdraw earnings from delivered orders. Minimum payout is {formatPrice(minimum)}.</p>
+        <h2 className="font-semibold text-lg text-gray-900 dark:text-white">Withdraw Funds</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Withdraw earnings from delivered orders. Minimum payout is {formatPrice(minimum)}.</p>
       </div>
 
       <div className="card p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <p className="text-sm text-gray-500 mb-1">Available balance</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Available balance</p>
             {balanceLoading ? (
-              <p className="text-gray-400">Loading…</p>
+              <p className="text-gray-400 dark:text-gray-300">Loading…</p>
             ) : (
-              <p className="text-3xl font-semibold tracking-tight">{formatPrice(available)}</p>
+              <p className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{formatPrice(available)}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Default method: <span className="font-medium text-brand-teal dark:text-brand-orange">{hasDefaultMethod ? defaultMethodLabel : 'None set'}</span>
             </p>
           </div>
 
           <div className="flex flex-col items-start sm:items-end gap-2">
             <div className="w-full sm:w-auto">
-              <label className="text-xs text-gray-500 mb-1 block">Amount to withdraw</label>
+              <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Amount to withdraw</label>
               <input
                 type="number"
                 min={minimum}
                 max={Math.max(available, 0)}
                 step="0.01"
-                className="input w-full sm:w-40 text-right"
+                className="input-field w-full sm:w-40 text-right"
                 placeholder={`${formatPrice(minimum)} min`}
               />
             </div>
@@ -424,13 +490,13 @@ const tabPanel = () => {
         </div>
 
         {!hasDefaultMethod && !methodsLoading && (
-          <p className="text-sm text-amber-600">Add a payout method below before withdrawing.</p>
+          <p className="text-sm text-amber-600 dark:text-amber-500">Add a payout method below before withdrawing.</p>
         )}
       </div>
 
       <div className="card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">Payment Methods</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white">Payment Methods</h3>
           <button
             className="btn-secondary text-sm"
             onClick={() => setActiveTab('add')}
@@ -441,7 +507,7 @@ const tabPanel = () => {
 
         {methods.length === 0 && !methodsLoading && !isAddMode && (
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6">
-            <p className="text-sm text-gray-500 mb-3">No payout methods configured.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">No payout methods configured.</p>
             <button className="btn-primary text-sm" onClick={() => setActiveTab('add')}>Add your first payment method</button>
           </div>
         )}
@@ -484,29 +550,29 @@ const tabPanel = () => {
       </div>
 
       <div className="card p-6">
-        <h3 className="font-semibold mb-4">Withdrawal history</h3>
+        <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Withdrawal history</h3>
         {payoutsLoading ? (
-          <p className="text-gray-400">Loading…</p>
+          <p className="text-gray-400 dark:text-gray-300">Loading…</p>
         ) : payouts.length === 0 ? (
-          <p className="text-sm text-gray-500">No withdrawals yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No withdrawals yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-gray-500 border-b border-gray-200 dark:border-gray-800">
-                  <th className="py-2 pr-4">Date</th>
-                  <th className="py-2 pr-4">Amount</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2">Reference</th>
+                <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-800">
+                  <th className="py-2 pr-4 text-gray-900 dark:text-white">Date</th>
+                  <th className="py-2 pr-4 text-gray-900 dark:text-white">Amount</th>
+                  <th className="py-2 pr-4 text-gray-900 dark:text-white">Status</th>
+                  <th className="py-2 text-gray-900 dark:text-white">Reference</th>
                 </tr>
               </thead>
               <tbody>
                 {payouts.map((payout) => (
                   <tr key={payout.id} className="border-b border-gray-100 dark:border-gray-900">
-                    <td className="py-3 pr-4">{new Date(payout.createdAt).toLocaleDateString()}</td>
-                    <td className="py-3 pr-4">{formatPrice(payout.amount)}</td>
-                    <td className="py-3 pr-4 capitalize">{payout.status}</td>
-                    <td className="py-3 text-gray-500">{payout.reference || '—'}</td>
+                    <td className="py-3 pr-4 text-gray-900 dark:text-white">{new Date(payout.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 pr-4 text-gray-900 dark:text-white">{formatPrice(payout.amount)}</td>
+                    <td className="py-3 pr-4 capitalize text-gray-900 dark:text-white">{payout.status}</td>
+                    <td className="py-3 text-gray-500 dark:text-gray-400">{payout.reference || '—'}</td>
                   </tr>
                 ))}
               </tbody>
