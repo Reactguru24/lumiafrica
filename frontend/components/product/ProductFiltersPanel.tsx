@@ -30,7 +30,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
   return (
     <div className="space-y-3.5">
       <div>
-        <h3 className="font-medium text-sm mb-1">Sort By</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Sort By</h3>
         <FilterSelect
           value={filters.sort || 'newest'}
           allowEmpty={false}
@@ -50,7 +50,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       </div>
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Search</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Search</h3>
         <input
           type="search"
           placeholder="Search products..."
@@ -61,7 +61,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       </div>
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Category</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Category</h3>
         <FilterSelect
           value={filters.category || ''}
           emptyLabel="All Categories"
@@ -73,7 +73,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
 
       {subcategories.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm mb-1">Subcategory</h3>
+          <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Subcategory</h3>
           <FilterSelect
             value={filters.subcategory || ''}
             emptyLabel="All Subcategories"
@@ -85,7 +85,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       )}
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Gender</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Gender</h3>
         <FilterSelect
           value={filters.gender || ''}
           emptyLabel="All"
@@ -97,7 +97,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
 
       {brands.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm mb-1">Brand</h3>
+          <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Brand</h3>
           <FilterSelect
             value={filters.brand || ''}
             emptyLabel="All Brands"
@@ -110,7 +110,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
 
       {sizes.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm mb-1">Size</h3>
+          <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Size</h3>
           <FilterSelect
             value={filters.size || ''}
             emptyLabel="All Sizes"
@@ -123,7 +123,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
 
       {colors.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm mb-1">Color</h3>
+          <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Color</h3>
           <FilterSelect
             value={filters.color || ''}
             emptyLabel="All Colors"
@@ -136,7 +136,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
 
       {vendors && vendors.length > 0 && (
         <div>
-          <h3 className="font-medium text-sm mb-1">Vendor</h3>
+          <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Vendor</h3>
           <FilterSelect
             value={filters.vendorId || ''}
             emptyLabel="All Vendors"
@@ -148,7 +148,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       )}
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Price Range (KES)</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Price Range (KES)</h3>
         <div className="grid grid-cols-2 gap-2">
           <input
             type="number"
@@ -170,7 +170,7 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       </div>
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Min Rating</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Min Rating</h3>
         <FilterSelect
           value={filters.minRating != null ? String(filters.minRating) : ''}
           emptyLabel="Any"
@@ -185,33 +185,33 @@ export function ProductFiltersPanel({ filters, onChange, filterOptions, vendors,
       </div>
 
       <div>
-        <h3 className="font-medium text-sm mb-1">Special</h3>
+        <h3 className="font-medium text-sm mb-1 text-gray-900 dark:text-white">Special</h3>
         <div className="space-y-1.5">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={!!filters.featured} onChange={(e) => update({ featured: e.target.checked || undefined })} className="rounded" />
-            Featured
+            <input type="checkbox" checked={!!filters.featured} onChange={(e) => update({ featured: e.target.checked || undefined })} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-teal dark:text-brand-orange focus:ring-brand-teal dark:focus:ring-brand-orange" />
+            <span className="text-gray-700 dark:text-gray-300">Featured</span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={!!filters.trending} onChange={(e) => update({ trending: e.target.checked || undefined })} className="rounded" />
-            Trending
+            <input type="checkbox" checked={!!filters.trending} onChange={(e) => update({ trending: e.target.checked || undefined })} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-teal dark:text-brand-orange focus:ring-brand-teal dark:focus:ring-brand-orange" />
+            <span className="text-gray-700 dark:text-gray-300">Trending</span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={!!filters.bestseller} onChange={(e) => update({ bestseller: e.target.checked || undefined })} className="rounded" />
-            Bestsellers
+            <input type="checkbox" checked={!!filters.bestseller} onChange={(e) => update({ bestseller: e.target.checked || undefined })} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-teal dark:text-brand-orange focus:ring-brand-teal dark:focus:ring-brand-orange" />
+            <span className="text-gray-700 dark:text-gray-300">Bestsellers</span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={!!filters.newArrival} onChange={(e) => update({ newArrival: e.target.checked || undefined })} className="rounded" />
-            New Arrivals
+            <input type="checkbox" checked={!!filters.newArrival} onChange={(e) => update({ newArrival: e.target.checked || undefined })} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-teal dark:text-brand-orange focus:ring-brand-teal dark:focus:ring-brand-orange" />
+            <span className="text-gray-700 dark:text-gray-300">New Arrivals</span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" checked={!!filters.onSale} onChange={(e) => update({ onSale: e.target.checked || undefined })} className="rounded" />
-            On Sale
+            <input type="checkbox" checked={!!filters.onSale} onChange={(e) => update({ onSale: e.target.checked || undefined })} className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-brand-teal dark:text-brand-orange focus:ring-brand-teal dark:focus:ring-brand-orange" />
+            <span className="text-gray-700 dark:text-gray-300">On Sale</span>
           </label>
         </div>
       </div>
 
       {onClear && (
-        <button type="button" className="btn-ghost text-sm w-full md:hidden" onClick={onClear}>Clear All Filters</button>
+        <button type="button" className="btn-ghost text-sm w-full md:hidden rounded-xl py-2" onClick={onClear}>Clear All Filters</button>
       )}
     </div>
   )

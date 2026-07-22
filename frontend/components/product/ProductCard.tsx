@@ -38,7 +38,7 @@ export function ProductCard({ product, listView = false, compact = false }: Prod
   }
 
   return (
-    <div className={`group relative ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 card p-3 sm:p-4' : ''}`}>
+    <div className={`product-card group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4' : ''}`}>
       <Link href={`/products/${product.id}`} className={`block overflow-hidden ${listView ? 'w-full sm:w-32 shrink-0' : ''}`}>
         <div className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${compact ? 'aspect-[4/5]' : 'aspect-[3/4]'}`}>
           <MediaImage
@@ -47,30 +47,32 @@ export function ProductCard({ product, listView = false, compact = false }: Prod
             fill
             loading="lazy"
             transform={{ width: 600, aspect: '3:4' }}
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes="(max-width: 768px) 50vw, 25vw"
           />
           {product.discount > 0 && (
-            <span className={`absolute top-1.5 left-1.5 bg-red-600 text-white font-medium ${compact ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'}`}>
+            <span className={`absolute top-1.5 left-1.5 product-card-badge product-card-sale`}>
               -{product.discount}%
             </span>
           )}
           {product.newArrival && (
-            <span className={`absolute top-1.5 right-1.5 bg-gray-900 text-white ${compact ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'}`}>NEW</span>
+            <span className={`absolute top-1.5 right-1.5 product-card-badge product-card-new`}>
+              NEW
+            </span>
           )}
         </div>
       </Link>
 
       <div className={listView ? 'flex-1 flex flex-col justify-center min-w-0' : compact ? 'mt-1.5' : 'mt-3'}>
-        <p className={`text-gray-500 dark:text-gray-400 uppercase tracking-wider ${compact ? 'text-[10px]' : 'text-xs'}`}>{product.brand}</p>
+        <p className={`product-card-brand ${compact ? 'text-[10px]' : ''}`}>{product.brand}</p>
         <Link href={`/products/${product.id}`}>
-          <h3 className={`font-medium text-gray-900 dark:text-white group-hover:underline line-clamp-2 ${compact ? 'text-xs mt-0.5' : 'text-sm sm:text-base mt-1'}`}>{product.name}</h3>
+          <h3 className={`font-medium ${compact ? 'text-xs mt-0.5' : 'text-sm sm:text-base mt-1'} line-clamp-2 text-gray-900 dark:text-white`}>{product.name}</h3>
         </Link>
-        <div className="flex items-center gap-1 mt-0.5">
+        <div className="product-card-rating">
           <StarIcon className={compact ? 'w-3 h-3 text-yellow-400' : 'w-3.5 h-3.5 text-yellow-400'} />
           <span className={`text-gray-500 ${compact ? 'text-[10px]' : 'text-xs'}`}>{product.rating} ({product.reviewCount})</span>
         </div>
-        <div className={`flex items-center gap-2 ${compact ? 'mt-1' : 'mt-2'}`}>
+        <div className={`product-card-price ${compact ? 'mt-1' : 'mt-2'}`}>
           <span className={`font-semibold text-gray-900 dark:text-white ${compact ? 'text-xs' : ''}`}>{formatPrice(salePrice)}</span>
           {discount > 0 && (
             <span className={`text-gray-400 line-through ${compact ? 'text-[10px]' : 'text-sm'}`}>{formatPrice(price)}</span>
@@ -83,7 +85,7 @@ export function ProductCard({ product, listView = false, compact = false }: Prod
         className={`absolute top-1.5 right-1.5 bg-white/80 dark:bg-gray-900/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${inWishlist ? 'opacity-100' : ''} ${compact ? 'p-1.5' : 'p-2 top-2 right-2'}`}
         onClick={handleWishlist}
       >
-        {inWishlist ? <HeartSolid className={compact ? 'w-4 h-4 text-red-500' : 'w-5 h-5 text-red-500'} /> : <HeartIcon className={compact ? 'w-4 h-4' : 'w-5 h-5'} />}
+        {inWishlist ? <HeartSolid className={compact ? 'w-4 h-4 text-red-500' : 'w-5 h-5 text-red-500'} /> : <HeartIcon className={compact ? 'w-4 h-4 text-gray-700 dark:text-gray-300' : 'w-5 h-5 text-gray-700 dark:text-gray-300'} />}
       </button>
     </div>
   )

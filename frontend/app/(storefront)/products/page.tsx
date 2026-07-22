@@ -13,6 +13,7 @@ import { ProductFiltersPanel } from '@/components/product/ProductFiltersPanel'
 import { ActiveFilterChips } from '@/components/product/ActiveFilterChips'
 import { Pagination } from '@/components/common/Pagination'
 import { MobileDrawer } from '@/components/common/MobileDrawer'
+import { ProductCardSkeleton } from '@/components/common/LoadingSkeleton'
 import { Squares2X2Icon, ListBulletIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 function productsHref(filters: ProductFilters, page: number): string {
@@ -102,7 +103,7 @@ function ProductsPageContent() {
     clearSingleFilter('vendorId')
   }
 
-  return (
+return (
     <div className="page-container">
       {filters.vendorId && (
         <div className="card p-4 mb-6 flex flex-col sm:flex-row sm:items-center gap-4 border-brand-teal/30 dark:border-brand-orange/30 bg-brand-teal/5 dark:bg-brand-orange/5">
@@ -118,7 +119,7 @@ function ProductsPageContent() {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Shopping this vendor</p>
-            <h2 className="font-semibold text-lg truncate">{activeVendor?.storeName || 'Vendor products'}</h2>
+            <h2 className="font-semibold text-lg truncate text-gray-900 dark:text-white">{activeVendor?.storeName || 'Vendor products'}</h2>
             {activeVendor?.description && (
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{activeVendor.description}</p>
             )}
@@ -130,7 +131,7 @@ function ProductsPageContent() {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="min-w-0">
-          <h1 className="section-title truncate">{pageTitle}</h1>
+          <h1 className="section-title truncate text-brand-teal dark:text-white">{pageTitle}</h1>
           <p className="text-gray-500 text-sm mt-1">
             {loading && !products.length
               ? 'Loading products...'
@@ -138,12 +139,13 @@ function ProductsPageContent() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button type="button" className="md:hidden relative inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium" onClick={() => setShowFilters(true)}>
-            <FunnelIcon className="w-4 h-4" />Filters
+          <button type="button" className="md:hidden relative inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" onClick={() => setShowFilters(true)}>
+            <FunnelIcon className="w-4 h-4" />
             {activeFilterCount > 0 && <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-brand-orange text-white text-[10px] rounded-full flex items-center justify-center">{activeFilterCount}</span>}
+            Filters
           </button>
-          <button type="button" className={`p-2 border border-gray-300 dark:border-gray-700 ${!listView ? 'bg-brand-teal text-white dark:bg-brand-orange' : ''}`} onClick={() => setListView(false)}><Squares2X2Icon className="w-5 h-5" /></button>
-          <button type="button" className={`p-2 border border-gray-300 dark:border-gray-700 ${listView ? 'bg-brand-teal text-white dark:bg-brand-orange' : ''}`} onClick={() => setListView(true)}><ListBulletIcon className="w-5 h-5" /></button>
+          <button type="button" className={`p-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-xl transition-all duration-200 ${!listView ? 'bg-brand-teal text-white dark:bg-brand-orange' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`} onClick={() => setListView(false)}><Squares2X2Icon className="w-5 h-5" /></button>
+          <button type="button" className={`p-2 border border-gray-300 dark:border-gray-700 text-sm font-medium rounded-xl transition-all duration-200 ${listView ? 'bg-brand-teal text-white dark:bg-brand-orange' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`} onClick={() => setListView(true)}><ListBulletIcon className="w-5 h-5" /></button>
         </div>
       </div>
       <ActiveFilterChips
@@ -154,26 +156,26 @@ function ProductsPageContent() {
       />
       <div className="flex flex-col md:flex-row gap-6 md:gap-8">
         <aside className="hidden md:block w-64 lg:w-72 shrink-0">
-          <div className="sticky top-24 space-y-6 card p-4">
+          <div className="sticky top-24 space-y-6 card p-4 rounded-xl">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-sm">Filters</h2>
-              <button type="button" className="text-xs text-gray-500 hover:underline" onClick={clearFilters}>Clear</button>
+              <h2 className="font-semibold text-sm text-gray-900 dark:text-white">Filters</h2>
+              <button type="button" className="text-xs text-gray-500 hover:text-brand-teal dark:hover:text-brand-orange font-medium transition-colors rounded-full px-1.5 py-0.5" onClick={clearFilters}>Clear</button>
             </div>
             <ProductFiltersPanel filters={filters} onChange={updateFilters} filterOptions={filterOptions} vendors={vendors} onClear={clearFilters} />
           </div>
         </aside>
         <div className="flex-1 min-w-0">
           {loading && !products.length ? (
-            <div className="text-center py-8 text-gray-500">Loading products...</div>
+            <ProductCardSkeleton count={12} />
           ) : error ? (
             <div className="text-center py-16 text-red-600 dark:text-red-400 px-4">
               {getFriendlyErrorMessage(error, 'Unable to load products. Please try again.')}
             </div>
           ) : products.length ? (
             <div className={`relative ${isRefetching ? 'opacity-70 pointer-events-none' : ''}`}>
-            <div className={listView ? 'space-y-4' : 'grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6'}>
-              {products.map((p: any) => <ProductCard key={p.id} product={p} listView={listView} />)}
-            </div>
+              <div className={listView ? 'space-y-4' : 'grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6'}>
+                {products.map((p: any) => <ProductCard key={p.id} product={p} listView={listView} />)}
+              </div>
             </div>
           ) : (
             <div className="text-center py-16 text-gray-500 px-4">No products match your filters. Try adjusting your search or clearing some filters.</div>
