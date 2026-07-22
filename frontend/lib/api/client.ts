@@ -486,6 +486,32 @@ export const vendorAPI = {
     return post('/vendor/payouts/methods', data)
   },
 
+  createBankTransferPayoutMethod(data: {
+    accountName: string
+    bankAccountNumber: string
+    bankRoutingNumber: string
+    bankName?: string
+    bankCurrency?: string
+    isDefault?: boolean
+  }) {
+    return post('/vendor/payouts/methods/bank', data)
+  },
+
+  updateBankTransferPayoutMethod(methodId: string, data: {
+    accountName: string
+    bankAccountNumber: string
+    bankRoutingNumber: string
+    bankName?: string
+    bankCurrency?: string
+    isDefault?: boolean
+  }) {
+    return put(`/vendor/payouts/methods/bank/${methodId}`, data)
+  },
+
+  deletePayoutMethod(methodId: string) {
+    return del(`/vendor/payouts/methods/${methodId}`)
+  },
+
   listPayouts(params?: { page?: number; limit?: number }) {
     return get(`/vendor/payouts${buildQuery(params)}`)
   },

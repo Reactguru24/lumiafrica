@@ -1434,15 +1434,18 @@ type VendorPayoutItem struct {
 }
 
 type VendorPayoutMethod struct {
-	ID          types.BinaryUUID        `json:"id"`
-	VendorID    types.BinaryUUID        `json:"vendor_id"`
-	Type        VendorPayoutMethodsType `json:"type"`
-	AccountName string                  `json:"account_name"`
-	AccountRef  string                  `json:"account_ref"`
-	BankName    sql.NullString          `json:"bank_name"`
-	IsDefault   int16                   `json:"is_default"`
-	CreatedAt   time.Time               `json:"created_at"`
-	UpdatedAt   time.Time               `json:"updated_at"`
+	ID                   types.BinaryUUID        `json:"id"`
+	VendorID             types.BinaryUUID        `json:"vendor_id"`
+	Type                 VendorPayoutMethodsType `json:"type"`
+	AccountName          string                  `json:"account_name"`
+	AccountRef           string                  `json:"account_ref"`
+	BankName             sql.NullString          `json:"bank_name"`
+	BankAccountNumber    sql.NullString          `json:"bank_account_number"`
+	BankRoutingNumber    sql.NullString          `json:"bank_routing_number"`
+	BankCurrency         sql.NullString          `json:"bank_currency"`
+	IsDefault            int16                   `json:"is_default"`
+	CreatedAt            time.Time               `json:"created_at"`
+	UpdatedAt            time.Time               `json:"updated_at"`
 }
 
 type VendorShippingRate struct {

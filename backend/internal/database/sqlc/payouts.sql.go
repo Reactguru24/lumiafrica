@@ -114,7 +114,7 @@ func (q *Queries) CreateVendorPayoutMethod(ctx context.Context, arg CreateVendor
 }
 
 const getDefaultVendorMpesaMethod = `-- name: GetDefaultVendorMpesaMethod :one
-SELECT id, vendor_id, type, account_name, account_ref, bank_name, is_default, created_at, updated_at FROM vendor_payout_methods
+SELECT id, vendor_id, type, account_name, account_ref, bank_name, bank_account_number, bank_routing_number, bank_currency, is_default, created_at, updated_at FROM vendor_payout_methods
 WHERE vendor_id = ? AND type = 'mpesa' AND is_default = 1
 LIMIT 1
 `
@@ -129,6 +129,9 @@ func (q *Queries) GetDefaultVendorMpesaMethod(ctx context.Context, vendorID type
 		&i.AccountName,
 		&i.AccountRef,
 		&i.BankName,
+		&i.BankAccountNumber,
+		&i.BankRoutingNumber,
+		&i.BankCurrency,
 		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -155,7 +158,7 @@ func (q *Queries) GetVendorAvailableBalance(ctx context.Context, vendorID types.
 }
 
 const getVendorPayoutMethodByID = `-- name: GetVendorPayoutMethodByID :one
-SELECT id, vendor_id, type, account_name, account_ref, bank_name, is_default, created_at, updated_at FROM vendor_payout_methods
+SELECT id, vendor_id, type, account_name, account_ref, bank_name, bank_account_number, bank_routing_number, bank_currency, is_default, created_at, updated_at FROM vendor_payout_methods
 WHERE id = ? AND vendor_id = ?
 LIMIT 1
 `
@@ -175,6 +178,9 @@ func (q *Queries) GetVendorPayoutMethodByID(ctx context.Context, arg GetVendorPa
 		&i.AccountName,
 		&i.AccountRef,
 		&i.BankName,
+		&i.BankAccountNumber,
+		&i.BankRoutingNumber,
+		&i.BankCurrency,
 		&i.IsDefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -218,7 +224,7 @@ func (q *Queries) ListPayableOrderItems(ctx context.Context, vendorID types.Bina
 }
 
 const listVendorPayoutMethods = `-- name: ListVendorPayoutMethods :many
-SELECT id, vendor_id, type, account_name, account_ref, bank_name, is_default, created_at, updated_at FROM vendor_payout_methods
+SELECT id, vendor_id, type, account_name, account_ref, bank_name, bank_account_number, bank_routing_number, bank_currency, is_default, created_at, updated_at FROM vendor_payout_methods
 WHERE vendor_id = ?
 ORDER BY is_default DESC, created_at ASC
 `
@@ -239,6 +245,9 @@ func (q *Queries) ListVendorPayoutMethods(ctx context.Context, vendorID types.Bi
 			&i.AccountName,
 			&i.AccountRef,
 			&i.BankName,
+			&i.BankAccountNumber,
+			&i.BankRoutingNumber,
+			&i.BankCurrency,
 			&i.IsDefault,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -336,4 +345,136 @@ type UpdateVendorPayoutMethodRecipientParams struct {
 func (q *Queries) UpdateVendorPayoutMethodRecipient(ctx context.Context, arg UpdateVendorPayoutMethodRecipientParams) error {
 	_, err := q.db.ExecContext(ctx, updateVendorPayoutMethodRecipient, arg.BankName, arg.ID, arg.VendorID)
 	return err
+}
+
+const getDefaultVendorBankTransferMethod = `-- name: GetDefaultVendorBankTransferMethod :one
+SELECT id, vendor_id, type, account_name, account_ref, bank_name, bank_account_number, bank_routing_number, bank_currency, is_default, created_at, updated_at FROM vendor_payout_methods
+WHERE vendor_id = ? AND type = 'bank_transfer' AND is_default = 1
+LIMIT 1
+`
+
+func (q *Queries) GetDefaultVendorBankTransferMethod(ctx context.Context, vendorID types.BinaryUUID) (VendorPayoutMethod, error) {
+	row := q.db.QueryRowContext(ctx, getDefaultVendorBankTransferMethod, vendorID)
+	var i VendorPayoutMethod
+	err := row.Scan(
+		&i.ID,
+		&i.VendorID,
+		&i.Type,
+		&i.AccountName,
+		&i.AccountRef,
+		&i.BankName,
+		&i.BankAccountNumber,
+		&i.BankRoutingNumber,
+		&i.BankCurrency,
+		&i.IsDefault,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createVendorBankTransferMethod = `-- name: CreateVendorBankTransferMethod :exec
+INSERT INTO vendor_payout_methods (
+  id, vendor_id, type, account_name, account_ref, bank_account_number, bank_routing_number, bank_currency, is_default
+) VALUES (?, ?, 'bank_transfer', ?, ?, ?, ?, ?, ?)
+`
+
+type CreateVendorBankTransferMethodParams struct {
+	ID                  types.BinaryUUID `json:"id"`
+	VendorID            types.BinaryUUID `json:"vendor_id"`
+	AccountName         string           `json:"account_name"`
+	AccountRef          string           `json:"account_ref"`
+	BankAccountNumber   string           `json:"bank_account_number"`
+	BankRoutingNumber   string           `json:"bank_routing_number"`
+	BankCurrency        string           `json:"bank_currency"`
+	IsDefault           int16            `json:"is_default"`
+}
+
+func (q *Queries) CreateVendorBankTransferMethod(ctx context.Context, arg CreateVendorBankTransferMethodParams) error {
+	_, err := q.db.ExecContext(ctx, createVendorBankTransferMethod,
+		arg.ID,
+		arg.VendorID,
+		arg.AccountName,
+		arg.AccountRef,
+		arg.BankAccountNumber,
+		arg.BankRoutingNumber,
+		arg.BankCurrency,
+		arg.IsDefault,
+	)
+	return err
+}
+
+const updateVendorBankTransferMethod = `-- name: UpdateVendorBankTransferMethod :exec
+UPDATE vendor_payout_methods
+SET account_name = ?, bank_account_number = ?, bank_routing_number = ?, bank_currency = ?, is_default = ?
+WHERE id = ? AND vendor_id = ?
+`
+
+type UpdateVendorBankTransferMethodParams struct {
+	AccountName       string           `json:"account_name"`
+	BankAccountNumber string           `json:"bank_account_number"`
+	BankRoutingNumber string           `json:"bank_routing_number"`
+	BankCurrency      string           `json:"bank_currency"`
+	IsDefault         int16            `json:"is_default"`
+	ID                types.BinaryUUID `json:"id"`
+	VendorID          types.BinaryUUID `json:"vendor_id"`
+}
+
+func (q *Queries) UpdateVendorBankTransferMethod(ctx context.Context, arg UpdateVendorBankTransferMethodParams) error {
+	_, err := q.db.ExecContext(ctx, updateVendorBankTransferMethod,
+		arg.AccountName,
+		arg.BankAccountNumber,
+		arg.BankRoutingNumber,
+		arg.BankCurrency,
+		arg.IsDefault,
+		arg.ID,
+		arg.VendorID,
+	)
+	return err
+}
+
+const deleteVendorPayoutMethod = `-- name: DeleteVendorPayoutMethod :exec
+DELETE FROM vendor_payout_methods WHERE id = ? AND vendor_id = ?
+`
+
+func (q *Queries) DeleteVendorPayoutMethod(ctx context.Context, id types.BinaryUUID, vendorID types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, deleteVendorPayoutMethod, id, vendorID)
+	return err
+}
+
+const countVendorPayoutMethods = `-- name: CountVendorPayoutMethods :one
+SELECT COUNT(*) FROM vendor_payout_methods WHERE vendor_id = ?
+`
+
+func (q *Queries) CountVendorPayoutMethods(ctx context.Context, vendorID types.BinaryUUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countVendorPayoutMethods, vendorID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getDefaultVendorPayoutMethod = `-- name: GetDefaultVendorPayoutMethod :one
+SELECT id, vendor_id, type, account_name, account_ref, bank_name, bank_account_number, bank_routing_number, bank_currency, is_default, created_at, updated_at FROM vendor_payout_methods
+WHERE vendor_id = ? AND is_default = 1
+LIMIT 1
+`
+
+func (q *Queries) GetDefaultVendorPayoutMethod(ctx context.Context, vendorID types.BinaryUUID) (VendorPayoutMethod, error) {
+	row := q.db.QueryRowContext(ctx, getDefaultVendorPayoutMethod, vendorID)
+	var i VendorPayoutMethod
+	err := row.Scan(
+		&i.ID,
+		&i.VendorID,
+		&i.Type,
+		&i.AccountName,
+		&i.AccountRef,
+		&i.BankName,
+		&i.BankAccountNumber,
+		&i.BankRoutingNumber,
+		&i.BankCurrency,
+		&i.IsDefault,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
