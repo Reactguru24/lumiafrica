@@ -175,273 +175,273 @@ export default function VendorWithdrawalsPage() {
     }
   }
 
-function startEditBank(method: PayoutMethod) {
-  setEditingBankMethod(method)
-  setBankAccountName(method.accountName)
-  setBankAccountNumber(method.bankAccountNumber || '')
-  setBankRoutingNumber(method.bankRoutingNumber || '')
-  setBankName(method.bankName || '')
-  setBankCurrency(method.bankCurrency || 'KES')
-  setShowBankForm(true)
-}
-
-const tabs = [
-  ...mpesaMethods.map((m) => ({ id: m.id, label: 'M-Pesa' })),
-  ...bankMethods.map((m) => ({ id: m.id, label: m.bankName || 'Bank Account' })),
-  { id: 'add', label: '+ Add Payment Method' },
-]
-
-const tabPanel = () => {
-  if (isAddMode && showBankForm) {
-    return (
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-        <h4 className="font-semibold text-gray-900 dark:text-white">Add Bank Account</h4>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankAccountName}
-              onChange={(e) => setBankAccountName(e.target.value)}
-              placeholder="Name on the bank account"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. Equity Bank, KCB"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankAccountNumber}
-              onChange={(e) => setBankAccountNumber(e.target.value)}
-              placeholder="Bank account number"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankRoutingNumber}
-              onChange={(e) => setBankRoutingNumber(e.target.value)}
-              placeholder="Bank code or SWIFT/IFSC"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
-            <select
-              className="input-field mt-1 w-full"
-              value={bankCurrency}
-              onChange={(e) => setBankCurrency(e.target.value)}
-            >
-              <option value="KES">KES - Kenyan Shilling</option>
-              <option value="USD">USD - US Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button className="btn-primary text-sm" onClick={saveBankAccount}>Save Bank Account</button>
-            <button className="btn-secondary text-sm" onClick={() => { setShowBankForm(false); setEditingBankMethod(null) }}>Cancel</button>
-          </div>
-        </div>
-      </div>
-    )
+  function startEditBank(method: PayoutMethod) {
+    setEditingBankMethod(method)
+    setBankAccountName(method.accountName)
+    setBankAccountNumber(method.bankAccountNumber || '')
+    setBankRoutingNumber(method.bankRoutingNumber || '')
+    setBankName(method.bankName || '')
+    setBankCurrency(method.bankCurrency || 'KES')
+    setShowBankForm(true)
   }
 
-  if (isAddMode) {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6 space-y-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Choose a payment method to add, or update the details below.</p>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <button
-            className="btn-secondary text-sm"
-            onClick={() => {
-              setEditingBankMethod(null)
-              setShowBankForm(false)
-              setActiveTab(primaryMpesa?.id || 'add')
-            }}
-          >
-            {primaryMpesa ? 'Update M-Pesa' : 'Add M-Pesa'}
-          </button>
-          <button
-            className="btn-secondary text-sm"
-            onClick={() => {
-              setEditingBankMethod(null)
-              setBankAccountName('')
-              setBankAccountNumber('')
-              setBankRoutingNumber('')
-              setBankName('')
-              setBankCurrency('KES')
-              setShowBankForm(true)
-              if (primaryBank) setActiveTab(primaryBank.id)
-            }}
-          >
-            {primaryBank ? 'Update Bank Account' : 'Add Bank Account'}
-          </button>
+  const tabs = [
+    ...mpesaMethods.map((m) => ({ id: m.id, label: 'M-Pesa' })),
+    ...bankMethods.map((m) => ({ id: m.id, label: m.bankName || 'Bank Account' })),
+    { id: 'add', label: '+ Add Payment Method' },
+  ]
+
+  const tabPanel = () => {
+    if (isAddMode && showBankForm) {
+      return (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+          <h4 className="font-semibold text-gray-900 dark:text-white">Add Bank Account</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankAccountName}
+                onChange={(e) => setBankAccountName(e.target.value)}
+                placeholder="Name on the bank account"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g. Equity Bank, KCB"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankAccountNumber}
+                onChange={(e) => setBankAccountNumber(e.target.value)}
+                placeholder="Bank account number"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankRoutingNumber}
+                onChange={(e) => setBankRoutingNumber(e.target.value)}
+                placeholder="Bank code or SWIFT/IFSC"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+              <select
+                className="input-field mt-1 w-full"
+                value={bankCurrency}
+                onChange={(e) => setBankCurrency(e.target.value)}
+              >
+                <option value="KES">KES - Kenyan Shilling</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button className="btn-primary text-sm" onClick={saveBankAccount}>Save Bank Account</button>
+              <button className="btn-secondary text-sm" onClick={() => { setShowBankForm(false); setEditingBankMethod(null) }}>Cancel</button>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">M-Pesa details</h4>
-          <form onSubmit={saveMpesa} className="space-y-3">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account name</label>
-              <input
-                className="input-field mt-1 w-full"
-                value={mpesaAccountName}
-                onChange={(e) => setMpesaAccountName(e.target.value)}
-                placeholder="Name on M-Pesa account"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">M-Pesa phone number</label>
-              <input
-                className="input-field mt-1 w-full"
-                value={mpesaPhone}
-                onChange={(e) => setMpesaPhone(e.target.value)}
-                placeholder="0712345678"
-                required
-              />
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Safaricom or Airtel number registered on M-Pesa (07… or 01…).</p>
-            </div>
-            <button type="submit" className="btn-secondary text-sm" disabled={methodsLoading}>
-              {methods.length ? 'Update M-Pesa details' : 'Save M-Pesa details'}
+      )
+    }
+  
+    if (isAddMode) {
+      return (
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6 space-y-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">Choose a payment method to add, or update the details below.</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <button
+              className="btn-secondary text-sm"
+              onClick={() => {
+                setEditingBankMethod(null)
+                setShowBankForm(false)
+                setActiveTab(primaryMpesa?.id || 'add')
+              }}
+            >
+              {primaryMpesa ? 'Update M-Pesa' : 'Add M-Pesa'}
             </button>
-          </form>
+            <button
+              className="btn-secondary text-sm"
+              onClick={() => {
+                setEditingBankMethod(null)
+                setBankAccountName('')
+                setBankAccountNumber('')
+                setBankRoutingNumber('')
+                setBankName('')
+                setBankCurrency('KES')
+                setShowBankForm(true)
+                if (primaryBank) setActiveTab(primaryBank.id)
+              }}
+            >
+              {primaryBank ? 'Update Bank Account' : 'Add Bank Account'}
+            </button>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-white">M-Pesa details</h4>
+            <form onSubmit={saveMpesa} className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account name</label>
+                <input
+                  className="input-field mt-1 w-full"
+                  value={mpesaAccountName}
+                  onChange={(e) => setMpesaAccountName(e.target.value)}
+                  placeholder="Name on M-Pesa account"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">M-Pesa phone number</label>
+                <input
+                  className="input-field mt-1 w-full"
+                  value={mpesaPhone}
+                  onChange={(e) => setMpesaPhone(e.target.value)}
+                  placeholder="0712345678"
+                  required
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Safaricom or Airtel number registered on M-Pesa (07… or 01…).</p>
+              </div>
+              <button type="submit" className="btn-secondary text-sm" disabled={methodsLoading}>
+                {methods.length ? 'Update M-Pesa details' : 'Save M-Pesa details'}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-    )
-  }
-
-  if (!activeMethod) {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6">
-        <p className="text-sm text-gray-500 dark:text-gray-400">No payment method details found.</p>
-      </div>
-    )
-  }
-
-  const isMpesa = activeMethod.type === 'mpesa'
-
-  if (!activeMethod.isDefault && !isMpesa && editingBankMethod?.id === activeMethod.id && showBankForm) {
+      )
+    }
+  
+    if (!activeMethod) {
+      return (
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No payment method details found.</p>
+        </div>
+      )
+    }
+  
+    const isMpesa = activeMethod.type === 'mpesa'
+  
+    if (!activeMethod.isDefault && !isMpesa && editingBankMethod?.id === activeMethod.id && showBankForm) {
+      return (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
+          <h4 className="font-semibold text-gray-900 dark:text-white">Edit Bank Account</h4>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankAccountName}
+                onChange={(e) => setBankAccountName(e.target.value)}
+                placeholder="Name on the bank account"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="e.g. Equity Bank, KCB"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankAccountNumber}
+                onChange={(e) => setBankAccountNumber(e.target.value)}
+                placeholder="Bank account number"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
+              <input
+                className="input-field mt-1 w-full"
+                value={bankRoutingNumber}
+                onChange={(e) => setBankRoutingNumber(e.target.value)}
+                placeholder="Bank code or SWIFT/IFSC"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+              <select
+                className="input-field mt-1 w-full"
+                value={bankCurrency}
+                onChange={(e) => setBankCurrency(e.target.value)}
+              >
+                <option value="KES">KES - Kenyan Shilling</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button className="btn-primary text-sm" onClick={saveBankAccount}>Save changes</button>
+              <button className="btn-secondary text-sm" onClick={() => { setShowBankForm(false); setEditingBankMethod(null) }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  
     return (
       <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-        <h4 className="font-semibold text-gray-900 dark:text-white">Edit Bank Account</h4>
-        <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Holder Name</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankAccountName}
-              onChange={(e) => setBankAccountName(e.target.value)}
-              placeholder="Name on the bank account"
-              required
-            />
+            <span className="badge badge-featured mb-2">{isMpesa ? 'M-Pesa' : 'Bank Transfer'}</span>
+            <h4 className="font-semibold mt-1">{activeMethod.accountName}</h4>
+            <p className="text-sm text-gray-500 mt-1">
+              {isMpesa ? (activeMethod.phone ? `••••${activeMethod.phone.slice(-4)}` : 'No phone added') : `${activeMethod.bankName || 'Bank'} • ${activeMethod.bankAccountNumber ? '••••' + activeMethod.bankAccountNumber.slice(-4) : 'No account number'} ${activeMethod.bankCurrency ? `(${activeMethod.bankCurrency})` : ''}`}
+            </p>
           </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bank Name</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder="e.g. Equity Bank, KCB"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Number</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankAccountNumber}
-              onChange={(e) => setBankAccountNumber(e.target.value)}
-              placeholder="Bank account number"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Routing Number / SWIFT / IFSC</label>
-            <input
-              className="input-field mt-1 w-full"
-              value={bankRoutingNumber}
-              onChange={(e) => setBankRoutingNumber(e.target.value)}
-              placeholder="Bank code or SWIFT/IFSC"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
-            <select
-              className="input-field mt-1 w-full"
-              value={bankCurrency}
-              onChange={(e) => setBankCurrency(e.target.value)}
+          {activeMethod.isDefault && (
+            <span className="badge bg-brand-teal/10 text-brand-teal dark:bg-brand-orange/10 dark:text-brand-orange">Default</span>
+          )}
+        </div>
+  
+        <div className="flex flex-wrap items-center gap-2">
+          {!activeMethod.isDefault && (
+            <button
+              className="btn-secondary text-sm"
+              onClick={async () => {
+                await refetchMethods()
+              }}
             >
-              <option value="KES">KES - Kenyan Shilling</option>
-              <option value="USD">USD - US Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button className="btn-primary text-sm" onClick={saveBankAccount}>Save changes</button>
-            <button className="btn-secondary text-sm" onClick={() => { setShowBankForm(false); setEditingBankMethod(null) }}>Cancel</button>
-          </div>
+              Set as default
+            </button>
+          )}
+          <button
+            className="text-sm text-red-500 hover:text-red-600 dark:text-red-400"
+            onClick={() => removeMethod(activeMethod.id)}
+            disabled={deletingMethod === activeMethod.id}
+          >
+            {deletingMethod === activeMethod.id ? 'Removing…' : 'Remove'}
+          </button>
+          {!isMpesa && (
+            <button
+              className="btn-ghost text-sm"
+              onClick={() => startEditBank(activeMethod)}
+            >
+              Edit
+            </button>
+          )}
         </div>
       </div>
     )
-  }
-
-  return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="badge badge-featured mb-2">{isMpesa ? 'M-Pesa' : 'Bank Transfer'}</span>
-          <h4 className="font-semibold mt-1">{activeMethod.accountName}</h4>
-          <p className="text-sm text-gray-500 mt-1">
-            {isMpesa ? (activeMethod.phone ? `••••${activeMethod.phone.slice(-4)}` : 'No phone added') : `${activeMethod.bankName || 'Bank'} • ${activeMethod.bankAccountNumber ? '••••' + activeMethod.bankAccountNumber.slice(-4) : 'No account number'} ${activeMethod.bankCurrency ? `(${activeMethod.bankCurrency})` : ''}`}
-          </p>
-        </div>
-        {activeMethod.isDefault && (
-          <span className="badge bg-brand-teal/10 text-brand-teal dark:bg-brand-orange/10 dark:text-brand-orange">Default</span>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {!activeMethod.isDefault && (
-          <button
-            className="btn-secondary text-sm"
-            onClick={async () => {
-              await refetchMethods()
-            }}
-          >
-            Set as default
-          </button>
-        )}
-        <button
-          className="text-sm text-red-500 hover:text-red-600 dark:text-red-400"
-          onClick={() => removeMethod(activeMethod.id)}
-          disabled={deletingMethod === activeMethod.id}
-        >
-          {deletingMethod === activeMethod.id ? 'Removing…' : 'Remove'}
-        </button>
-        {!isMpesa && (
-          <button
-            className="btn-ghost text-sm"
-            onClick={() => startEditBank(activeMethod)}
-          >
-            Edit
-          </button>
-        )}
-      </div>
-    </div>
-  )
 }
 
   return (
