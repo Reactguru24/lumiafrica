@@ -536,6 +536,48 @@ export function useCreateMpesaPayoutMethod() {
   )
 }
 
+export function useCreateBankTransferPayoutMethod() {
+  return useMutation(
+    'create-bank-transfer-payout-method',
+    (data: {
+      accountName: string
+      bankAccountNumber: string
+      bankRoutingNumber: string
+      bankName?: string
+      bankCurrency?: string
+      isDefault?: boolean
+    }) => vendorAPI.createBankTransferPayoutMethod(data),
+  )
+}
+
+export function useUpdateBankTransferPayoutMethod() {
+  return useMutation(
+    'update-bank-transfer-payout-method',
+    (data: {
+      methodId: string
+      accountName: string
+      bankAccountNumber: string
+      bankRoutingNumber: string
+      bankName?: string
+      bankCurrency?: string
+      isDefault?: boolean
+    }) => vendorAPI.updateBankTransferPayoutMethod(data.methodId, {
+      accountName: data.accountName,
+      bankAccountNumber: data.bankAccountNumber,
+      bankRoutingNumber: data.bankRoutingNumber,
+      bankName: data.bankName,
+      bankCurrency: data.bankCurrency,
+      isDefault: data.isDefault,
+    }),
+  )
+}
+
+export function useDeletePayoutMethod() {
+  return useMutation('delete-payout-method', (methodId: string) =>
+    vendorAPI.deletePayoutMethod(methodId),
+  )
+}
+
 export function useRequestVendorWithdrawal() {
   return useMutation(
     'request-vendor-withdrawal',

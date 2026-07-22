@@ -122,6 +122,9 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 		vendor.GET("/payouts/balance", handlers.GetVendorPayoutBalance())
 		vendor.GET("/payouts/methods", handlers.ListVendorPayoutMethods())
 		vendor.POST("/payouts/methods", handlers.CreateVendorMpesaMethod())
+		vendor.POST("/payouts/methods/bank", handlers.CreateVendorBankTransferMethod())
+		vendor.PUT("/payouts/methods/bank/:methodId", handlers.UpdateVendorBankTransferMethod())
+		vendor.DELETE("/payouts/methods/:methodId", handlers.DeleteVendorPayoutMethod())
 		vendor.GET("/payouts", handlers.ListVendorPayoutHistory())
 		vendor.POST("/payouts/withdraw", handlers.RequestVendorWithdrawal(cfg))
 	}

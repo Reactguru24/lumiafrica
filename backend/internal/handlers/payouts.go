@@ -39,13 +39,29 @@ func maskPhone(phone string) string {
 }
 
 func toPayoutMethodResponse(row sqlc.VendorPayoutMethod) models.VendorPayoutMethodResponse {
-	return models.VendorPayoutMethodResponse{
+	resp := models.VendorPayoutMethodResponse{
 		ID:          row.ID.String(),
 		Type:        string(row.Type),
 		AccountName: row.AccountName,
-		Phone:       maskPhone(row.AccountRef),
 		IsDefault:   row.IsDefault != 0,
 	}
+	if row.Type == sqlc.VendorPayoutMethodsTypeMpesa {
+		resp.Phone = maskPhone(row.AccountRef)
+	} else if row.Type == sqlc.VendorPayoutMethodsTypeBankTransfer {
+		if row.BankName.Valid {
+			resp.BankName = row.BankName.String
+		}
+		if row.BankAccountNumber.Valid {
+			resp.BankAccountNumber = row.BankAccountNumber.String
+		}
+		if row.BankRoutingNumber.Valid {
+			resp.BankRoutingNumber = row.BankRoutingNumber.String
+		}
+		if row.BankCurrency.Valid {
+			resp.BankCurrency = row.BankCurrency.String
+		}
+	}
+	return resp
 }
 
 func toPayoutResponse(row sqlc.VendorPayout) models.VendorPayoutResponse {
@@ -218,6 +234,203 @@ func CreateVendorMpesaMethod() gin.HandlerFunc {
 	}
 }
 
+// CreateVendorBankTransferMethod godoc
+// @Summary Add Bank Transfer payout method
+// @Tags Vendor
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param body body models.CreateBankTransferPayoutMethodRequest true "Bank account details"
+// @Success 201 {object} models.VendorPayoutMethodResponse
+// @Router /vendor/payouts/methods/bank [post]
+func CreateVendorBankTransferMethod() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		vendorIDStr, ok := getVendorID(c)
+		if !ok {
+			return
+		}
+		var req models.CreateBankTransferPayoutMethodRequest
+		if !bindJSON(c, &req) {
+			return
+		}
+		req.AccountName = strings.TrimSpace(req.AccountName)
+		if req.AccountName == "" {
+			utils.Error(c, http.StatusBadRequest, "Account holder name is required")
+			return
+		}
+		if req.BankAccountNumber == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank account number is required")
+			return
+		}
+		if req.BankRoutingNumber == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank routing number (SWIFT/IFSC) is required")
+			return
+		}
+		if req.BankName == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank name is required")
+			return
+		}
+		if req.BankCurrency == "" {
+			req.BankCurrency = "KES"
+		}
+
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		vendorID, _ := utils.ParseID(vendorIDStr)
+
+		if req.IsDefault {
+			_ = q.ClearVendorDefaultPayoutMethods(ctx, vendorID)
+		}
+		methodID := utils.GenerateBinaryID()
+		isDefault := int16(0)
+		if req.IsDefault {
+			isDefault = 1
+		} else {
+			methods, _ := q.ListVendorPayoutMethods(ctx, vendorID)
+			if len(methods) == 0 {
+				isDefault = 1
+			}
+		}
+		if err := q.CreateVendorBankTransferMethod(ctx, sqlc.CreateVendorBankTransferMethodParams{
+			ID:                methodID,
+			VendorID:          vendorID,
+			AccountName:       req.AccountName,
+			AccountRef:        "",
+			BankAccountNumber: req.BankAccountNumber,
+			BankRoutingNumber: req.BankRoutingNumber,
+			BankCurrency:      req.BankCurrency,
+			IsDefault:         isDefault,
+		}); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to save bank account")
+			return
+		}
+		row, err := q.GetVendorPayoutMethodByID(ctx, sqlc.GetVendorPayoutMethodByIDParams{
+			ID: methodID, VendorID: vendorID,
+		})
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to load payout method")
+			return
+		}
+		utils.SuccessCreated(c, toPayoutMethodResponse(row))
+	}
+}
+
+// UpdateVendorBankTransferMethod godoc
+// @Summary Update Bank Transfer payout method
+// @Tags Vendor
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param methodId path string true "Payout method ID"
+// @Param body body models.UpdateBankTransferPayoutMethodRequest true "Bank account details"
+// @Success 200 {object} models.VendorPayoutMethodResponse
+// @Router /vendor/payouts/methods/bank/{methodId} [put]
+func UpdateVendorBankTransferMethod() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		methodID, ok := parsePathID(c, "methodId")
+		if !ok {
+			return
+		}
+		vendorIDStr, ok := getVendorID(c)
+		if !ok {
+			return
+		}
+		var req models.UpdateBankTransferPayoutMethodRequest
+		if !bindJSON(c, &req) {
+			return
+		}
+		req.AccountName = strings.TrimSpace(req.AccountName)
+		if req.AccountName == "" {
+			utils.Error(c, http.StatusBadRequest, "Account holder name is required")
+			return
+		}
+		if req.BankAccountNumber == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank account number is required")
+			return
+		}
+		if req.BankRoutingNumber == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank routing number (SWIFT/IFSC) is required")
+			return
+		}
+		if req.BankName == "" {
+			utils.Error(c, http.StatusBadRequest, "Bank name is required")
+			return
+		}
+		if req.BankCurrency == "" {
+			req.BankCurrency = "KES"
+		}
+
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		vendorID, _ := utils.ParseID(vendorIDStr)
+
+		if req.IsDefault {
+			_ = q.ClearVendorDefaultPayoutMethods(ctx, vendorID)
+		}
+		if err := q.UpdateVendorBankTransferMethod(ctx, sqlc.UpdateVendorBankTransferMethodParams{
+			ID:                methodID,
+			VendorID:          vendorID,
+			AccountName:       req.AccountName,
+			BankAccountNumber: req.BankAccountNumber,
+			BankRoutingNumber: req.BankRoutingNumber,
+			BankCurrency:      req.BankCurrency,
+			IsDefault:         boolToInt16(req.IsDefault),
+		}); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to update bank account")
+			return
+		}
+		row, err := q.GetVendorPayoutMethodByID(ctx, sqlc.GetVendorPayoutMethodByIDParams{
+			ID: methodID, VendorID: vendorID,
+		})
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to load payout method")
+			return
+		}
+		utils.Success(c, toPayoutMethodResponse(row))
+	}
+}
+
+// DeleteVendorPayoutMethod godoc
+// @Summary Delete a payout method
+// @Tags Vendor
+// @Produce json
+// @Security Bearer
+// @Param methodId path string true "Payout method ID"
+// @Success 200 {object} map[string]string
+// @Router /vendor/payouts/methods/{methodId} [delete]
+func DeleteVendorPayoutMethod() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		methodID, ok := parsePathID(c, "methodId")
+		if !ok {
+			return
+		}
+		vendorIDStr, ok := getVendorID(c)
+		if !ok {
+			return
+		}
+
+		ctx := c.Request.Context()
+		q := getStore(c).Queries()
+		vendorID, _ := utils.ParseID(vendorIDStr)
+
+		count, err := q.CountVendorPayoutMethods(ctx, vendorID)
+		if err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to check payout methods")
+			return
+		}
+		if count <= 1 {
+			utils.Error(c, http.StatusBadRequest, "Cannot delete the only payout method")
+			return
+		}
+
+		if err := q.DeleteVendorPayoutMethod(ctx, methodID, vendorID); err != nil {
+			utils.Error(c, http.StatusInternalServerError, "Failed to delete payout method")
+			return
+		}
+		utils.Success(c, map[string]string{"message": "Payout method deleted"})
+	}
+}
+
 // ListVendorPayoutHistory godoc
 // @Summary Vendor payout history
 // @Tags Vendor
@@ -258,24 +471,44 @@ func ListVendorPayoutHistory() gin.HandlerFunc {
 }
 
 func resolvePaystackRecipient(cfg *config.Config, method sqlc.VendorPayoutMethod) (string, error) {
-	if method.BankName.Valid && strings.HasPrefix(method.BankName.String, "RCP_") {
-		return method.BankName.String, nil
+	if method.Type == sqlc.VendorPayoutMethodsTypeMpesa {
+		if method.BankName.Valid && strings.HasPrefix(method.BankName.String, "RCP_") {
+			return method.BankName.String, nil
+		}
+		accountNumber, err := paystack.MpesaAccountNumberForTransfer(method.AccountRef)
+		if err != nil {
+			return "", err
+		}
+		data, err := paystackClient(cfg).CreateTransferRecipient(paystack.TransferRecipientRequest{
+			Type:          "mobile_money",
+			Name:          method.AccountName,
+			AccountNumber: accountNumber,
+			BankCode:      "MPESA",
+			Currency:      "KES",
+		})
+		if err != nil {
+			return "", err
+		}
+		return data.RecipientCode, nil
 	}
-	accountNumber, err := paystack.MpesaAccountNumberForTransfer(method.AccountRef)
-	if err != nil {
-		return "", err
+
+	if method.Type == sqlc.VendorPayoutMethodsTypeBankTransfer {
+		if method.BankName.Valid && strings.HasPrefix(method.BankName.String, "RCP_") {
+			return method.BankName.String, nil
+		}
+		data, err := paystackClient(cfg).CreateTransferRecipient(paystack.TransferRecipientRequest{
+			Type:          "bank_transfer",
+			Name:          method.AccountName,
+			AccountNumber: method.BankAccountNumber.String,
+			BankCode:      method.BankRoutingNumber.String,
+			Currency:      method.BankCurrency.String,
+		})
+		if err != nil {
+			return "", err
+		}
+		return data.RecipientCode, nil
 	}
-	data, err := paystackClient(cfg).CreateTransferRecipient(paystack.TransferRecipientRequest{
-		Type:          "mobile_money",
-		Name:          method.AccountName,
-		AccountNumber: accountNumber,
-		BankCode:      "MPESA",
-		Currency:      "KES",
-	})
-	if err != nil {
-		return "", err
-	}
-	return data.RecipientCode, nil
+	return "", fmt.Errorf("unsupported payout method type: %s", method.Type)
 }
 
 func processVendorSettlementWithdrawal(
@@ -353,9 +586,10 @@ func processVendorSettlementWithdrawal(
 			Status: sqlc.VendorPayoutsStatusFailed, Reference: sql.NullString{},
 			StatusEq: sqlc.VendorPayoutsStatusPaid, AdminNote: sql.NullString{String: err.Error(), Valid: true}, ID: payoutID,
 		})
-		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("M-Pesa transfer setup failed: %w", err)
+		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("payout transfer setup failed: %w", err)
 	}
-	if !method.BankName.Valid || method.BankName.String != recipient {
+	if (method.Type == sqlc.VendorPayoutMethodsTypeMpesa && (!method.BankName.Valid || method.BankName.String != recipient)) ||
+		(method.Type == sqlc.VendorPayoutMethodsTypeBankTransfer && (!method.BankName.Valid || method.BankName.String != recipient)) {
 		_ = q.UpdateVendorPayoutMethodRecipient(ctx, sqlc.UpdateVendorPayoutMethodRecipientParams{
 			BankName: sql.NullString{String: recipient, Valid: true}, ID: method.ID, VendorID: vendorID,
 		})
@@ -370,7 +604,7 @@ func processVendorSettlementWithdrawal(
 			Status: sqlc.VendorPayoutsStatusFailed, Reference: sql.NullString{},
 			StatusEq: sqlc.VendorPayoutsStatusPaid, AdminNote: sql.NullString{String: err.Error(), Valid: true}, ID: payoutID,
 		})
-		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("M-Pesa transfer failed: %w", err)
+		return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("payout transfer failed: %w", err)
 	}
 
 	ref := transfer.Reference
@@ -401,10 +635,10 @@ func processVendorSettlementWithdrawal(
 }
 
 func processVendorWithdrawal(ctx context.Context, cfg *config.Config, q *sqlc.Queries, vendorID types.BinaryUUID, requestedAmount *float64) (models.RequestVendorWithdrawalResponse, error) {
-	method, err := q.GetDefaultVendorMpesaMethod(ctx, vendorID)
+	method, err := q.GetDefaultVendorPayoutMethod(ctx, vendorID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("add an M-Pesa payout method before withdrawing")
+			return models.RequestVendorWithdrawalResponse{}, fmt.Errorf("add a payout method before withdrawing")
 		}
 		return models.RequestVendorWithdrawalResponse{}, err
 	}
@@ -569,8 +803,8 @@ func processVendorWithdrawal(ctx context.Context, cfg *config.Config, q *sqlc.Qu
 }
 
 // RequestVendorWithdrawal godoc
-// @Summary Withdraw vendor earnings to M-Pesa
-// @Description Transfers available earnings from delivered orders to the vendor default M-Pesa number via Paystack.
+// @Summary Withdraw vendor earnings
+// @Description Transfers available earnings from delivered orders to the vendor's default payout method via Paystack.
 // @Tags Vendor
 // @Accept json
 // @Produce json
@@ -613,7 +847,7 @@ func RequestVendorWithdrawal(cfg *config.Config) gin.HandlerFunc {
 			resp, err := processVendorWithdrawal(c.Request.Context(), cfg, q, vendorID, req.Amount)
 			if err != nil {
 				code := http.StatusBadRequest
-				if strings.Contains(err.Error(), "M-Pesa transfer") {
+				if strings.Contains(err.Error(), "payout transfer") {
 					code = http.StatusBadGateway
 				}
 				return code, nil, err

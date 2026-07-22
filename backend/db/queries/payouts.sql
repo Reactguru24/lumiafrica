@@ -74,3 +74,29 @@ SET status = ?,
     completed_at = CASE WHEN ? = 'paid' THEN NOW() ELSE completed_at END,
     admin_note = COALESCE(?, admin_note)
 WHERE id = ?;
+
+-- name: GetDefaultVendorBankTransferMethod :one
+SELECT * FROM vendor_payout_methods
+WHERE vendor_id = ? AND type = 'bank_transfer' AND is_default = 1
+LIMIT 1;
+
+-- name: CreateVendorBankTransferMethod :exec
+INSERT INTO vendor_payout_methods (
+  id, vendor_id, type, account_name, account_ref, bank_account_number, bank_routing_number, bank_currency, is_default
+) VALUES (?, ?, 'bank_transfer', ?, ?, ?, ?, ?, ?);
+
+-- name: UpdateVendorBankTransferMethod :exec
+UPDATE vendor_payout_methods
+SET account_name = ?, bank_account_number = ?, bank_routing_number = ?, bank_currency = ?, is_default = ?
+WHERE id = ? AND vendor_id = ?;
+
+-- name: DeleteVendorPayoutMethod :exec
+DELETE FROM vendor_payout_methods WHERE id = ? AND vendor_id = ?;
+
+-- name: CountVendorPayoutMethods :one
+SELECT COUNT(*) FROM vendor_payout_methods WHERE vendor_id = ?;
+
+-- name: GetDefaultVendorPayoutMethod :one
+SELECT * FROM vendor_payout_methods
+WHERE vendor_id = ? AND is_default = 1
+LIMIT 1;
