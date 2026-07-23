@@ -195,12 +195,12 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
-const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE phone = ? LIMIT 1
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByPhone, phone)
+func (q *Queries) GetUserByID(ctx context.Context, id types.BinaryUUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -219,12 +219,12 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error
 	return i, err
 }
 
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE id = ? LIMIT 1
+const getUserByPhone = `-- name: GetUserByPhone :one
+SELECT id, full_name, email, phone, password, role, avatar, disabled, email_verified_at, password_set_at, created_at, updated_at FROM users WHERE phone = ? LIMIT 1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id types.BinaryUUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByPhone, phone)
 	var i User
 	err := row.Scan(
 		&i.ID,

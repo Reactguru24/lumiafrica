@@ -942,47 +942,6 @@ type Category struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 
-type HomepageHeroSlide struct {
-	ID        types.BinaryUUID `json:"id"`
-	Label     string           `json:"label"`
-	Title     string           `json:"title"`
-	Subtitle  sql.NullString   `json:"subtitle"`
-	Image     string           `json:"image"`
-	Link      string           `json:"link"`
-	SortOrder int32            `json:"sort_order"`
-	Active    int16            `json:"active"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
-}
-
-type HomepagePromoItem struct {
-	ID          types.BinaryUUID `json:"id"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	Icon        string           `json:"icon"`
-	SortOrder   int32            `json:"sort_order"`
-	Active      int16            `json:"active"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
-}
-
-type HomepageShowcase struct {
-	ID              types.BinaryUUID `json:"id"`
-	Overline        string           `json:"overline"`
-	Headline        string           `json:"headline"`
-	Description     string           `json:"description"`
-	ButtonText      string           `json:"button_text"`
-	ButtonLink      string           `json:"button_link"`
-	BackgroundColor string           `json:"background_color"`
-	Image1          string           `json:"image_1"`
-	Image2          string           `json:"image_2"`
-	Image3          string           `json:"image_3"`
-	Image4          string           `json:"image_4"`
-	Active          int16            `json:"active"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
-}
-
 type Collection struct {
 	ID          types.BinaryUUID  `json:"id"`
 	Name        string            `json:"name"`
@@ -1434,18 +1393,15 @@ type VendorPayoutItem struct {
 }
 
 type VendorPayoutMethod struct {
-	ID                   types.BinaryUUID        `json:"id"`
-	VendorID             types.BinaryUUID        `json:"vendor_id"`
-	Type                 VendorPayoutMethodsType `json:"type"`
-	AccountName          string                  `json:"account_name"`
-	AccountRef           string                  `json:"account_ref"`
-	BankName             sql.NullString          `json:"bank_name"`
-	BankAccountNumber    sql.NullString          `json:"bank_account_number"`
-	BankRoutingNumber    sql.NullString          `json:"bank_routing_number"`
-	BankCurrency         sql.NullString          `json:"bank_currency"`
-	IsDefault            int16                   `json:"is_default"`
-	CreatedAt            time.Time               `json:"created_at"`
-	UpdatedAt            time.Time               `json:"updated_at"`
+	ID          types.BinaryUUID        `json:"id"`
+	VendorID    types.BinaryUUID        `json:"vendor_id"`
+	Type        VendorPayoutMethodsType `json:"type"`
+	AccountName string                  `json:"account_name"`
+	AccountRef  string                  `json:"account_ref"`
+	BankName    sql.NullString          `json:"bank_name"`
+	IsDefault   int16                   `json:"is_default"`
+	CreatedAt   time.Time               `json:"created_at"`
+	UpdatedAt   time.Time               `json:"updated_at"`
 }
 
 type VendorShippingRate struct {
