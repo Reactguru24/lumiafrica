@@ -38,9 +38,9 @@ export function ProductCard({ product, listView = false, compact = false }: Prod
   }
 
   return (
-    <div className={`product-card group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4' : ''}`}>
+    <div className={`product-card group relative transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${listView ? 'flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4' : 'p-3 sm:p-4'}`}>
       <Link href={`/products/${product.id}`} className={`block overflow-hidden ${listView ? 'w-full sm:w-32 shrink-0' : ''}`}>
-        <div className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${compact ? 'aspect-[4/5]' : 'aspect-[3/4]'}`}>
+        <div className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${compact ? 'aspect-[4/5]' : 'aspect-[3/4]'} ring-1 ring-gray-200 dark:ring-gray-700 rounded-xl`}>
           <MediaImage
             src={productImage}
             alt={product.name}
