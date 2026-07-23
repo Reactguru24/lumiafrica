@@ -7,6 +7,10 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
+	"time"
+
+	"github.com/Reactguru24/lumiafrica/internal/database/types"
 )
 
 const countAllVendors = `-- name: CountAllVendors :one
@@ -66,6 +70,298 @@ func (q *Queries) ListTopVendorsForAnalytics(ctx context.Context, limit int32) (
 			&i.IsFeatured,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const vendorCategorySales = `-- name: VendorCategorySales :many
+SELECT c.name as category, c.slug,
+  COALESCE(SUM(oi.quantity), 0) as units,
+  COALESCE(SUM(oi.subtotal), 0) as revenue,
+  COUNT(DISTINCT o.id) as orders
+FROM order_items oi
+INNER JOIN orders o ON o.id = oi.order_id
+INNER JOIN products p ON p.id = oi.product_id
+INNER JOIN categories c ON c.id = p.category_id
+WHERE oi.vendor_id = ?
+  AND o.status != 'cancelled'
+  AND (? IS NULL OR o.created_at >= ?)
+  AND (? IS NULL OR o.created_at <= ?)
+GROUP BY c.id, c.name, c.slug
+ORDER BY revenue DESC
+`
+
+type VendorCategorySalesParams struct {
+	VendorID    types.BinaryUUID `json:"vendor_id"`
+	Column2     interface{}      `json:"column_2"`
+	CreatedAt   time.Time        `json:"created_at"`
+	Column4     interface{}      `json:"column_4"`
+	CreatedAt_2 time.Time        `json:"created_at_2"`
+}
+
+type VendorCategorySalesRow struct {
+	Category string      `json:"category"`
+	Slug     string      `json:"slug"`
+	Units    interface{} `json:"units"`
+	Revenue  interface{} `json:"revenue"`
+	Orders   int64       `json:"orders"`
+}
+
+func (q *Queries) VendorCategorySales(ctx context.Context, arg VendorCategorySalesParams) ([]VendorCategorySalesRow, error) {
+	rows, err := q.db.QueryContext(ctx, vendorCategorySales,
+		arg.VendorID,
+		arg.Column2,
+		arg.CreatedAt,
+		arg.Column4,
+		arg.CreatedAt_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []VendorCategorySalesRow{}
+	for rows.Next() {
+		var i VendorCategorySalesRow
+		if err := rows.Scan(
+			&i.Category,
+			&i.Slug,
+			&i.Units,
+			&i.Revenue,
+			&i.Orders,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const vendorDailyAnalytics = `-- name: VendorDailyAnalytics :many
+SELECT period_date, orders, units_sold, revenue, earnings, refunds
+FROM vendor_analytics_daily
+WHERE vendor_id = ?
+  AND (? IS NULL OR period_date >= ?)
+  AND (? IS NULL OR period_date <= ?)
+ORDER BY period_date ASC
+`
+
+type VendorDailyAnalyticsParams struct {
+	VendorID     types.BinaryUUID `json:"vendor_id"`
+	Column2      interface{}      `json:"column_2"`
+	PeriodDate   time.Time        `json:"period_date"`
+	Column4      interface{}      `json:"column_4"`
+	PeriodDate_2 time.Time        `json:"period_date_2"`
+}
+
+type VendorDailyAnalyticsRow struct {
+	PeriodDate time.Time `json:"period_date"`
+	Orders     int32     `json:"orders"`
+	UnitsSold  int32     `json:"units_sold"`
+	Revenue    string    `json:"revenue"`
+	Earnings   string    `json:"earnings"`
+	Refunds    string    `json:"refunds"`
+}
+
+func (q *Queries) VendorDailyAnalytics(ctx context.Context, arg VendorDailyAnalyticsParams) ([]VendorDailyAnalyticsRow, error) {
+	rows, err := q.db.QueryContext(ctx, vendorDailyAnalytics,
+		arg.VendorID,
+		arg.Column2,
+		arg.PeriodDate,
+		arg.Column4,
+		arg.PeriodDate_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []VendorDailyAnalyticsRow{}
+	for rows.Next() {
+		var i VendorDailyAnalyticsRow
+		if err := rows.Scan(
+			&i.PeriodDate,
+			&i.Orders,
+			&i.UnitsSold,
+			&i.Revenue,
+			&i.Earnings,
+			&i.Refunds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const vendorOrderStatusCounts = `-- name: VendorOrderStatusCounts :many
+SELECT o.status, COUNT(DISTINCT o.id) as count, SUM(o.total) as total_amount
+FROM orders o
+INNER JOIN order_items oi ON oi.order_id = o.id
+WHERE oi.vendor_id = ?
+  AND (? IS NULL OR o.created_at >= ?)
+  AND (? IS NULL OR o.created_at <= ?)
+GROUP BY o.status
+`
+
+type VendorOrderStatusCountsParams struct {
+	VendorID    types.BinaryUUID `json:"vendor_id"`
+	Column2     interface{}      `json:"column_2"`
+	CreatedAt   time.Time        `json:"created_at"`
+	Column4     interface{}      `json:"column_4"`
+	CreatedAt_2 time.Time        `json:"created_at_2"`
+}
+
+type VendorOrderStatusCountsRow struct {
+	Status      OrdersStatus `json:"status"`
+	Count       int64        `json:"count"`
+	TotalAmount interface{}  `json:"total_amount"`
+}
+
+func (q *Queries) VendorOrderStatusCounts(ctx context.Context, arg VendorOrderStatusCountsParams) ([]VendorOrderStatusCountsRow, error) {
+	rows, err := q.db.QueryContext(ctx, vendorOrderStatusCounts,
+		arg.VendorID,
+		arg.Column2,
+		arg.CreatedAt,
+		arg.Column4,
+		arg.CreatedAt_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []VendorOrderStatusCountsRow{}
+	for rows.Next() {
+		var i VendorOrderStatusCountsRow
+		if err := rows.Scan(&i.Status, &i.Count, &i.TotalAmount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const vendorPaymentMethodStats = `-- name: VendorPaymentMethodStats :many
+SELECT o.payment_method,
+  COUNT(DISTINCT o.id) as orders,
+  COALESCE(SUM(o.total), 0) as amount
+FROM orders o
+INNER JOIN order_items oi ON oi.order_id = o.id
+WHERE oi.vendor_id = ?
+  AND o.status != 'cancelled'
+  AND (? IS NULL OR o.created_at >= ?)
+  AND (? IS NULL OR o.created_at <= ?)
+GROUP BY o.payment_method
+ORDER BY amount DESC
+`
+
+type VendorPaymentMethodStatsParams struct {
+	VendorID    types.BinaryUUID `json:"vendor_id"`
+	Column2     interface{}      `json:"column_2"`
+	CreatedAt   time.Time        `json:"created_at"`
+	Column4     interface{}      `json:"column_4"`
+	CreatedAt_2 time.Time        `json:"created_at_2"`
+}
+
+type VendorPaymentMethodStatsRow struct {
+	PaymentMethod string      `json:"payment_method"`
+	Orders        int64       `json:"orders"`
+	Amount        interface{} `json:"amount"`
+}
+
+func (q *Queries) VendorPaymentMethodStats(ctx context.Context, arg VendorPaymentMethodStatsParams) ([]VendorPaymentMethodStatsRow, error) {
+	rows, err := q.db.QueryContext(ctx, vendorPaymentMethodStats,
+		arg.VendorID,
+		arg.Column2,
+		arg.CreatedAt,
+		arg.Column4,
+		arg.CreatedAt_2,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []VendorPaymentMethodStatsRow{}
+	for rows.Next() {
+		var i VendorPaymentMethodStatsRow
+		if err := rows.Scan(&i.PaymentMethod, &i.Orders, &i.Amount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const vendorPayoutHistory = `-- name: VendorPayoutHistory :many
+SELECT period_start, period_end, amount, status, reference, created_at
+FROM vendor_payouts
+WHERE vendor_id = ?
+ORDER BY created_at DESC
+LIMIT ?
+`
+
+type VendorPayoutHistoryParams struct {
+	VendorID types.BinaryUUID `json:"vendor_id"`
+	Limit    int32            `json:"limit"`
+}
+
+type VendorPayoutHistoryRow struct {
+	PeriodStart time.Time           `json:"period_start"`
+	PeriodEnd   time.Time           `json:"period_end"`
+	Amount      string              `json:"amount"`
+	Status      VendorPayoutsStatus `json:"status"`
+	Reference   sql.NullString      `json:"reference"`
+	CreatedAt   time.Time           `json:"created_at"`
+}
+
+func (q *Queries) VendorPayoutHistory(ctx context.Context, arg VendorPayoutHistoryParams) ([]VendorPayoutHistoryRow, error) {
+	rows, err := q.db.QueryContext(ctx, vendorPayoutHistory, arg.VendorID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []VendorPayoutHistoryRow{}
+	for rows.Next() {
+		var i VendorPayoutHistoryRow
+		if err := rows.Scan(
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.Amount,
+			&i.Status,
+			&i.Reference,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

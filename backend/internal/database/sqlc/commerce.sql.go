@@ -8,7 +8,6 @@ package sqlc
 import (
 	"context"
 	"database/sql"
-	"strings"
 	"time"
 
 	"github.com/Reactguru24/lumiafrica/internal/database/types"
@@ -430,6 +429,33 @@ func (q *Queries) GetDeliveryZoneByID(ctx context.Context, id types.BinaryUUID) 
 	return i, err
 }
 
+const getDeliveryZoneByVendorAndName = `-- name: GetDeliveryZoneByVendorAndName :one
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones
+WHERE vendor_id = ? AND active = true AND LOWER(name) = LOWER(?)
+LIMIT 1
+`
+
+type GetDeliveryZoneByVendorAndNameParams struct {
+	VendorID *types.BinaryUUID `json:"vendor_id"`
+	LOWER    string            `json:"LOWER"`
+}
+
+func (q *Queries) GetDeliveryZoneByVendorAndName(ctx context.Context, arg GetDeliveryZoneByVendorAndNameParams) (DeliveryZone, error) {
+	row := q.db.QueryRowContext(ctx, getDeliveryZoneByVendorAndName, arg.VendorID, arg.LOWER)
+	var i DeliveryZone
+	err := row.Scan(
+		&i.ID,
+		&i.VendorID,
+		&i.Name,
+		&i.BaseCost,
+		&i.EstimatedDays,
+		&i.Active,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getPlatformDeliveryZoneByID = `-- name: GetPlatformDeliveryZoneByID :one
 SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE id = ? AND vendor_id IS NULL LIMIT 1
 `
@@ -458,106 +484,6 @@ LIMIT 1
 
 func (q *Queries) GetPlatformDeliveryZoneByName(ctx context.Context, lower string) (DeliveryZone, error) {
 	row := q.db.QueryRowContext(ctx, getPlatformDeliveryZoneByName, lower)
-	var i DeliveryZone
-	err := row.Scan(
-		&i.ID,
-		&i.VendorID,
-		&i.Name,
-		&i.BaseCost,
-		&i.EstimatedDays,
-		&i.Active,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const listPlatformDeliveryZones = `-- name: ListPlatformDeliveryZones :many
-SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE vendor_id IS NULL ORDER BY name
-`
-
-func (q *Queries) ListPlatformDeliveryZones(ctx context.Context) ([]DeliveryZone, error) {
-	rows, err := q.db.QueryContext(ctx, listPlatformDeliveryZones)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DeliveryZone{}
-	for rows.Next() {
-		var i DeliveryZone
-		if err := rows.Scan(
-			&i.ID,
-			&i.VendorID,
-			&i.Name,
-			&i.BaseCost,
-			&i.EstimatedDays,
-			&i.Active,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const setPlatformDeliveryZoneActive = `-- name: SetPlatformDeliveryZoneActive :exec
-UPDATE delivery_zones SET active = ?, updated_at = NOW() WHERE id = ? AND vendor_id IS NULL
-`
-
-type SetPlatformDeliveryZoneActiveParams struct {
-	Active int16              `json:"active"`
-	ID     types.BinaryUUID     `json:"id"`
-}
-
-func (q *Queries) SetPlatformDeliveryZoneActive(ctx context.Context, arg SetPlatformDeliveryZoneActiveParams) error {
-	_, err := q.db.ExecContext(ctx, setPlatformDeliveryZoneActive, arg.Active, arg.ID)
-	return err
-}
-
-const updatePlatformDeliveryZone = `-- name: UpdatePlatformDeliveryZone :exec
-UPDATE delivery_zones
-SET name = ?, base_cost = ?, estimated_days = ?, updated_at = NOW()
-WHERE id = ? AND vendor_id IS NULL
-`
-
-type UpdatePlatformDeliveryZoneParams struct {
-	Name          string           `json:"name"`
-	BaseCost      string           `json:"base_cost"`
-	EstimatedDays string           `json:"estimated_days"`
-	ID            types.BinaryUUID `json:"id"`
-}
-
-func (q *Queries) UpdatePlatformDeliveryZone(ctx context.Context, arg UpdatePlatformDeliveryZoneParams) error {
-	_, err := q.db.ExecContext(ctx, updatePlatformDeliveryZone,
-		arg.Name,
-		arg.BaseCost,
-		arg.EstimatedDays,
-		arg.ID,
-	)
-	return err
-}
-
-const getDeliveryZoneByVendorAndName = `-- name: GetDeliveryZoneByVendorAndName :one
-SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones
-WHERE vendor_id = ? AND active = true AND LOWER(name) = LOWER(?)
-LIMIT 1
-`
-
-type GetDeliveryZoneByVendorAndNameParams struct {
-	VendorID *types.BinaryUUID `json:"vendor_id"`
-	LOWER    string            `json:"LOWER"`
-}
-
-func (q *Queries) GetDeliveryZoneByVendorAndName(ctx context.Context, arg GetDeliveryZoneByVendorAndNameParams) (DeliveryZone, error) {
-	row := q.db.QueryRowContext(ctx, getDeliveryZoneByVendorAndName, arg.VendorID, arg.LOWER)
 	var i DeliveryZone
 	err := row.Scan(
 		&i.ID,
@@ -885,63 +811,12 @@ func (q *Queries) ListCheckoutDeliveryZones(ctx context.Context) ([]ListCheckout
 	items := []ListCheckoutDeliveryZonesRow{}
 	for rows.Next() {
 		var i ListCheckoutDeliveryZonesRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.EstimatedDays, &i.BaseCost); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listIntersectingCheckoutDeliveryZones = `-- name: ListIntersectingCheckoutDeliveryZones :many
-SELECT dz.name, MIN(dz.estimated_days) AS estimated_days, MIN(dz.base_cost) AS base_cost
-FROM delivery_zones dz
-WHERE dz.active = true
-  AND dz.vendor_id IS NOT NULL
-  AND dz.vendor_id IN (/*SLICE:vendor_ids*/?)
-GROUP BY dz.name
-HAVING COUNT(DISTINCT dz.vendor_id) = ?
-ORDER BY dz.name
-`
-
-type ListIntersectingCheckoutDeliveryZonesParams struct {
-	VendorIds   []types.BinaryUUID `json:"vendor_ids"`
-	VendorCount int64              `json:"vendor_count"`
-}
-
-type ListIntersectingCheckoutDeliveryZonesRow struct {
-	Name          string `json:"name"`
-	EstimatedDays string `json:"estimated_days"`
-	BaseCost      string `json:"base_cost"`
-}
-
-func (q *Queries) ListIntersectingCheckoutDeliveryZones(ctx context.Context, arg ListIntersectingCheckoutDeliveryZonesParams) ([]ListIntersectingCheckoutDeliveryZonesRow, error) {
-	query := listIntersectingCheckoutDeliveryZones
-	var queryParams []interface{}
-	if len(arg.VendorIds) > 0 {
-		for _, v := range arg.VendorIds {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:vendor_ids*/?", strings.Repeat(",?", len(arg.VendorIds))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:vendor_ids*/?", "NULL", 1)
-	}
-	queryParams = append(queryParams, arg.VendorCount)
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListIntersectingCheckoutDeliveryZonesRow{}
-	for rows.Next() {
-		var i ListIntersectingCheckoutDeliveryZonesRow
-		if err := rows.Scan(&i.Name, &i.EstimatedDays, &i.BaseCost); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.EstimatedDays,
+			&i.BaseCost,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -988,6 +863,42 @@ SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updat
 
 func (q *Queries) ListDeliveryZonesByVendor(ctx context.Context, vendorID *types.BinaryUUID) ([]DeliveryZone, error) {
 	rows, err := q.db.QueryContext(ctx, listDeliveryZonesByVendor, vendorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DeliveryZone{}
+	for rows.Next() {
+		var i DeliveryZone
+		if err := rows.Scan(
+			&i.ID,
+			&i.VendorID,
+			&i.Name,
+			&i.BaseCost,
+			&i.EstimatedDays,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlatformDeliveryZones = `-- name: ListPlatformDeliveryZones :many
+SELECT id, vendor_id, name, base_cost, estimated_days, active, created_at, updated_at FROM delivery_zones WHERE vendor_id IS NULL ORDER BY name
+`
+
+func (q *Queries) ListPlatformDeliveryZones(ctx context.Context) ([]DeliveryZone, error) {
+	rows, err := q.db.QueryContext(ctx, listPlatformDeliveryZones)
 	if err != nil {
 		return nil, err
 	}
@@ -1085,6 +996,20 @@ type SetDeliveryZoneActiveParams struct {
 
 func (q *Queries) SetDeliveryZoneActive(ctx context.Context, arg SetDeliveryZoneActiveParams) error {
 	_, err := q.db.ExecContext(ctx, setDeliveryZoneActive, arg.Active, arg.ID, arg.VendorID)
+	return err
+}
+
+const setPlatformDeliveryZoneActive = `-- name: SetPlatformDeliveryZoneActive :exec
+UPDATE delivery_zones SET active = ?, updated_at = NOW() WHERE id = ? AND vendor_id IS NULL
+`
+
+type SetPlatformDeliveryZoneActiveParams struct {
+	Active int16            `json:"active"`
+	ID     types.BinaryUUID `json:"id"`
+}
+
+func (q *Queries) SetPlatformDeliveryZoneActive(ctx context.Context, arg SetPlatformDeliveryZoneActiveParams) error {
+	_, err := q.db.ExecContext(ctx, setPlatformDeliveryZoneActive, arg.Active, arg.ID)
 	return err
 }
 
@@ -1224,6 +1149,29 @@ func (q *Queries) UpdateDeliveryZone(ctx context.Context, arg UpdateDeliveryZone
 		arg.EstimatedDays,
 		arg.ID,
 		arg.VendorID,
+	)
+	return err
+}
+
+const updatePlatformDeliveryZone = `-- name: UpdatePlatformDeliveryZone :exec
+UPDATE delivery_zones
+SET name = ?, base_cost = ?, estimated_days = ?, updated_at = NOW()
+WHERE id = ? AND vendor_id IS NULL
+`
+
+type UpdatePlatformDeliveryZoneParams struct {
+	Name          string           `json:"name"`
+	BaseCost      string           `json:"base_cost"`
+	EstimatedDays string           `json:"estimated_days"`
+	ID            types.BinaryUUID `json:"id"`
+}
+
+func (q *Queries) UpdatePlatformDeliveryZone(ctx context.Context, arg UpdatePlatformDeliveryZoneParams) error {
+	_, err := q.db.ExecContext(ctx, updatePlatformDeliveryZone,
+		arg.Name,
+		arg.BaseCost,
+		arg.EstimatedDays,
+		arg.ID,
 	)
 	return err
 }

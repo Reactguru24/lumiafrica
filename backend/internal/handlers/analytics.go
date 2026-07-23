@@ -37,6 +37,43 @@ type VendorAnalytics struct {
 	TopProductsClient   []ProductAnalytics `json:"topProducts"`
 	LowStock            []models.Product   `json:"lowStock"`
 	OutOfStock          []models.Product   `json:"outOfStock"`
+
+	AverageOrderValue    float64              `json:"average_order_value"`
+	OrderStatusBreakdown []StatusBreakdown    `json:"order_status_breakdown"`
+	CategorySales        []CategorySales      `json:"category_sales"`
+	PaymentMethods       []PaymentMethodStats `json:"payment_methods"`
+	PayoutHistory        []PayoutHistory      `json:"payout_history"`
+	DailyTrend           []OrderTrendPoint    `json:"daily_trend"`
+	TotalRefunds         float64              `json:"total_refunds"`
+}
+
+type StatusBreakdown struct {
+	Status      string  `json:"status"`
+	Count       int64   `json:"count"`
+	TotalAmount float64 `json:"total_amount"`
+}
+
+type CategorySales struct {
+	Category string  `json:"category"`
+	Slug     string  `json:"slug"`
+	Units    float64 `json:"units"`
+	Revenue  float64 `json:"revenue"`
+	Orders   int64   `json:"orders"`
+}
+
+type PaymentMethodStats struct {
+	PaymentMethod string  `json:"payment_method"`
+	Orders        int64   `json:"orders"`
+	Amount        float64 `json:"amount"`
+}
+
+type PayoutHistory struct {
+	PeriodStart time.Time `json:"period_start"`
+	PeriodEnd   time.Time `json:"period_end"`
+	Amount      float64   `json:"amount"`
+	Status      string    `json:"status"`
+	Reference   *string   `json:"reference"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type AdminAnalytics struct {
@@ -211,6 +248,105 @@ func GetVendorAnalytics() gin.HandlerFunc {
 		analytics.OutOfStockCount = int64(len(outOfStock))
 		analytics.LowStock = analytics.LowStockProducts
 		analytics.OutOfStock = outOfStock
+
+		if analytics.TotalOrders > 0 {
+			analytics.AverageOrderValue = analytics.TotalRevenue / float64(analytics.TotalOrders)
+		}
+
+		statusRows, _ := q.VendorOrderStatusCounts(ctx, sqlc.VendorOrderStatusCountsParams{
+			VendorID:    vendorID,
+			Column2:     since,
+			CreatedAt:   startDate,
+			Column4:     since,
+			CreatedAt_2: time.Now(),
+		})
+		breakdown := make([]StatusBreakdown, 0, len(statusRows))
+		for _, row := range statusRows {
+			breakdown = append(breakdown, StatusBreakdown{
+				Status:      string(row.Status),
+				Count:       row.Count,
+				TotalAmount: parseFloat(row.TotalAmount),
+			})
+		}
+		analytics.OrderStatusBreakdown = breakdown
+
+		var endDate sql.NullTime
+		if !startDate.IsZero() {
+			endDate = sql.NullTime{Time: time.Now(), Valid: true}
+		}
+
+		categoryRows, _ := q.VendorCategorySales(ctx, sqlc.VendorCategorySalesParams{
+			VendorID:    vendorID,
+			Column2:     since,
+			CreatedAt:   startDate,
+			Column4:     endDate,
+			CreatedAt_2: time.Now(),
+		})
+		for _, row := range categoryRows {
+			analytics.CategorySales = append(analytics.CategorySales, CategorySales{
+				Category: row.Category,
+				Slug:     row.Slug,
+				Units:    parseFloat(row.Units),
+				Revenue:  parseFloat(row.Revenue),
+				Orders:   row.Orders,
+			})
+		}
+
+		paymentRows, _ := q.VendorPaymentMethodStats(ctx, sqlc.VendorPaymentMethodStatsParams{
+			VendorID:    vendorID,
+			Column2:     since,
+			CreatedAt:   startDate,
+			Column4:     endDate,
+			CreatedAt_2: time.Now(),
+		})
+		for _, row := range paymentRows {
+			analytics.PaymentMethods = append(analytics.PaymentMethods, PaymentMethodStats{
+				PaymentMethod: row.PaymentMethod,
+				Orders:        row.Orders,
+				Amount:        parseFloat(row.Amount),
+			})
+		}
+
+		payoutRows, _ := q.VendorPayoutHistory(ctx, sqlc.VendorPayoutHistoryParams{
+			VendorID: vendorID,
+			Limit:    12,
+		})
+		for _, row := range payoutRows {
+			ref := ""
+			if row.Reference.Valid {
+				ref = row.Reference.String
+			}
+			analytics.PayoutHistory = append(analytics.PayoutHistory, PayoutHistory{
+				PeriodStart: row.PeriodStart,
+				PeriodEnd:   row.PeriodEnd,
+				Amount:      parseFloat(row.Amount),
+				Status:      string(row.Status),
+				Reference:   &ref,
+				CreatedAt:   row.CreatedAt,
+			})
+		}
+		if len(payoutRows) > 12 {
+			analytics.PayoutHistory = analytics.PayoutHistory[:12]
+		}
+
+		if !startDate.IsZero() {
+			dailyRows, _ := q.VendorDailyAnalytics(ctx, sqlc.VendorDailyAnalyticsParams{
+				VendorID:     vendorID,
+				Column2:      since,
+				PeriodDate:   startDate,
+				Column4:      endDate,
+				PeriodDate_2: time.Now(),
+			})
+			for _, row := range dailyRows {
+				dateStr := row.PeriodDate.Format("2006-01-02")
+				analytics.DailyTrend = append(analytics.DailyTrend, OrderTrendPoint{
+					Date:  dateStr,
+					Count: int64(row.Orders),
+				})
+				analytics.TotalRefunds += parseFloat(row.Refunds)
+			}
+			reverseSlice(analytics.DailyTrend)
+		}
 
 		vendorRow, _ := q.GetVendorByID(ctx, vendorID)
 		vendor := store.ToVendor(vendorRow)
@@ -411,4 +547,29 @@ func buildOrderTrends(orders []sqlc.Order, period string) []OrderTrendPoint {
 		}
 	}
 	return trends
+}
+
+func parseFloat(v interface{}) float64 {
+	if v == nil {
+		return 0
+	}
+	switch val := v.(type) {
+	case float64:
+		return val
+	case []byte:
+		f, _ := strconv.ParseFloat(string(val), 64)
+		return f
+	case string:
+		f, _ := strconv.ParseFloat(val, 64)
+		return f
+	case int64:
+		return float64(val)
+	}
+	return 0
+}
+
+func reverseSlice[T any](s []T) {
+	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
+		s[i], s[j] = s[j], s[i]
+	}
 }

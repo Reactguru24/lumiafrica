@@ -31,15 +31,6 @@ func (q *Queries) CompleteIdempotencyKey(ctx context.Context, arg CompleteIdempo
 	return err
 }
 
-const deleteIdempotencyKey = `-- name: DeleteIdempotencyKey :exec
-DELETE FROM idempotency_keys WHERE id = ?
-`
-
-func (q *Queries) DeleteIdempotencyKey(ctx context.Context, id types.BinaryUUID) error {
-	_, err := q.db.ExecContext(ctx, deleteIdempotencyKey, id)
-	return err
-}
-
 const createIdempotencyKey = `-- name: CreateIdempotencyKey :exec
 INSERT INTO idempotency_keys (
   id, key_hash, user_id, endpoint, request_hash, expires_at
@@ -64,6 +55,15 @@ func (q *Queries) CreateIdempotencyKey(ctx context.Context, arg CreateIdempotenc
 		arg.RequestHash,
 		arg.ExpiresAt,
 	)
+	return err
+}
+
+const deleteIdempotencyKey = `-- name: DeleteIdempotencyKey :exec
+DELETE FROM idempotency_keys WHERE id = ?
+`
+
+func (q *Queries) DeleteIdempotencyKey(ctx context.Context, id types.BinaryUUID) error {
+	_, err := q.db.ExecContext(ctx, deleteIdempotencyKey, id)
 	return err
 }
 
