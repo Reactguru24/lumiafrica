@@ -72,7 +72,7 @@ export function LineChart({ labels, datasets, title }: LineChartProps) {
         display: !!title,
         text: title,
         color: isDark ? '#f9fafb' : '#111827',
-        font: { size: 13, weight: '600' as const },
+        font: { size: 13, weight: 600 },
         padding: { bottom: 12 },
       },
       tooltip: {
