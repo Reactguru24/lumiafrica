@@ -414,13 +414,19 @@ export default function VendorProductsPage() {
       </Modal>
 
       {productsLoading ? (
-        <div className="text-center py-8 text-gray-500">Loading products...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading products...</div>
       ) : products.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No products yet. Add your first product to get started.</p>
+        <div className="card p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No products yet. Add your first product to get started.</p>
+          <button className="btn-primary" onClick={openCreateForm}>Add Product</button>
+        </div>
       ) : filteredProducts.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No products match your search.</p>
+        <div className="card p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400">No products match your search.</p>
+        </div>
       ) : (
         <>
+          <div className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-xl">
           <ResponsiveDataTable
             columns={[
               { key: 'name', label: 'Product', width: '30%' },
@@ -435,9 +441,17 @@ export default function VendorProductsPage() {
               if (key === 'name') {
                 return (
                   <div className="flex items-center gap-3">
-                    <MediaImage src={row.image as string} alt={row.name as string} width={40} height={48} transform={{ width: 80, aspect: '3:4' }} className="w-10 h-12 object-cover rounded" />
-                    <span className="font-medium">{row.name as string}</span>
+                    <MediaImage src={row.image as string} alt={row.name as string} width={40} height={48} transform={{ width: 80, aspect: '3:4' }} className="w-10 h-12 object-cover rounded-xl" />
+                    <span className="font-medium text-gray-900 dark:text-white">{row.name as string}</span>
                   </div>
+                )
+              }
+              if (key === 'stock') {
+                const stock = row.stock as number
+                const stockStatus = stock === 0 ? 'out' : stock <= 10 ? 'low' : 'in'
+                const stockLabels = { in: 'In Stock', low: 'Low Stock', out: 'Out of Stock' }
+                return (
+                  <span className={`badge badge-stock-${stockStatus}`}>{stockLabels[stockStatus as keyof typeof stockLabels]}</span>
                 )
               }
               if (key === 'featured') {
@@ -450,7 +464,7 @@ export default function VendorProductsPage() {
                     checked={isFeatured}
                     disabled={!canFeature || featuredLoading || (!hasActiveSub && !isFeatured) || atLimit}
                     onChange={(e) => setProductFeatured(row.id as string, e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange disabled:opacity-40"
+                    className="checkbox-input"
                     aria-label={`Feature ${row.name}`}
                     title={
                       !hasActiveSub && !isFeatured
@@ -467,12 +481,13 @@ export default function VendorProductsPage() {
             }}
             renderActions={(row) => (
               <>
-                <button className="p-1 hover:text-blue-600" onClick={() => editProduct(products.find((p) => p.id === row.id)!)}><PencilIcon className="w-4 h-4" /></button>
-                <button className="p-1 hover:text-red-600" disabled={deleteLoading} onClick={() => handleDelete(row.id)} title="Archive"><TrashIcon className="w-4 h-4" /></button>
+                <button className="action-btn action-btn-edit" onClick={() => editProduct(products.find((p) => p.id === row.id)!)}><PencilIcon className="w-4 h-4" /></button>
+                <button className="action-btn action-btn-delete" disabled={deleteLoading} onClick={() => handleDelete(row.id)} title="Archive"><TrashIcon className="w-4 h-4" /></button>
               </>
             )}
           />
           {total > pageSize && <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goTo} />}
+          </div>
         </>
       )}
     </div>

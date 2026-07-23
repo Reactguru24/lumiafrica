@@ -49,7 +49,7 @@ export function BarChart({ labels, data, label = 'Value', title, color }: BarCha
         display: !!title,
         text: title,
         color: isDark ? '#f9fafb' : '#111827',
-        font: { size: 13, weight: '600' as const },
+        font: { size: 13, weight: 600 },
         padding: { bottom: 12 },
       },
       tooltip: {
