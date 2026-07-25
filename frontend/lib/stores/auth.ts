@@ -19,6 +19,7 @@ interface AuthState {
   isDisabled: boolean
   permissions: string[]
   hasPermission: (permission: string) => boolean
+  hasAnyPermissionPrefix: (prefix: string) => boolean
   login: (email: string, password: string) => Promise<Omit<User, 'password'>>
   register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<Omit<User, 'password'>>
   logout: () => Promise<void>
@@ -171,7 +172,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const me = await authAPI.getCurrentUser().catch(() => null)
       const parsed = parseMeResponse(me)
       // fetch permissions for this user
-      const perms = await authAPI.getPermissions().catch(() => [])
+      const perms = await authAPI.getPermissions().catch(() => []) as string[]
       set({ ...applyAuthState(parsed.user ?? safeUser, parsed.pendingVendorApplication), permissions: perms })
       if (get().isCustomer) {
         await useCartStore.getState().mergeGuestCart()
@@ -205,7 +206,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const safeUser = removePassword(response?.user)
       if (!safeUser) throw new Error('Registration failed - no user data')
       storeSession(response.token || '', safeUser.id)
-      const perms = await authAPI.getPermissions().catch(() => [])
+      const perms = await authAPI.getPermissions().catch(() => []) as string[]
       set({ ...applyAuthState(safeUser, null), permissions: perms })
       if (get().isCustomer) {
         await useCartStore.getState().mergeGuestCart()
@@ -302,7 +303,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return
       }
 
-      const perms = await authAPI.getPermissions().catch(() => [])
+      const perms = await authAPI.getPermissions().catch(() => []) as string[]
       set({ ...applyAuthState(safeUser, pendingVendorApplication), permissions: perms })
       if (typeof document !== 'undefined') {
         const secure = window.location.protocol === 'https:' ? '; Secure' : ''
@@ -346,7 +347,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   // permission helpers
-  permissions: [],
   hasPermission: (permission: string) => {
     const { isAdmin, permissions } = get()
     if (isAdmin) return true

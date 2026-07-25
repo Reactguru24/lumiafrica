@@ -9,14 +9,13 @@ import { getFriendlyErrorMessage } from '@/lib/utils/errors'
 export default function AdminPermissionsPage() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  
 
   async function load() {
     try {
       setLoading(true)
       const data = await adminAPI.listPermissions()
-      setItems(Array.isArray(data) ? data : [])
+      setItems(Array.isArray(data) ? [...data].sort((a, b) => (a.name || '').localeCompare(b.name || '')) : [])
     } catch (err) {
       toast.error(getFriendlyErrorMessage(err, 'Unable to load permissions'))
     } finally { setLoading(false) }
@@ -24,30 +23,16 @@ export default function AdminPermissionsPage() {
 
   useEffect(() => { load() }, [])
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    try {
-      setLoading(true)
-      await adminAPI.createPermission({ name, description })
-      toast.success('Permission created')
-      setName('')
-      setDescription('')
-      await load()
-    } catch (err) {
-      toast.error(getFriendlyErrorMessage(err, 'Unable to create permission'))
-    } finally { setLoading(false) }
-  }
+  // Permission creation via UI is disabled. Permissions should be managed via migrations or CLI.
 
   return (
     <div>
       <AdminPageHeader title="Permissions" subtitle="Create and manage permissions" />
       <div className="card p-4 mb-4">
-        <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <input className="input-field" placeholder="name (e.g. admin.users.create)" value={name} onChange={(e) => setName(e.target.value)} />
-          <input className="input-field" placeholder="description" value={description} onChange={(e) => setDescription(e.target.value)} />
-          <div />
-          <button className="btn-primary" disabled={loading || !name}>{loading ? 'Creating…' : 'Create Permission'}</button>
-        </form>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-gray-500">Permission creation via the admin UI is disabled. Manage permissions via migrations or the backend CLI.</div>
+          <button type="button" className="btn-secondary text-sm px-4 py-2 w-full sm:w-auto" onClick={() => load()} disabled={loading}>{loading ? 'Refreshing…' : 'Refresh'}</button>
+        </div>
       </div>
 
       <div className="card p-4">

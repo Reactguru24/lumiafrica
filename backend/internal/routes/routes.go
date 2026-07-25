@@ -21,6 +21,9 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	guestCart := router.Group("")
 	guestCart.Use(middleware.GuestSessionMiddleware(cfg), middleware.OptionalAuthMiddleware(cfg))
 	{
+		// WebSocket support endpoint for customer chat (guest or authenticated)
+		guestCart.GET("/ws/support", handlers.SupportWS())
+
 		guestCart.GET("/cart", handlers.GetCart())
 		guestCart.POST("/cart/items", handlers.UpsertCartItem())
 		guestCart.DELETE("/cart/items/:productID", handlers.RemoveCartItem())
@@ -134,10 +137,13 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	admin := router.Group("/admin")
 	admin.Use(auth, activeUser, middleware.RoleMiddleware(models.RoleAdmin))
 	{
+		// Admin create user + invite (creates user and sends password reset)
+		admin.POST("/users", handlers.AdminCreateUser(cfg))
 	// RBAC management
 		admin.POST("/roles", handlers.CreateRole())
 	admin.GET("/roles", handlers.ListRoles())
-	admin.POST("/permissions", handlers.CreatePermission())
+	    admin.GET("/roles/:roleID/permissions", handlers.GetRolePermissions())
+	// permission creation disabled: managed via migrations or CLI
 	admin.GET("/permissions", handlers.ListPermissions())
 	admin.POST("/roles/:roleID/permissions", handlers.AssignPermissionToRole())
 		admin.POST("/roles/:roleID/invite", handlers.InviteUserToRole(cfg))

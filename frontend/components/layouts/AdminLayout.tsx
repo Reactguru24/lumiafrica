@@ -85,7 +85,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
             {navItems.map((item) => {
               // permission gating: allow if full admin OR has any permission matching the resource prefix
-              if (item.permission && !auth.hasPermission(item.permission)) return null
+              if ((item as any).permission && !auth.hasPermission((item as any).permission)) return null
               if ((item as any).permissionPrefix && !auth.hasAnyPermissionPrefix((item as any).permissionPrefix)) return null
               const active = pathname === item.to || (item.to !== '/admin' && pathname.startsWith(item.to + '/'))
               return (

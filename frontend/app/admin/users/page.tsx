@@ -13,6 +13,8 @@ import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { UserIcon, ShieldCheckIcon, NoSymbolIcon } from '@heroicons/react/24/outline'
 import { toast } from 'sonner'
 import { getFriendlyErrorMessage } from '@/lib/utils/errors'
+import { adminAPI } from '@/lib/api/client'
+import { useCreateUser } from '@/lib/stores/api'
 
 const ROLES = ['ALL', 'CUSTOMER', 'VENDOR', 'ADMIN'] as const
 
@@ -26,6 +28,38 @@ export default function AdminUsersPage() {
   const { data: analyticsData } = useAdminAnalytics()
   const disableUser = useDisableUser().mutate
   const enableUser = useEnableUser().mutate
+  const createUser = useCreateUser()
+
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([])
+  const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([])
+
+  async function openInvite() {
+    setInviteOpen(true)
+    try {
+      const data = await adminAPI.listRoles()
+      setRoles(Array.isArray(data) ? [...data].sort((a, b) => (a.name || '').localeCompare(b.name || '')) : [])
+    } catch (e) {
+      toast.error('Unable to load roles')
+    }
+  }
+
+  async function handleInviteSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      await createUser.mutate({ email: inviteEmail, full_name: inviteName, role_ids: selectedRoleIds })
+      toast.success('Invitation sent')
+      setInviteOpen(false)
+      setInviteEmail('')
+      setInviteName('')
+      setSelectedRoleIds([])
+      refetch()
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Unable to invite user'))
+    }
+  }
 
   const { items: users, total, limit: pageLimit } = unwrapPaginated<{
     id: string
@@ -97,7 +131,9 @@ export default function AdminUsersPage() {
       <AdminPageHeader
         title="Users"
         subtitle="Manage customer and vendor accounts. Admin accounts cannot be disabled."
-      />
+      >
+        <button type="button" onClick={openInvite} className="btn-primary px-3 py-2 text-sm">Invite user</button>
+      </AdminPageHeader>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard title="Total Users" value={totalUsers} icon={UserIcon} />
@@ -190,6 +226,36 @@ export default function AdminUsersPage() {
               pageSize={pageLimit}
               onPageChange={setPage}
             />
+          </div>
+        </div>
+      )}
+      {inviteOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setInviteOpen(false)} />
+          <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold mb-2">Invite User</h3>
+            <form onSubmit={handleInviteSubmit} className="space-y-3">
+              <input value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="Email" className="input-field" />
+              <input value={inviteName} onChange={(e) => setInviteName(e.target.value)} placeholder="Full name (optional)" className="input-field" />
+              <div>
+                <label className="text-sm font-medium mb-1 block">Assign roles</label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-auto">
+                  {roles.map((r) => (
+                    <label key={r.id} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={selectedRoleIds.includes(r.id)} onChange={(e) => {
+                        if (e.target.checked) setSelectedRoleIds((s) => [...s, r.id])
+                        else setSelectedRoleIds((s) => s.filter((id) => id !== r.id))
+                      }} />
+                      <span className="capitalize">{r.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setInviteOpen(false)} className="px-3 py-2 rounded border">Cancel</button>
+                <button type="submit" className="btn-primary px-3 py-2">Send invite</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

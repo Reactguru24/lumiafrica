@@ -193,6 +193,12 @@ export function useEnableUser() {
   return useMutation('enable-user', (id: string) => adminAPI.enableUser(id))
 }
 
+export function useCreateUser() {
+  return useMutation('create-admin-user', (data: { email: string; full_name?: string; role_ids?: string[] }) =>
+    adminAPI.createUser(data),
+  )
+}
+
 export function useAdminAnalytics() {
   return useQuery('admin-analytics', () => adminAPI.getAnalytics())
 }

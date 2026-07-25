@@ -534,6 +534,10 @@ export const adminAPI = {
     return get(`/admin/users${buildQuery(params)}`)
   },
 
+  createUser(data: { email: string; full_name?: string; role_ids?: string[] }) {
+    return post('/admin/users', data)
+  },
+
   disableUser(userId: string) {
     return post(`/admin/users/${userId}/disable`)
   },
@@ -736,13 +740,20 @@ export const adminAPI = {
     return get('/admin/roles')
   },
   createPermission(data: { name: string; description?: string }) {
-    return post('/admin/permissions', data)
+    // permission creation disabled in backend
+    return Promise.reject(new Error('Permission creation is disabled'))
   },
   listPermissions() {
     return get('/admin/permissions')
   },
-  assignPermissionToRole(roleId: string, permissionId: string) {
-    return post(`/admin/roles/${roleId}/permissions`, { permission_id: permissionId })
+  getRolePermissions(roleId: string) {
+    return get(`/admin/roles/${roleId}/permissions`)
+  },
+  assignPermissionToRole(roleId: string, permissionIdOrIds: string | string[]) {
+    if (Array.isArray(permissionIdOrIds)) {
+      return post(`/admin/roles/${roleId}/permissions`, { permission_ids: permissionIdOrIds })
+    }
+    return post(`/admin/roles/${roleId}/permissions`, { permission_id: permissionIdOrIds })
   },
   inviteUserToRole(roleId: string, data: { email: string; full_name?: string }) {
     return post(`/admin/roles/${roleId}/invite`, data)
