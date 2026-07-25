@@ -330,6 +330,10 @@ export const authAPI = {
     return get('/auth/me')
   },
 
+  getPermissions() {
+    return get('/auth/permissions')
+  },
+
   forgotPassword(email: string) {
     return post('/auth/forgot-password', { email }, { skipAuth: true })
   },
@@ -722,5 +726,25 @@ export const adminAPI = {
 
   upsertHomepageShowcase(data: Record<string, unknown>) {
     return put('/admin/homepage/showcase', data)
+  },
+
+  // RBAC
+  createRole(data: { name: string; display_name: string }) {
+    return post('/admin/roles', data)
+  },
+  listRoles() {
+    return get('/admin/roles')
+  },
+  createPermission(data: { name: string; description?: string }) {
+    return post('/admin/permissions', data)
+  },
+  listPermissions() {
+    return get('/admin/permissions')
+  },
+  assignPermissionToRole(roleId: string, permissionId: string) {
+    return post(`/admin/roles/${roleId}/permissions`, { permission_id: permissionId })
+  },
+  inviteUserToRole(roleId: string, data: { email: string; full_name?: string }) {
+    return post(`/admin/roles/${roleId}/invite`, data)
   },
 }

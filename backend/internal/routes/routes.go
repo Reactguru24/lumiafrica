@@ -72,6 +72,7 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	router.GET("/homepage", handlers.GetHomepageContent())
 
 	router.POST("/auth/upload", auth, activeUser, handlers.UploadImage(cfg))
+	router.GET("/auth/permissions", auth, activeUser, handlers.GetMyPermissions())
 
 	// ── Signed-in user (any role) ──────────────────────────────────────────
 	router.GET("/auth/me", auth, activeUser, middleware.AuthenticatedRole(), handlers.GetCurrentUser())
@@ -133,6 +134,13 @@ func SetupRoutes(router *gin.Engine, st *store.Store, cfg *config.Config, rc *re
 	admin := router.Group("/admin")
 	admin.Use(auth, activeUser, middleware.RoleMiddleware(models.RoleAdmin))
 	{
+	// RBAC management
+		admin.POST("/roles", handlers.CreateRole())
+	admin.GET("/roles", handlers.ListRoles())
+	admin.POST("/permissions", handlers.CreatePermission())
+	admin.GET("/permissions", handlers.ListPermissions())
+	admin.POST("/roles/:roleID/permissions", handlers.AssignPermissionToRole())
+		admin.POST("/roles/:roleID/invite", handlers.InviteUserToRole(cfg))
 		admin.GET("/users", handlers.ListUsers())
 		admin.POST("/users/:userID/disable", handlers.DisableUser())
 		admin.POST("/users/:userID/enable", handlers.EnableUser())

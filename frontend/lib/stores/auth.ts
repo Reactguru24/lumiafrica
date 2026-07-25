@@ -17,6 +17,8 @@ interface AuthState {
   canShop: boolean
   isApplicant: boolean
   isDisabled: boolean
+  permissions: string[]
+  hasPermission: (permission: string) => boolean
   login: (email: string, password: string) => Promise<Omit<User, 'password'>>
   register: (data: { fullName: string; email: string; phone: string; password: string }) => Promise<Omit<User, 'password'>>
   logout: () => Promise<void>
@@ -153,6 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   canShop: false,
   isApplicant: false,
   isDisabled: false,
+  permissions: [] as string[],
 
   login: async (email, password) => {
     set({ loading: true })
@@ -167,7 +170,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       storeSession(response.token || '', safeUser.id)
       const me = await authAPI.getCurrentUser().catch(() => null)
       const parsed = parseMeResponse(me)
-      set(applyAuthState(parsed.user ?? safeUser, parsed.pendingVendorApplication))
+      // fetch permissions for this user
+      const perms = await authAPI.getPermissions().catch(() => [])
+      set({ ...applyAuthState(parsed.user ?? safeUser, parsed.pendingVendorApplication), permissions: perms })
       if (get().isCustomer) {
         await useCartStore.getState().mergeGuestCart()
       }
@@ -200,7 +205,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const safeUser = removePassword(response?.user)
       if (!safeUser) throw new Error('Registration failed - no user data')
       storeSession(response.token || '', safeUser.id)
-      set(applyAuthState(safeUser, null))
+      const perms = await authAPI.getPermissions().catch(() => [])
+      set({ ...applyAuthState(safeUser, null), permissions: perms })
       if (get().isCustomer) {
         await useCartStore.getState().mergeGuestCart()
       }
@@ -296,7 +302,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return
       }
 
-      set(applyAuthState(safeUser, pendingVendorApplication))
+      const perms = await authAPI.getPermissions().catch(() => [])
+      set({ ...applyAuthState(safeUser, pendingVendorApplication), permissions: perms })
       if (typeof document !== 'undefined') {
         const secure = window.location.protocol === 'https:' ? '; Secure' : ''
         document.cookie = `lumi_authenticated=1; path=/; max-age=86400; SameSite=Strict${secure}`
@@ -312,7 +319,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   clearSession: () => {
     localStorage.removeItem(SESSION_KEY)
     clearSessionCookie()
-    set(clearAuthState())
+    set({ ...clearAuthState(), permissions: [] })
   },
 
   updateProfile: async (data) => {
@@ -336,6 +343,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const result = await authAPI.uploadImage(file) as { url?: string }
     if (!result?.url) throw new Error('Upload failed')
     return { url: result.url }
+  },
+
+  // permission helpers
+  permissions: [],
+  hasPermission: (permission: string) => {
+    const { isAdmin, permissions } = get()
+    if (isAdmin) return true
+    return permissions.includes(permission)
+  },
+  hasAnyPermissionPrefix: (prefix: string) => {
+    const { isAdmin, permissions } = get()
+    if (isAdmin) return true
+    return permissions.some((p) => p.startsWith(prefix))
   },
 
   hasRole: (requiredRole) => {

@@ -11,6 +11,7 @@ import { AppLogo } from '@/components/common/AppLogo'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
 import { UserAvatar } from '@/components/account/UserAvatar'
 import { UserMenu } from '@/components/common/UserMenu'
+import { SupportChatButton } from '@/components/common/SupportChatButton'
 import { VendorModeToggle } from '@/components/vendor/VendorModeToggle'
 import { SHOP_CATEGORIES, shopCategoryQuery, shopSubcategoryQuery } from '@/lib/constants/navigation'
 import { useAuthStore } from '@/lib/stores/auth'
@@ -222,7 +223,10 @@ export function MainLayout({ children }: { children: ReactNode }) {
         </aside>
       </header>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 relative">
+        {children}
+        {isCustomer && <SupportChatButton />}
+      </main>
 
       <footer className="bg-gray-100 dark:bg-gray-900 text-gray-500 dark:text-gray-400 py-8 sm:py-12 mt-auto border-t border-gray-200 dark:border-gray-800">
         <div className="page-width grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 md:gap-8">

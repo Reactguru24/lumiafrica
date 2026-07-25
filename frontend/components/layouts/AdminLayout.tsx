@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   HomeIcon, UsersIcon, BuildingStorefrontIcon, CubeIcon, ShoppingCartIcon,
   Cog6ToothIcon, Bars3Icon, XMarkIcon, ArrowLeftOnRectangleIcon, SparklesIcon,
-  TicketIcon, PhotoIcon,
+  TicketIcon, PhotoIcon, ChatBubbleLeftRightIcon,
   TruckIcon,
 } from '@heroicons/react/24/outline'
 import { AppearanceControls } from '@/components/common/AppearanceControls'
@@ -15,16 +15,19 @@ import { useAuthStore } from '@/lib/stores/auth'
 import { RouteGuard } from './RouteGuard'
 
 const navItems = [
-  { name: 'Dashboard', to: '/admin', icon: HomeIcon },
-  { name: 'Users', to: '/admin/users', icon: UsersIcon },
-  { name: 'Vendors', to: '/admin/vendors', icon: BuildingStorefrontIcon },
-  { name: 'Subscriptions', to: '/admin/subscriptions', icon: SparklesIcon },
-  { name: 'Products', to: '/admin/products', icon: CubeIcon },
-  { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon },
-  { name: 'Shipping Lanes', to: '/admin/delivery-zones', icon: TruckIcon },
-  { name: 'Commerce', to: '/admin/commerce', icon: TicketIcon },
-  { name: 'Homepage', to: '/admin/homepage', icon: PhotoIcon },
-  { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon },
+  { name: 'Dashboard', to: '/admin', icon: HomeIcon, permissionPrefix: 'admin' },
+  { name: 'Users', to: '/admin/users', icon: UsersIcon, permissionPrefix: 'admin.users' },
+  { name: 'Roles', to: '/admin/roles', icon: UsersIcon, permissionPrefix: 'admin.roles' },
+  { name: 'Permissions', to: '/admin/permissions', icon: TicketIcon, permissionPrefix: 'admin.permissions' },
+  { name: 'Support', to: '/admin/support', icon: ChatBubbleLeftRightIcon, permissionPrefix: 'admin.support' },
+  { name: 'Vendors', to: '/admin/vendors', icon: BuildingStorefrontIcon, permissionPrefix: 'admin.vendors' },
+  { name: 'Subscriptions', to: '/admin/subscriptions', icon: SparklesIcon, permissionPrefix: 'admin.subscriptions' },
+  { name: 'Products', to: '/admin/products', icon: CubeIcon, permissionPrefix: 'admin.products' },
+  { name: 'Orders', to: '/admin/orders', icon: ShoppingCartIcon, permissionPrefix: 'admin.orders' },
+  { name: 'Shipping Lanes', to: '/admin/delivery-zones', icon: TruckIcon, permissionPrefix: 'admin.shipping' },
+  { name: 'Commerce', to: '/admin/commerce', icon: TicketIcon, permissionPrefix: 'admin.commerce' },
+  { name: 'Homepage', to: '/admin/homepage', icon: PhotoIcon, permissionPrefix: 'admin.homepage' },
+  { name: 'Settings', to: '/admin/settings', icon: Cog6ToothIcon, permissionPrefix: 'admin.settings' },
 ]
 
 export function AdminLayout({ children }: { children: ReactNode }) {
@@ -81,6 +84,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           {/* Nav links */}
           <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
             {navItems.map((item) => {
+              // permission gating: allow if full admin OR has any permission matching the resource prefix
+              if (item.permission && !auth.hasPermission(item.permission)) return null
+              if ((item as any).permissionPrefix && !auth.hasAnyPermissionPrefix((item as any).permissionPrefix)) return null
               const active = pathname === item.to || (item.to !== '/admin' && pathname.startsWith(item.to + '/'))
               return (
                 <Link
@@ -140,18 +146,23 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
         {/* Main content — offset by sidebar width */}
         <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${desktopCollapsed ? 'lg:ml-16' : 'lg:ml-64'}`}>
-          <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 min-w-0">
-            {/* Mobile open button */}
-            <button
-              className="lg:hidden p-2 shrink-0 -ml-1 text-gray-500 hover:text-gray-900 dark:hover:text-white"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open menu"
-            >
-              <Bars3Icon className="w-6 h-6" />
-            </button>
-            <h1 className="flex-1 text-sm sm:text-lg font-semibold truncate">
-              {activeNav?.name ?? 'Platform Administration'}
-            </h1>
+          <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-3 sm:px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center gap-2 w-full">
+              <button
+                className="lg:hidden p-2 shrink-0 -ml-1 text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open menu"
+              >
+                <Bars3Icon className="w-6 h-6" />
+              </button>
+              <h1 className="flex-1 text-sm sm:text-lg font-semibold truncate">
+                {activeNav?.name ?? 'Platform Administration'}
+              </h1>
+              <Link href="/products" className="hidden sm:inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                <HomeIcon className="w-4 h-4" />
+                Storefront
+              </Link>
+            </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               <AppearanceControls />
               <Link href="/admin/account" className="hidden sm:flex items-center gap-2">

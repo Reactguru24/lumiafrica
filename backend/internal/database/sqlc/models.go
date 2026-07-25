@@ -1399,6 +1399,9 @@ type VendorPayoutMethod struct {
 	AccountName string                  `json:"account_name"`
 	AccountRef  string                  `json:"account_ref"`
 	BankName    sql.NullString          `json:"bank_name"`
+	BankAccountNumber sql.NullString    `json:"bank_account_number"`
+	BankRoutingNumber sql.NullString    `json:"bank_routing_number"`
+	BankCurrency       sql.NullString    `json:"bank_currency"`
 	IsDefault   int16                   `json:"is_default"`
 	CreatedAt   time.Time               `json:"created_at"`
 	UpdatedAt   time.Time               `json:"updated_at"`
